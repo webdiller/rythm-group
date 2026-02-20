@@ -127,7 +127,7 @@ export function ContactForm() {
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(0,212,255,0.3)]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)]"
             >
               <Send className="h-4 w-4" />
               {t.contact.submit}

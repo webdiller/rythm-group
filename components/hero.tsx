@@ -27,7 +27,7 @@ export function Hero() {
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
             href="#contact"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(0,212,255,0.3)]"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)]"
           >
             {t.hero.cta}
           </a>

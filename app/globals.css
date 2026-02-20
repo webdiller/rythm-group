@@ -10,26 +10,26 @@
   --card-foreground: #F0F0F5;
   --popover: #12121A;
   --popover-foreground: #F0F0F5;
-  --primary: #00D4FF;
+  --primary: #e61b00;
   --primary-foreground: #0A0A0F;
   --secondary: #1A1A28;
   --secondary-foreground: #F0F0F5;
   --muted: #1A1A28;
   --muted-foreground: #8888A0;
-  --accent: #00D4FF;
+  --accent: #e61b00;
   --accent-foreground: #0A0A0F;
   --destructive: #FF4444;
   --destructive-foreground: #F0F0F5;
   --border: #2A2A3A;
   --input: #1A1A28;
-  --ring: #00D4FF;
-  --chart-1: #00D4FF;
-  --chart-2: #00B4D8;
-  --chart-3: #0090A8;
-  --chart-4: #006880;
-  --chart-5: #004858;
+  --ring: #e61b00;
+  --chart-1: #e61b00;
+  --chart-2: #FF4444;
+  --chart-3: #E61B00;
+  --chart-4: #CC1600;
+  --chart-5: #991100;
   --radius: 0.5rem;
-  --glow: #00D4FF;
+  --glow: #e61b00;
 }
 
 @theme inline {
@@ -113,24 +113,24 @@ html {
 }
 
 .glow-border {
-  box-shadow: 0 0 15px -3px rgba(0, 212, 255, 0.15), inset 0 0 15px -3px rgba(0, 212, 255, 0.05);
+  box-shadow: 0 0 15px -3px rgba(230, 27, 0, 0.15), inset 0 0 15px -3px rgba(230, 27, 0, 0.05);
 }
 
 .glow-border:hover {
-  box-shadow: 0 0 25px -3px rgba(0, 212, 255, 0.3), inset 0 0 25px -3px rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 25px -3px rgba(230, 27, 0, 0.3), inset 0 0 25px -3px rgba(230, 27, 0, 0.1);
 }
 
 .text-glow {
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.2);
+  text-shadow: 0 0 20px rgba(230, 27, 0, 0.5), 0 0 40px rgba(230, 27, 0, 0.2);
 }
 
 /* Radial gradient background for layout */
 .radial-gradient-bg {
   background: radial-gradient(
     125% 125% at 50% 10%,
-    rgba(0, 212, 255, 0.2) 0%,
-    rgba(0, 212, 255, 0.12) 20%,
-    rgba(0, 212, 255, 0.06) 35%,
+    rgba(230, 27, 0, 0.2) 0%,
+    rgba(230, 27, 0, 0.12) 20%,
+    rgba(230, 27, 0, 0.06) 35%,
     rgba(10, 10, 15, 0.98) 55%,
     #0A0A0F 100%
   );

@@ -45,13 +45,13 @@ export default function RootLayout({
           <div
             className="absolute inset-0 z-0 opacity-60"
             style={{
-              background: "radial-gradient(100% 100% at 80% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%)",
+              background: "radial-gradient(100% 100% at 80% 20%, rgba(230, 27, 0, 0.08) 0%, transparent 50%)",
             }}
           />
           <div
             className="absolute inset-0 z-0 opacity-40"
             style={{
-              background: "radial-gradient(100% 100% at 20% 80%, rgba(0, 212, 255, 0.06) 0%, transparent 50%)",
+              background: "radial-gradient(100% 100% at 20% 80%, rgba(230, 27, 0, 0.06) 0%, transparent 50%)",
             }}
           />
           {/* Your Content/Components */}

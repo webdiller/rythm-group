@@ -31,7 +31,7 @@ export function Channels() {
               onClick={() => setActiveCategory(cat.id)}
               className={`rounded-lg px-5 py-2.5 text-sm font-medium transition-all ${
                 activeCategory === cat.id
-                  ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(0,212,255,0.2)]"
+                  ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(230,27,0,0.2)]"
                   : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
               }`}
             >
