@@ -38,7 +38,27 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
-        {children}
+        <div className="min-h-screen w-full relative">
+          {/* Radial Gradient Background from Top */}
+          <div className="absolute inset-0 z-0 radial-gradient-bg" />
+          {/* Additional subtle gradient layers for depth */}
+          <div
+            className="absolute inset-0 z-0 opacity-60"
+            style={{
+              background: "radial-gradient(100% 100% at 80% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%)",
+            }}
+          />
+          <div
+            className="absolute inset-0 z-0 opacity-40"
+            style={{
+              background: "radial-gradient(100% 100% at 20% 80%, rgba(0, 212, 255, 0.06) 0%, transparent 50%)",
+            }}
+          />
+          {/* Your Content/Components */}
+          <div className="relative z-10">
+            {children}
+          </div>
+        </div>
         <Analytics />
       </body>
     </html>

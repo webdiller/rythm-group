@@ -123,3 +123,15 @@ html {
 .text-glow {
   text-shadow: 0 0 20px rgba(0, 212, 255, 0.5), 0 0 40px rgba(0, 212, 255, 0.2);
 }
+
+/* Radial gradient background for layout */
+.radial-gradient-bg {
+  background: radial-gradient(
+    125% 125% at 50% 10%,
+    rgba(0, 212, 255, 0.2) 0%,
+    rgba(0, 212, 255, 0.12) 20%,
+    rgba(0, 212, 255, 0.06) 35%,
+    rgba(10, 10, 15, 0.98) 55%,
+    #0A0A0F 100%
+  );
+}
