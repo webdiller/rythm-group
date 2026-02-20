@@ -2,6 +2,7 @@
 
 import { useLocale } from "@/lib/locale-context"
 import { partnerLogos } from "@/lib/data"
+import { ScrollReveal } from "@/components/ui/scroll-reveal"
 
 export function Cases() {
   const { t } = useLocale()
@@ -9,14 +10,16 @@ export function Cases() {
   return (
     <section id="cases" className="relative px-6 py-24 md:py-32">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-12 text-center md:mb-16">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
-            {t.cases.title}
-          </h2>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg text-pretty">
-            {t.cases.subtitle}
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mb-12 text-center md:mb-16">
+            <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+              {t.cases.title}
+            </h2>
+            <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg text-pretty">
+              {t.cases.subtitle}
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* Scrolling partner logos */}
         <div className="relative overflow-hidden">

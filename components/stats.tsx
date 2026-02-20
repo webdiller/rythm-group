@@ -1,6 +1,8 @@
 "use client"
 
 import { useLocale } from "@/lib/locale-context"
+import { ScrollReveal } from "@/components/ui/scroll-reveal"
+import { ScrollStagger } from "@/components/ui/scroll-stagger"
 
 export function Stats() {
   const { t } = useLocale()
@@ -13,26 +15,27 @@ export function Stats() {
       </div>
 
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-12 text-center md:mb-16">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
-            {t.stats.title}
-          </h2>
-          <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg text-pretty">
-            {t.stats.subtitle}
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="mb-12 text-center md:mb-16">
+            <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+              {t.stats.title}
+            </h2>
+            <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg text-pretty">
+              {t.stats.subtitle}
+            </p>
+          </div>
+        </ScrollReveal>
 
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div className="grid sm:grid-cols-2 gap-6 md:grid-cols-4">
           {t.stats.items.map((item, i) => (
-            <div
-              key={i}
-              className="flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-primary/30 glow-border"
-            >
-              <span className="mb-2 text-3xl font-bold text-primary md:text-4xl lg:text-5xl text-glow">
-                {item.value}
-              </span>
-              <span className="text-sm text-muted-foreground">{item.label}</span>
-            </div>
+            <ScrollStagger key={i} index={i} delayStep={100}>
+              <div className="flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-primary/30 glow-border">
+                <span className="mb-2 text-3xl font-bold text-primary md:text-4xl lg:text-5xl text-glow">
+                  {item.value}
+                </span>
+                <span className="text-sm text-muted-foreground">{item.label}</span>
+              </div>
+            </ScrollStagger>
           ))}
         </div>
       </div>
