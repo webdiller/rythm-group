@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -175,8 +174,18 @@ export function TranslationsEditor() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Edit Translations</CardTitle>
+          {hasChanges && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+                Отмена
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? "Сохранение…" : "Сохранить"}
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {getNestedKeys(selectedSection).map((key) => (
