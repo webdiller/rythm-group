@@ -18,6 +18,7 @@ export function TranslationsEditor() {
   const [selectedLocale, setSelectedLocale] = useState<"ru" | "en">("ru")
   const [selectedSection, setSelectedSection] = useState(sections[0])
   const [translations, setTranslations] = useState<Record<string, TranslationRow>>({})
+  const [savedTranslations, setSavedTranslations] = useState<Record<string, TranslationRow>>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -41,6 +42,7 @@ export function TranslationsEditor() {
           map[item.key] = { id: item.id, value: item.value ?? "" }
         })
         setTranslations(map)
+        setSavedTranslations(map)
       }
     } catch (error) {
       toast.error("Failed to load translations")
@@ -49,51 +51,83 @@ export function TranslationsEditor() {
     }
   }
 
-  const saveTranslation = async (key: string, value: string) => {
+  const saveOneTranslation = async (key: string, value: string): Promise<boolean> => {
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("auth_token="))
+      ?.split("=")[1]
+
+    const existingId = translations[key]?.id
+    const method = existingId != null ? "PUT" : "POST"
+    const body =
+      existingId != null
+        ? { id: existingId, locale: selectedLocale, section: selectedSection, key, value }
+        : { locale: selectedLocale, section: selectedSection, key, value }
+
+    const response = await fetch("/api/content/translations", {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (response.ok) {
+      const resJson = (await response.json()) as { data?: { id: number; value: string | null } }
+      setTranslations((prev) => ({
+        ...prev,
+        [key]: { id: resJson.data?.id ?? existingId, value },
+      }))
+      return true
+    }
+    const err = (await response.json()) as { error?: string }
+    toast.error(err.error ?? "Failed to save translation")
+    return false
+  }
+
+  const getChangedKeys = (): string[] => {
+    const keys = new Set([...Object.keys(translations), ...Object.keys(savedTranslations)])
+    return Array.from(keys).filter(
+      (key) => (translations[key]?.value ?? "") !== (savedTranslations[key]?.value ?? "")
+    )
+  }
+
+  const hasChanges = getChangedKeys().length > 0
+
+  const handleSave = async () => {
+    const changedKeys = getChangedKeys()
+    if (changedKeys.length === 0) return
     setSaving(true)
     try {
-      const token = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("auth_token="))
-        ?.split("=")[1]
-
-      const existingId = translations[key]?.id
-      const method = existingId != null ? "PUT" : "POST"
-      const body =
-        existingId != null
-          ? { id: existingId, locale: selectedLocale, section: selectedSection, key, value }
-          : { locale: selectedLocale, section: selectedSection, key, value }
-
-      const response = await fetch("/api/content/translations", {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      })
-
-      if (response.ok) {
-        toast.success("Translation saved")
-        const resJson = (await response.json()) as { data?: { id: number; value: string | null } }
-        setTranslations((prev) => ({
-          ...prev,
-          [key]: { id: resJson.data?.id ?? existingId, value },
-        }))
-      } else {
-        const err = (await response.json()) as { error?: string }
-        toast.error(err.error ?? "Failed to save translation")
+      let ok = true
+      for (const key of changedKeys) {
+        const success = await saveOneTranslation(key, translations[key]?.value ?? "")
+        if (!success) ok = false
+      }
+      if (ok) {
+        setSavedTranslations((prev) => {
+          const next = { ...prev }
+          changedKeys.forEach((key) => {
+            next[key] = { ...translations[key], value: translations[key]?.value ?? "" }
+          })
+          return next
+        })
+        toast.success("Translations saved")
       }
     } catch (error) {
-      toast.error("Failed to save translation")
+      toast.error("Failed to save translations")
     } finally {
       setSaving(false)
     }
   }
 
+  const handleCancel = () => {
+    setTranslations({ ...savedTranslations })
+  }
+
   const handleChange = (key: string, value: string) => {
     setTranslations((prev) => ({ ...prev, [key]: { ...prev[key], value } }))
-    saveTranslation(key, value)
   }
 
   const getNestedKeys = (section: string): string[] => {
