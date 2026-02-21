@@ -1,28 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { getDb } from "@/lib/db"
 import { generateToken } from "@/lib/auth"
+import { ServiceUsers } from "@/lib/services/users"
+import { LoginBody } from "@/lib/schemas/users"
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json()
-
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
+    const body = await request.json()
+    const parsed = LoginBody.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Username and password are required", errors: parsed.error.flatten() }, { status: 400 })
     }
 
-    const db = getDb()
-    const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username) as {
-      id: number
-      username: string
-      password_hash: string
-    } | undefined
-
+    const user = ServiceUsers.getByUsername(parsed.data.username)
     if (!user) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password_hash)
+    const isValidPassword = await bcrypt.compare(parsed.data.password, user.password_hash)
     if (!isValidPassword) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }

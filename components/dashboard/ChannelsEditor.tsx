@@ -45,10 +45,12 @@ export function ChannelsEditor() {
         fetch("/api/content/channel-categories"),
       ])
       if (channelsRes.ok) {
-        setChannels(await channelsRes.json())
+        const channelsJson = (await channelsRes.json()) as { data?: Channel[] }
+        setChannels(channelsJson.data ?? [])
       }
       if (categoriesRes.ok) {
-        setCategories(await categoriesRes.json())
+        const categoriesJson = (await categoriesRes.json()) as { data?: Category[] }
+        setCategories(categoriesJson.data ?? [])
       }
     } catch (error) {
       toast.error("Failed to load data")
@@ -271,9 +273,9 @@ function ChannelForm({
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          Отменить
         </Button>
-        <Button type="submit">Save</Button>
+        <Button type="submit">Сохранить</Button>
       </div>
     </form>
   )

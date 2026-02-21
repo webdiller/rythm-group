@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { getDb } from "@/lib/db"
-
-// This route creates the first admin user if no users exist
-// Should be called once during initial setup
+import { tableUsers } from "@/lib/db/schema"
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json()
+    const body = await request.json() as { username?: string; password?: string }
+    const { username, password } = body
 
     if (!username || !password) {
       return NextResponse.json({ error: "Username and password are required" }, { status: 400 })
     }
 
     const db = getDb()
-    
-    // Check if any users exist
-    const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as { count: number }
-    
-    if (userCount.count > 0) {
+    const users = db.select().from(tableUsers).limit(1).all()
+    if (users.length > 0) {
       return NextResponse.json({ error: "Users already exist. Use /api/auth/login instead." }, { status: 400 })
     }
 
-    // Create first admin user
     const passwordHash = await bcrypt.hash(password, 10)
-    const result = db.prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)").run(username, passwordHash)
+    const [created] = db.insert(tableUsers).values({ username, password_hash: passwordHash }).returning().all()
+    if (!created) {
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,
       message: "Admin user created successfully",
-      userId: result.lastInsertRowid,
+      userId: created.id,
     })
   } catch (error) {
     console.error("Init user error:", error)

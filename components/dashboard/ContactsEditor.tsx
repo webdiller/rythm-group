@@ -16,11 +16,12 @@ interface Contact {
 
 export function ContactsEditor() {
   const [contact, setContact] = useState<Contact>({
-    id: 1,
+    id: 0,
     email: "",
     telegram_url: "",
     telegram_username: "",
   })
+  const [initialContact, setInitialContact] = useState<Contact | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -33,8 +34,10 @@ export function ContactsEditor() {
     try {
       const response = await fetch("/api/content/contacts")
       if (response.ok) {
-        const data = await response.json()
-        setContact(data)
+        const json = (await response.json()) as { data?: Contact[] }
+        const loaded = json.data?.[0] ?? { id: 0, email: "", telegram_url: "", telegram_username: "" }
+        setContact(loaded)
+        setInitialContact(loaded)
       }
     } catch (error) {
       toast.error("Failed to load contacts")
@@ -47,9 +50,9 @@ export function ContactsEditor() {
     setSaving(true)
     try {
       const token = document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
-
+      const isCreate = !contact.id
       const response = await fetch("/api/content/contacts", {
-        method: "PUT",
+        method: isCreate ? "POST" : "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -58,7 +61,12 @@ export function ContactsEditor() {
       })
 
       if (response.ok) {
-        toast.success("Contacts updated")
+        toast.success(isCreate ? "Contact created" : "Contacts updated")
+        if (isCreate) {
+          loadContact()
+        } else {
+          setInitialContact(contact)
+        }
       } else {
         toast.error("Failed to save contacts")
       }
@@ -110,9 +118,18 @@ export function ContactsEditor() {
               placeholder="@username"
             />
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => initialContact && setContact(initialContact)}
+              disabled={!initialContact}>
+              Отменить
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Сохранение…" : "Сохранить"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -1,40 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
-import { getDb } from "@/lib/db"
+import { ServiceChannels } from "@/lib/services/channels"
+import {
+  CreateOneBody,
+  UpdateOneBody,
+  DeleteOneParams,
+} from "@/lib/schemas/channels"
 
-export async function GET(request: NextRequest) {
-  const db = getDb()
-  const channels = db
-    .prepare(
-      `
-    SELECT c.*, cc.name_ru as category_name_ru, cc.name_en as category_name_en
-    FROM channels c
-    JOIN channel_categories cc ON c.category_id = cc.id
-    ORDER BY c.category_id, c.order_index
-  `
-    )
-    .all()
-
-  return NextResponse.json(channels)
+export async function GET() {
+  const result = ServiceChannels.getAll()
+  return NextResponse.json(result)
 }
 
 export async function POST(request: NextRequest) {
   try {
     requireAuth(request)
-    const { category_id, name, subscribers, url, order_index } = await request.json()
-
-    if (!category_id || !name || !subscribers || !url) {
-      return NextResponse.json({ error: "category_id, name, subscribers, and url are required" }, { status: 400 })
+    const body = await request.json()
+    const parsed = CreateOneBody.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "category_id, name, subscribers, and url are required", errors: parsed.error.flatten() }, { status: 400 })
     }
-
-    const db = getDb()
-    const result = db
-      .prepare("INSERT INTO channels (category_id, name, subscribers, url, order_index) VALUES (?, ?, ?, ?, ?)")
-      .run(category_id, name, subscribers, url, order_index || 0)
-
-    return NextResponse.json({ id: Number(result.lastInsertRowid), category_id, name, subscribers, url, order_index })
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+    const result = ServiceChannels.createOne(parsed.data)
+    return NextResponse.json(result, { status: 201 })
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     console.error("Create channel error:", error)
@@ -45,20 +34,15 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     requireAuth(request)
-    const { id, category_id, name, subscribers, url, order_index } = await request.json()
-
-    if (!id) {
-      return NextResponse.json({ error: "id is required" }, { status: 400 })
+    const body = await request.json()
+    const parsed = UpdateOneBody.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: "id is required", errors: parsed.error.flatten() }, { status: 400 })
     }
-
-    const db = getDb()
-    db.prepare(
-      "UPDATE channels SET category_id = ?, name = ?, subscribers = ?, url = ?, order_index = ? WHERE id = ?"
-    ).run(category_id, name, subscribers, url, order_index || 0, id)
-
-    return NextResponse.json({ id, category_id, name, subscribers, url, order_index })
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+    const result = ServiceChannels.updateOne({ id: String(parsed.data.id) }, parsed.data)
+    return NextResponse.json(result)
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     console.error("Update channel error:", error)
@@ -71,17 +55,14 @@ export async function DELETE(request: NextRequest) {
     requireAuth(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
-
-    if (!id) {
+    const parsed = DeleteOneParams.safeParse({ id: id ?? "" })
+    if (!parsed.success) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
     }
-
-    const db = getDb()
-    db.prepare("DELETE FROM channels WHERE id = ?").run(id)
-
+    ServiceChannels.deleteOne(parsed.data)
     return NextResponse.json({ success: true })
-  } catch (error: any) {
-    if (error.message === "Unauthorized") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     console.error("Delete channel error:", error)

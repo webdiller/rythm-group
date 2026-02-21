@@ -12,10 +12,12 @@ import { toast } from "sonner"
 const sections = ["hero", "about", "stats", "cases", "contact", "nav", "footer"]
 const locales = ["ru", "en"]
 
+type TranslationRow = { id?: number; value: string }
+
 export function TranslationsEditor() {
   const [selectedLocale, setSelectedLocale] = useState<"ru" | "en">("ru")
   const [selectedSection, setSelectedSection] = useState(sections[0])
-  const [translations, setTranslations] = useState<Record<string, string>>({})
+  const [translations, setTranslations] = useState<Record<string, TranslationRow>>({})
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
@@ -30,12 +32,15 @@ export function TranslationsEditor() {
         `/api/content/translations?locale=${selectedLocale}&section=${selectedSection}`
       )
       if (response.ok) {
-        const data = await response.json()
-        const translationsMap: Record<string, string> = {}
-        data.forEach((item: { key: string; value: string }) => {
-          translationsMap[item.key] = item.value
+        const json = (await response.json()) as {
+          data?: Array<{ id: number; locale: string; section: string; key: string; value: string | null }>
+        }
+        const data = json.data ?? []
+        const map: Record<string, TranslationRow> = {}
+        data.forEach((item) => {
+          map[item.key] = { id: item.id, value: item.value ?? "" }
         })
-        setTranslations(translationsMap)
+        setTranslations(map)
       }
     } catch (error) {
       toast.error("Failed to load translations")
@@ -52,25 +57,32 @@ export function TranslationsEditor() {
         .find((row) => row.startsWith("auth_token="))
         ?.split("=")[1]
 
+      const existingId = translations[key]?.id
+      const method = existingId != null ? "PUT" : "POST"
+      const body =
+        existingId != null
+          ? { id: existingId, locale: selectedLocale, section: selectedSection, key, value }
+          : { locale: selectedLocale, section: selectedSection, key, value }
+
       const response = await fetch("/api/content/translations", {
-        method: "POST",
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          locale: selectedLocale,
-          section: selectedSection,
-          key,
-          value,
-        }),
+        body: JSON.stringify(body),
       })
 
       if (response.ok) {
         toast.success("Translation saved")
-        setTranslations((prev) => ({ ...prev, [key]: value }))
+        const resJson = (await response.json()) as { data?: { id: number; value: string | null } }
+        setTranslations((prev) => ({
+          ...prev,
+          [key]: { id: resJson.data?.id ?? existingId, value },
+        }))
       } else {
-        toast.error("Failed to save translation")
+        const err = (await response.json()) as { error?: string }
+        toast.error(err.error ?? "Failed to save translation")
       }
     } catch (error) {
       toast.error("Failed to save translation")
@@ -80,7 +92,7 @@ export function TranslationsEditor() {
   }
 
   const handleChange = (key: string, value: string) => {
-    setTranslations((prev) => ({ ...prev, [key]: value }))
+    setTranslations((prev) => ({ ...prev, [key]: { ...prev[key], value } }))
     saveTranslation(key, value)
   }
 
@@ -138,7 +150,7 @@ export function TranslationsEditor() {
               <Label htmlFor={key}>{key}</Label>
               <Textarea
                 id={key}
-                value={translations[key] || ""}
+                value={translations[key]?.value ?? ""}
                 onChange={(e) => handleChange(key, e.target.value)}
                 rows={key.includes("text") ? 3 : 1}
               />

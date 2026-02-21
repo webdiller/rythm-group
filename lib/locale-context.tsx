@@ -23,7 +23,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       try {
         const response = await fetch(`/api/content/translations?locale=${locale}`)
         if (response.ok) {
-          const dbTranslations = await response.json() as Array<{ section: string; key: string; value: string }>
+          const json = await response.json() as { data?: Array<{ section: string; key: string; value: string }> }
+          const dbTranslations = json.data ?? []
           
           // Start with fallback translations (deep clone to avoid readonly issues)
           const t = JSON.parse(JSON.stringify(fallbackTranslations[locale])) as any

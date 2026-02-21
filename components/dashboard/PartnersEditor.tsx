@@ -31,7 +31,8 @@ export function PartnersEditor() {
     try {
       const response = await fetch("/api/content/partners")
       if (response.ok) {
-        setPartners(await response.json())
+        const json = (await response.json()) as { data?: Partner[] }
+        setPartners(json.data ?? [])
       }
     } catch (error) {
       toast.error("Failed to load partners")
@@ -212,9 +213,9 @@ function PartnerForm({
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          Отменить
         </Button>
-        <Button type="submit">Save</Button>
+        <Button type="submit">Сохранить</Button>
       </div>
     </form>
   )
