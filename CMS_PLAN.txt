@@ -1,0 +1,309 @@
+ПЛАН РЕАЛИЗАЦИИ CMS ДЛЯ RYTHM GROUP LANDING
+===============================================
+
+ОБЩЕЕ ОПИСАНИЕ
+--------------
+Разработка простой CMS панели для управления контентом лендинга.
+Доступ: /dashboard
+Авторизация: логин/пароль с JWT токенами
+Хранение данных: SQLite база данных
+Бэкенд: Next.js API Routes (встроенный в проект)
+
+ТРЕБОВАНИЯ
+----------
+✓ Изменение контента и ссылок на страницах
+✓ Поддержка мультиязычности (RU/EN)
+✓ Управление каналами (Channels)
+✓ Управление партнёрами/кейсами (Cases)
+✓ Редактирование контактов (email, Telegram)
+✓ Авторизация по логину и паролю
+✓ Хеширование паролей (bcrypt)
+✓ JWT токены для сессий
+✓ Встроенная панель в текущий проект
+
+СТРУКТУРА БАЗЫ ДАННЫХ (SQLite)
+-------------------------------
+
+1. Таблица: users
+   - id (INTEGER PRIMARY KEY)
+   - username (TEXT UNIQUE NOT NULL)
+   - password_hash (TEXT NOT NULL) - bcrypt hash
+   - created_at (DATETIME DEFAULT CURRENT_TIMESTAMP)
+
+2. Таблица: translations
+   - id (INTEGER PRIMARY KEY)
+   - locale (TEXT NOT NULL) - 'ru' или 'en'
+   - section (TEXT NOT NULL) - 'hero', 'about', 'stats', 'cases', 'contact', 'nav', 'footer'
+   - key (TEXT NOT NULL) - ключ перевода (например, 'title', 'subtitle', 'mission.title')
+   - value (TEXT) - значение перевода
+   - UNIQUE(locale, section, key)
+
+3. Таблица: channel_categories
+   - id (TEXT PRIMARY KEY) - 'gaming', 'esports', 'media', 'betting'
+   - name_ru (TEXT NOT NULL)
+   - name_en (TEXT NOT NULL)
+   - order_index (INTEGER DEFAULT 0)
+
+4. Таблица: channels
+   - id (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - category_id (TEXT NOT NULL) - FK к channel_categories
+   - name (TEXT NOT NULL)
+   - subscribers (TEXT NOT NULL) - например, "2.1M"
+   - url (TEXT NOT NULL)
+   - order_index (INTEGER DEFAULT 0)
+   - FOREIGN KEY(category_id) REFERENCES channel_categories(id)
+
+5. Таблица: partners
+   - id (INTEGER PRIMARY KEY AUTOINCREMENT)
+   - name (TEXT NOT NULL)
+   - name_short (TEXT NOT NULL) - для отображения в логотипе
+   - order_index (INTEGER DEFAULT 0)
+
+6. Таблица: contacts
+   - id (INTEGER PRIMARY KEY)
+   - email (TEXT NOT NULL)
+   - telegram_url (TEXT NOT NULL)
+   - telegram_username (TEXT) - для отображения
+
+API ROUTES (Next.js)
+--------------------
+
+1. /api/auth/login (POST)
+   - Body: { username, password }
+   - Response: { token, user: { username } }
+   - Проверяет пароль, возвращает JWT токен
+
+2. /api/auth/verify (GET)
+   - Headers: Authorization: Bearer <token>
+   - Response: { valid: boolean, user: {...} }
+   - Проверяет валидность токена
+
+3. /api/content/translations (GET, POST, PUT, DELETE)
+   - GET: получить все переводы или фильтр по locale/section
+   - POST: создать новый перевод
+   - PUT: обновить перевод
+   - DELETE: удалить перевод
+   - Требует авторизации
+
+4. /api/content/channels (GET, POST, PUT, DELETE)
+   - GET: получить все каналы с категориями
+   - POST: создать новый канал
+   - PUT: обновить канал
+   - DELETE: удалить канал
+   - Требует авторизации
+
+5. /api/content/channel-categories (GET, POST, PUT, DELETE)
+   - Управление категориями каналов
+   - Требует авторизации
+
+6. /api/content/partners (GET, POST, PUT, DELETE)
+   - Управление партнёрами/кейсами
+   - Требует авторизации
+
+7. /api/content/contacts (GET, PUT)
+   - GET: получить контакты
+   - PUT: обновить контакты (email, telegram)
+   - Требует авторизации
+
+СТРАНИЦА DASHBOARD (/dashboard)
+--------------------------------
+
+Структура:
+- app/dashboard/page.tsx - главная страница дашборда
+- app/dashboard/login/page.tsx - страница входа
+- components/dashboard/ - компоненты панели управления
+
+Функционал после авторизации:
+
+1. Навигация по разделам:
+   - Переводы (Translations)
+   - Каналы (Channels)
+   - Партнёры (Partners)
+   - Контакты (Contacts)
+   - Выход (Logout)
+
+2. Раздел "Переводы":
+   - Выбор языка (RU/EN)
+   - Выбор секции (Hero, About, Stats, Cases, Contact, Nav, Footer)
+   - Форма редактирования для каждого ключа
+   - Сохранение изменений
+
+3. Раздел "Каналы":
+   - Список категорий с возможностью редактирования названий
+   - Список каналов в каждой категории
+   - Форма добавления/редактирования канала:
+     * Название
+     * Количество подписчиков
+     * URL ссылка
+     * Категория
+   - Удаление каналов
+   - Сортировка (order_index)
+
+4. Раздел "Партнёры":
+   - Список партнёров
+   - Форма добавления/редактирования:
+     * Название
+     * Короткое название (для логотипа)
+   - Удаление партнёров
+   - Сортировка
+
+5. Раздел "Контакты":
+   - Поля:
+     * Email
+     * Telegram URL
+     * Telegram Username (для отображения)
+   - Сохранение изменений
+
+ЗАВИСИМОСТИ ДЛЯ УСТАНОВКИ
+--------------------------
+
+npm install:
+- better-sqlite3 - работа с SQLite
+- bcryptjs - хеширование паролей
+- jsonwebtoken - JWT токены
+- @types/bcryptjs - типы для bcryptjs
+- @types/jsonwebtoken - типы для jsonwebtoken
+
+npm install --save-dev:
+- @types/better-sqlite3 - типы для better-sqlite3
+
+ИЗМЕНЕНИЯ В ТЕКУЩЕМ КОДЕ
+-------------------------
+
+1. lib/db.ts (новый файл)
+   - Инициализация подключения к SQLite
+   - Создание таблиц при первом запуске
+   - Функции для работы с БД
+
+2. lib/auth.ts (новый файл)
+   - Функции для работы с JWT
+   - Проверка токенов
+   - Middleware для защиты API routes
+
+3. lib/data.ts
+   - Изменить: загрузка данных из БД вместо статических массивов
+   - Функции: getChannelCategories(), getChannels(), getPartners()
+
+4. lib/i18n.ts
+   - Изменить: загрузка переводов из БД
+   - Функция: getTranslations(locale) - загружает все переводы для языка
+
+5. middleware.ts (новый файл в корне)
+   - Проверка авторизации для /dashboard/*
+   - Редирект на /dashboard/login если не авторизован
+
+6. Компоненты:
+   - Обновить все компоненты для использования данных из БД
+   - Hero, About, Stats, Cases, ContactForm, Channels
+
+ЭТАПЫ РЕАЛИЗАЦИИ
+----------------
+
+Этап 1: Настройка базы данных
+- Установка зависимостей
+- Создание lib/db.ts
+- Создание схемы БД
+- Миграция существующих данных в БД
+
+Этап 2: Система авторизации
+- Создание lib/auth.ts
+- API routes для авторизации
+- Middleware для защиты
+- Страница логина
+
+Этап 3: API для контента
+- API routes для translations
+- API routes для channels
+- API routes для partners
+- API routes для contacts
+
+Этап 4: Dashboard интерфейс
+- Страница /dashboard
+- Компоненты редактирования переводов
+- Компоненты управления каналами
+- Компоненты управления партнёрами
+- Компонент редактирования контактов
+
+Этап 5: Интеграция с фронтендом
+- Обновление компонентов для загрузки из БД
+- Тестирование всех секций
+- Проверка мультиязычности
+
+Этап 6: Тестирование и финализация
+- Тестирование всех функций CMS
+- Проверка безопасности
+- Оптимизация производительности
+
+БЕЗОПАСНОСТЬ
+------------
+
+1. Пароли:
+   - Хеширование через bcrypt (salt rounds: 10)
+   - Никогда не возвращать пароли в API
+
+2. JWT токены:
+   - Секретный ключ в переменных окружения
+   - Срок действия токена: 7 дней
+   - Проверка токена на каждом защищённом запросе
+
+3. API защита:
+   - Все API routes для контента требуют авторизации
+   - Проверка токена через middleware
+
+4. Валидация данных:
+   - Проверка всех входных данных
+   - Санитизация строк перед сохранением в БД
+
+ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
+--------------------
+
+Добавить в .env.local:
+- JWT_SECRET=секретный_ключ_для_jwt_токенов
+- DB_PATH=./data/cms.db (путь к файлу SQLite)
+
+СТРУКТУРА ФАЙЛОВ
+----------------
+
+lib/
+  db.ts - работа с БД
+  auth.ts - авторизация и JWT
+  data.ts - загрузка данных из БД (обновлённый)
+  i18n.ts - загрузка переводов из БД (обновлённый)
+
+app/
+  api/
+    auth/
+      login/route.ts
+      verify/route.ts
+    content/
+      translations/route.ts
+      channels/route.ts
+      channel-categories/route.ts
+      partners/route.ts
+      contacts/route.ts
+  dashboard/
+    page.tsx - главная страница дашборда
+    login/
+      page.tsx - страница входа
+
+components/
+  dashboard/
+    DashboardLayout.tsx
+    TranslationsEditor.tsx
+    ChannelsEditor.tsx
+    PartnersEditor.tsx
+    ContactsEditor.tsx
+    LoginForm.tsx
+
+middleware.ts - защита /dashboard
+
+data/
+  cms.db - файл SQLite базы данных (в .gitignore)
+
+ПРИМЕЧАНИЯ
+----------
+
+- SQLite файл должен быть в .gitignore
+- При первом запуске создаётся БД с начальными данными из lib/data.ts и lib/i18n.ts
+- Для продакшена можно использовать Vercel KV или другую БД вместо SQLite
+- Все изменения применяются сразу (без системы черновиков)

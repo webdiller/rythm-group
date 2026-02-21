@@ -8,3 +8,9 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+
+# CMS Database
+data/
+*.db
+*.db-shm
+*.db-wal

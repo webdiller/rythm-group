@@ -1,6 +1,20 @@
 export type Locale = "ru" | "en"
 
-export const translations = {
+// Helper function to set nested translation value
+export function setNestedValue(obj: any, path: string, value: any): void {
+  const keys = path.split(".")
+  const lastKey = keys.pop()!
+  const target = keys.reduce((current, key) => {
+    if (!current[key]) {
+      current[key] = {}
+    }
+    return current[key]
+  }, obj)
+  target[lastKey] = value
+}
+
+// Fallback translations (used if DB is not available or during SSR)
+export const fallbackTranslations = {
   ru: {
     nav: {
       about: "О нас",
@@ -139,4 +153,7 @@ export const translations = {
   },
 } as const
 
-export type Translations = typeof translations.ru
+export type Translations = typeof fallbackTranslations.ru
+
+// Export for backward compatibility
+export const translations = fallbackTranslations

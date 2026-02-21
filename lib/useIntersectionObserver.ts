@@ -17,7 +17,7 @@ export type UseIntersectionObserverOptions = {
  */
 export function useIntersectionObserver(
   options: UseIntersectionObserverOptions = {}
-): [React.RefObject<HTMLElement>, boolean] {
+): [React.RefObject<HTMLElement | null>, boolean] {
   const {
     threshold = 0.1,
     rootMargin = "0px",
