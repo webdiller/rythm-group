@@ -7,25 +7,25 @@ export const GetAllResponse = SharedDefaultResponse.extend({
       category_name_ru: z.string().optional(),
       category_name_en: z.string().optional(),
     })
-    .array() as unknown as z.ZodTypeAny,
+    .array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannels.select.nullable() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannels.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tableChannels.insert.pick({
   category_id: true,
   name: true,
-  subscribers: true,
+  subscribers: true,id: true,
   url: true,
   order_index: true,
-}) as unknown as z.ZodTypeAny
+})
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannels.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannels.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
@@ -40,7 +40,7 @@ export const UpdateOneBody = z.object({
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannels.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannels.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams

@@ -2,13 +2,13 @@ import { z } from "zod"
 import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/types"
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannelCategories.select.array() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannelCategories.select.array(),
 })
 
 export const GetOneParams = z.object({ id: z.string() })
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannelCategories.select.nullable() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannelCategories.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tableChannelCategories.insert.pick({
@@ -16,10 +16,10 @@ export const CreateOneBody = allZodSchemas.tableChannelCategories.insert.pick({
   name_ru: true,
   name_en: true,
   order_index: true,
-}) as unknown as z.ZodTypeAny
+})
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannelCategories.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannelCategories.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
@@ -32,7 +32,7 @@ export const UpdateOneBody = z.object({
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableChannelCategories.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableChannelCategories.select,
 })
 
 export const DeleteOneParams = z.object({ id: z.string() })

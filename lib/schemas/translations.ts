@@ -7,13 +7,13 @@ export const GetAllQueryParams = z.object({
 })
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select.array() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableTranslations.select.array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select.nullable() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableTranslations.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tableTranslations.insert.pick({
@@ -21,10 +21,10 @@ export const CreateOneBody = allZodSchemas.tableTranslations.insert.pick({
   section: true,
   key: true,
   value: true,
-}) as unknown as z.ZodTypeAny
+})
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableTranslations.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
@@ -37,7 +37,7 @@ export const UpdateOneBody = z.object({
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableTranslations.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams

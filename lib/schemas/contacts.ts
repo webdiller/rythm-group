@@ -2,23 +2,23 @@ import { z } from "zod"
 import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/types"
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableContacts.select.array() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableContacts.select.array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableContacts.select.nullable() as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableContacts.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tableContacts.insert.pick({
   email: true,
   telegram_url: true,
   telegram_username: true,
-}) as unknown as z.ZodTypeAny
+})
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableContacts.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableContacts.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
@@ -31,7 +31,7 @@ export const UpdateOneBody = z.object({
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableContacts.select as unknown as z.ZodTypeAny,
+  data: allZodSchemas.tableContacts.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams
