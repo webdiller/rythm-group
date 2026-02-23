@@ -9,13 +9,13 @@ export function Footer() {
     <footer className="border-t border-border px-6 py-10">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-xs font-bold text-primary-foreground">RG</span>
-          </div>
           <div>
-            <span className="block text-sm font-semibold text-foreground">
+            <a href="#" className="flex items-center gap-2" aria-label="Rythm Group Home">
+            <span className="text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
+              <div className="rounded-full overflow-hidden bg-primary"><img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" /></div>
               Rythm<span className="text-primary">Group</span>
             </span>
+          </a>
             <span className="text-xs text-muted-foreground">{t.footer.description}</span>
           </div>
         </div>

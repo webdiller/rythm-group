@@ -19,10 +19,8 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <a href="#" className="flex items-center gap-2" aria-label="Rythm Group Home">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">RG</span>
-          </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">
+          <span className="text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
+            <div className="rounded-full overflow-hidden bg-primary"><img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" /></div>
             Rythm<span className="text-primary">Group</span>
           </span>
         </a>
