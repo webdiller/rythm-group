@@ -3,12 +3,30 @@
 import { useLocale } from "@/lib/locale-context"
 import { ArrowDown } from "lucide-react"
 import { StaggerItem } from "@/components/ui/stagger-item"
+import LightRays from "@/components/LightRays"
 
 export function Hero() {
   const { t } = useLocale()
 
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20">
+      <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
+      <LightRays
+        raysOrigin="top-center"
+        raysColor="#ffffff"
+        raysSpeed={1}
+        lightSpread={0.6}
+        rayLength={3}
+        followMouse={true}
+        mouseInfluence={0.1}
+        noiseAmount={0}
+        distortion={0}
+        className="custom-rays"
+        pulsating={false}
+        fadeDistance={1.4}
+        saturation={2}
+      />
+      </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <StaggerItem
           index={0}
