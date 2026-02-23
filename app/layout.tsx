@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const inter = Inter({
@@ -36,9 +37,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ru" className="dark">
+    <html lang="ru" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
-        <div className="min-h-screen w-full relative">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <div className="min-h-screen w-full relative">
           {/* Radial Gradient Background from Top */}
           <div className="absolute inset-0 z-0 radial-gradient-bg" />
           {/* Additional subtle gradient layers for depth */}
@@ -59,6 +61,7 @@ export default function RootLayout({
             {children}
           </div>
         </div>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

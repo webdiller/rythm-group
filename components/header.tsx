@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useLocale } from "@/lib/locale-context"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Menu, X } from "lucide-react"
 
 export function Header() {
@@ -38,6 +39,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <button
             onClick={() => setLocale(locale === "ru" ? "en" : "ru")}
             className="flex h-9 items-center gap-1 rounded-lg border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground transition-colors hover:bg-border"
