@@ -1,19 +1,39 @@
 "use client"
 
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import { ArrowDown } from "lucide-react"
 import { StaggerItem } from "@/components/ui/stagger-item"
 import LightRays from "@/components/LightRays"
 
+const LIGHT_RAYS_DARK = {
+  raysColor: "#ffffff",
+  saturation: 2,
+}
+const LIGHT_RAYS_LIGHT = {
+  raysColor: "#fef2f0",
+  saturation: 1.2,
+}
+
 export function Hero() {
   const { t } = useLocale()
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isLight = mounted && resolvedTheme === "light"
+  const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
 
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20">
       <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
       <LightRays
         raysOrigin="top-center"
-        raysColor="#ffffff"
+        raysColor={raysProps.raysColor}
         raysSpeed={1}
         lightSpread={0.6}
         rayLength={3}
@@ -24,7 +44,7 @@ export function Hero() {
         className="custom-rays"
         pulsating={false}
         fadeDistance={1.4}
-        saturation={2}
+        saturation={raysProps.saturation}
       />
       </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
