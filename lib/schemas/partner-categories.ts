@@ -2,38 +2,34 @@ import { z } from "zod"
 import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/types"
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartners.select.array(),
+  data: allZodSchemas.tablePartnerCategories.select.array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartners.select.nullable(),
+  data: allZodSchemas.tablePartnerCategories.select.nullable(),
 })
 
-export const CreateOneBody = allZodSchemas.tablePartners.insert.pick({
-  category_id: true,
+export const CreateOneBody = allZodSchemas.tablePartnerCategories.insert.pick({
   name: true,
-  logo_url: true,
   order_index: true,
 })
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartners.select,
+  data: allZodSchemas.tablePartnerCategories.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
 
-export const UpdateOneBody = z.object({
-  id: z.number(),
-  category_id: z.number().nullable().optional(),
-  name: z.string().optional(),
-  logo_url: z.string().nullable().optional(),
-  order_index: z.number().optional(),
+export const UpdateOneBody = allZodSchemas.tablePartnerCategories.update.pick({
+  id: true,
+  name: true,
+  order_index: true,
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartners.select,
+  data: allZodSchemas.tablePartnerCategories.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams

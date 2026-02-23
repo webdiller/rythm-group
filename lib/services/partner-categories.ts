@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db"
-import { tablePartners } from "@/lib/db/schema"
+import { tablePartnerCategories } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import type {
   GetAllResponse,
@@ -12,15 +12,15 @@ import type {
   UpdateOneResponse,
   DeleteOneParams,
   DeleteOneResponse,
-} from "@/lib/schemas/partners"
+} from "@/lib/schemas/partner-categories"
 
-export class ServicePartners {
+export class ServicePartnerCategories {
   static getAll(): GetAllResponse {
     const db = getDb()
     const rows = db
       .select()
-      .from(tablePartners)
-      .orderBy(tablePartners.order_index)
+      .from(tablePartnerCategories)
+      .orderBy(tablePartnerCategories.order_index)
       .all()
     return { data: rows, meta: null }
   }
@@ -29,14 +29,18 @@ export class ServicePartners {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) return { data: null, meta: null }
-    const row = db.select().from(tablePartners).where(eq(tablePartners.id, id)).get()
+    const row = db
+      .select()
+      .from(tablePartnerCategories)
+      .where(eq(tablePartnerCategories.id, id))
+      .get()
     return { data: row ?? null, meta: null }
   }
 
   static createOne(body: CreateOneBody): CreateOneResponse {
     const db = getDb()
-    const [created] = db.insert(tablePartners).values(body).returning().all()
-    if (!created) throw new Error("Failed to create partner")
+    const [created] = db.insert(tablePartnerCategories).values(body).returning().all()
+    if (!created) throw new Error("Failed to create partner category")
     return { data: created, meta: null }
   }
 
@@ -45,12 +49,15 @@ export class ServicePartners {
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
     const set: Record<string, unknown> = {}
-    if (body.category_id !== undefined) set.category_id = body.category_id
     if (body.name !== undefined) set.name = body.name
-    if (body.logo_url !== undefined) set.logo_url = body.logo_url
     if (body.order_index !== undefined) set.order_index = body.order_index
-    const [updated] = db.update(tablePartners).set(set).where(eq(tablePartners.id, id)).returning().all()
-    if (!updated) throw new Error("Partner not found")
+    const [updated] = db
+      .update(tablePartnerCategories)
+      .set(set)
+      .where(eq(tablePartnerCategories.id, id))
+      .returning()
+      .all()
+    if (!updated) throw new Error("Partner category not found")
     return { data: updated, meta: null }
   }
 
@@ -58,7 +65,7 @@ export class ServicePartners {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
-    db.delete(tablePartners).where(eq(tablePartners.id, id)).run()
+    db.delete(tablePartnerCategories).where(eq(tablePartnerCategories.id, id)).run()
     return { data: true, meta: null }
   }
 }

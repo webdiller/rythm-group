@@ -5,6 +5,7 @@ import {
   tableTranslations,
   tableChannelCategories,
   tableChannels,
+  tablePartnerCategories,
   tablePartners,
   tableContacts,
 } from "./db/schema"
@@ -29,6 +30,11 @@ export const allZodSchemas = {
     select: createSelectSchema(tableChannels),
     insert: createInsertSchema(tableChannels),
     update: createUpdateSchema(tableChannels),
+  },
+  tablePartnerCategories: {
+    select: createSelectSchema(tablePartnerCategories),
+    insert: createInsertSchema(tablePartnerCategories),
+    update: createUpdateSchema(tablePartnerCategories),
   },
   tablePartners: {
     select: createSelectSchema(tablePartners),

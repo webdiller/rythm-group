@@ -136,7 +136,7 @@ export function TranslationsEditor() {
       nav: ["about", "channels", "cases", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
       stats: ["title", "subtitle"],
-      cases: ["title", "subtitle"],
+      cases: ["title", "subtitle", "empty"],
       contact: ["title", "subtitle", "name", "email", "company", "message", "budget", "submit", "or", "telegram", "emailUs"],
       footer: ["rights", "description"],
     }

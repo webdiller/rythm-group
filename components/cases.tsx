@@ -1,11 +1,58 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useLocale } from "@/lib/locale-context"
-import { partnerLogos } from "@/lib/data"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
+
+interface PartnerCategory {
+  id: number
+  name: string
+  order_index: number
+}
+
+interface Partner {
+  id: number
+  category_id: number | null
+  name: string
+  logo_url: string | null
+  order_index: number
+}
 
 export function Cases() {
   const { t } = useLocale()
+  const [categories, setCategories] = useState<PartnerCategory[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [catRes, partRes] = await Promise.all([
+          fetch("/api/content/partner-categories"),
+          fetch("/api/content/partners"),
+        ])
+        if (catRes.ok) {
+          const json = (await catRes.json()) as { data?: PartnerCategory[] }
+          setCategories(json.data ?? [])
+        }
+        if (partRes.ok) {
+          const json = (await partRes.json()) as { data?: Partner[] }
+          setPartners(json.data ?? [])
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
+  const partnersByCategory = categoriesOrdered.map((cat) => ({
+    category: cat,
+    partners: partners
+      .filter((p) => p.category_id === cat.id)
+      .sort((a, b) => a.order_index - b.order_index),
+  }))
 
   return (
     <section id="cases" className="relative px-6 py-24 md:py-32">
@@ -21,60 +68,48 @@ export function Cases() {
           </div>
         </ScrollReveal>
 
-        {/* Scrolling partner logos */}
-        <div className="relative overflow-hidden">
-          {/* Left fade */}
-          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-background to-transparent" />
-          {/* Right fade */}
-          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-background to-transparent" />
-
-          <div className="flex animate-[scroll_30s_linear_infinite] gap-6">
-            {[...partnerLogos, ...partnerLogos].map((partner, i) => (
-              <div
-                key={`${partner.name}-${i}`}
-                className="flex h-20 min-w-[180px] items-center justify-center rounded-xl border border-border bg-card px-8 transition-all hover:border-primary/30"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <span className="text-xs font-bold">{partner.nameShort}</span>
-                  </div>
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-                    {partner.name}
-                  </span>
-                </div>
-              </div>
-            ))}
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Загрузка...</div>
+        ) : (
+          <div className="space-y-12">
+            {partnersByCategory.map(
+              ({ category, partners: categoryPartners }) =>
+                categoryPartners.length > 0 && (
+                  <ScrollReveal key={category.id}>
+                    <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
+                      {category.name}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                      {categoryPartners.map((partner) => (
+                        <div
+                          key={partner.id}
+                          className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/30 min-h-[120px]"
+                        >
+                          {partner.logo_url ? (
+                            <img
+                              src={partner.logo_url}
+                              alt=""
+                              className="max-h-16 w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-center text-sm font-medium text-foreground">
+                              {partner.name}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollReveal>
+                )
+            )}
+            {!partnersByCategory.some((g) => g.partners.length > 0) && !loading && (
+              <p className="text-center text-muted-foreground py-8">
+                {t.cases.empty}
+              </p>
+            )}
           </div>
-        </div>
-
-        {/* Static grid for smaller screens */}
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:hidden">
-          {partnerLogos.slice(0, 6).map((partner) => (
-            <div
-              key={partner.name}
-              className="flex h-16 items-center justify-center rounded-xl border border-border bg-card px-4"
-            >
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-primary">
-                  <span className="text-[10px] font-bold">{partner.nameShort}</span>
-                </div>
-                <span className="text-xs font-medium text-muted-foreground">{partner.name}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        )}
       </div>
-
-      <style jsx>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
     </section>
   )
 }

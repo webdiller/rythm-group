@@ -4,6 +4,7 @@ import {
   tableTranslations,
   tableChannelCategories,
   tableChannels,
+  tablePartnerCategories,
   tablePartners,
   tableContacts,
 } from "./schema"
@@ -77,13 +78,27 @@ export function runSeed(
     }
   }
 
+  const existingPartnerCategories = db.select().from(tablePartnerCategories).limit(1).all()
+  let defaultPartnerCategoryId: number | null = null
+  if (existingPartnerCategories.length === 0) {
+    const [inserted] = db
+      .insert(tablePartnerCategories)
+      .values({ name: "Партнёры", order_index: 0 })
+      .returning()
+      .all()
+    if (inserted) defaultPartnerCategoryId = inserted.id
+  } else {
+    defaultPartnerCategoryId = existingPartnerCategories[0].id
+  }
+
   const existingPartners = db.select().from(tablePartners).limit(1).all()
-  if (existingPartners.length === 0) {
+  if (existingPartners.length === 0 && defaultPartnerCategoryId != null) {
     for (let i = 0; i < partnerLogos.length; i++) {
       db.insert(tablePartners)
         .values({
+          category_id: defaultPartnerCategoryId,
           name: partnerLogos[i].name,
-          name_short: partnerLogos[i].nameShort,
+          logo_url: null,
           order_index: i,
         })
         .run()

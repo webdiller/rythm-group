@@ -67,16 +67,35 @@ export const relationsChannels = relations(tableChannels, ({ one }) => ({
 }))
 
 // ---------------------------------------------------------------------------
-// partners
+// partner_categories (for cases/partners grouping)
 // ---------------------------------------------------------------------------
-export const tablePartners = sqliteTable("partners", {
+export const tablePartnerCategories = sqliteTable("partner_categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  name_short: text("name_short").notNull(),
   order_index: integer("order_index").default(0),
 })
 
-export const relationsPartners = relations(tablePartners, () => ({}))
+export const relationsPartnerCategories = relations(tablePartnerCategories, ({ many }) => ({
+  partners: many(tablePartners),
+}))
+
+// ---------------------------------------------------------------------------
+// partners (cases)
+// ---------------------------------------------------------------------------
+export const tablePartners = sqliteTable("partners", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  category_id: integer("category_id").references(() => tablePartnerCategories.id, { onDelete: "set null", onUpdate: "cascade" }),
+  name: text("name").notNull(),
+  logo_url: text("logo_url"),
+  order_index: integer("order_index").default(0),
+})
+
+export const relationsPartners = relations(tablePartners, ({ one }) => ({
+  category: one(tablePartnerCategories, {
+    fields: [tablePartners.category_id],
+    references: [tablePartnerCategories.id],
+  }),
+}))
 
 // ---------------------------------------------------------------------------
 // contacts

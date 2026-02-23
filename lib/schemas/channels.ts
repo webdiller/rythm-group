@@ -4,8 +4,8 @@ import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/
 export const GetAllResponse = SharedDefaultResponse.extend({
   data: allZodSchemas.tableChannels.select
     .extend({
-      category_name_ru: z.string().optional(),
-      category_name_en: z.string().optional(),
+      category_name_ru: z.string().nullish(),
+      category_name_en: z.string().nullish(),
     })
     .array(),
 })
