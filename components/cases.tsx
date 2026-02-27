@@ -1,5 +1,6 @@
 "use client"
 
+import clsx from "clsx"
 import { useLocale } from "@/lib/locale-context"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 
@@ -67,14 +68,19 @@ export function Cases({ categories, partners }: CasesProps) {
                     {categoryPartners.map((partner) => (
                       <div
                         key={partner.id}
-                        className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/30 min-h-[120px]"
+                        className={clsx(
+                          "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
+                          partner.logo_url ? "p-0" : "p-6",
+                        )}
                       >
                         {partner.logo_url ? (
-                          <img
-                            src={`/api/content/partners/${partner.id}/logo`}
-                            alt=""
-                            className="max-h-16 w-full object-contain"
-                          />
+                          <div className="flex h-full w-full items-center justify-center">
+                            <img
+                              src={`/api/content/partners/${partner.id}/logo`}
+                              alt={partner.name}
+                              className="max-h-16 max-w-full object-contain rounded-xl overflow-hidden"
+                            />
+                          </div>
                         ) : (
                           <span className="text-center text-sm font-medium text-foreground">
                             {partner.name}
@@ -96,14 +102,19 @@ export function Cases({ categories, partners }: CasesProps) {
                 {uncategorizedPartners.map((partner) => (
                   <div
                     key={partner.id}
-                    className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/30 min-h-[120px]"
+                    className={clsx(
+                      "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
+                      partner.logo_url ? "p-0" : "p-6",
+                    )}
                   >
                     {partner.logo_url ? (
-                      <img
-                        src={`/api/content/partners/${partner.id}/logo`}
-                        alt=""
-                        className="max-h-16 w-full object-contain"
-                      />
+                      <div className="flex h-16 w-full items-center justify-center">
+                        <img
+                          src={`/api/content/partners/${partner.id}/logo`}
+                          alt={partner.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </div>
                     ) : (
                       <span className="text-center text-sm font-medium text-foreground">
                         {partner.name}
