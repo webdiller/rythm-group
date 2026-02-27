@@ -59,7 +59,7 @@ export function Hero() {
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
             <span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
             <span className="text-xs font-medium text-muted-foreground tracking-wider uppercase">
-              Telegram Media Holding
+              {(t.hero as any).badge}
             </span>
           </div>
         </StaggerItem>

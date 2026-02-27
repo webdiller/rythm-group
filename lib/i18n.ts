@@ -26,6 +26,7 @@ export const fallbackTranslations = {
     hero: {
       title: "Rythm Group",
       subtitle: "Крупнейший игровой, киберспортивный и медийный холдинг в Telegram",
+      badge: "Telegram Media Holding",
       cta: "Заказать рекламу",
       scroll: "Узнать больше",
     },
@@ -95,6 +96,7 @@ export const fallbackTranslations = {
     hero: {
       title: "Rythm Group",
       subtitle: "The largest gaming, esports & media holding in Telegram",
+      badge: "Telegram Media Holding",
       cta: "Order Advertising",
       scroll: "Learn More",
     },

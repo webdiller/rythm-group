@@ -132,7 +132,7 @@ export function TranslationsEditor() {
   const getNestedKeys = (section: string): string[] => {
     // Generate keys based on section structure
     const keysMap: Record<string, string[]> = {
-      hero: ["title", "subtitle", "cta", "scroll"],
+      hero: ["title", "subtitle", "badge", "cta", "scroll"],
       nav: ["about", "channels", "cases", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
       stats: ["title", "subtitle"],
