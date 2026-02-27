@@ -354,10 +354,13 @@ export function ChannelsEditor() {
               <div className="space-y-4">
                 {channelsByCategory[category.id]?.map((channel) => (
                   <div key={channel.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-semibold">{channel.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {channel.subscribers} подписчиков • {channel.url}
+                    <div className="flex items-center gap-3">
+                      <AdminChannelAvatar channelId={channel.id} name={channel.name} />
+                      <div>
+                        <div className="font-semibold">{channel.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {channel.subscribers} подписчиков • {channel.url}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -387,6 +390,25 @@ export function ChannelsEditor() {
           </Card>
         ))}
       </div>
+    </div>
+  )
+}
+
+function AdminChannelAvatar({ channelId, name }: { channelId: number; name: string }) {
+  const [hasImage, setHasImage] = useState(true)
+
+  return (
+    <div className="h-10 w-10 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
+      {hasImage ? (
+        <img
+          src={`/api/content/channels/${channelId}/avatar?ts=${channelId}`}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setHasImage(false)}
+        />
+      ) : (
+        <span className="text-xs font-semibold">{name.charAt(0)}</span>
+      )}
     </div>
   )
 }
@@ -493,6 +515,8 @@ function ChannelForm({
     order_index: channel?.order_index || 0,
   })
 
+  const [hasAvatar, setHasAvatar] = useState(true)
+
   return (
     <form
       onSubmit={(e) => {
@@ -560,6 +584,7 @@ function ChannelForm({
                 onError={(e) => {
                   const target = e.currentTarget as HTMLImageElement
                   target.style.display = "none"
+                  setHasAvatar(false)
                 }}
               />
               {/* <span className="text-sm font-semibold">
@@ -575,17 +600,20 @@ function ChannelForm({
                   if (file) {
                     onUploadAvatar(channel.id, file)
                     e.target.value = ""
+                    setHasAvatar(true)
                   }
                 }}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onDeleteAvatar(channel.id)}
-              >
-                Удалить аватар
-              </Button>
+              {hasAvatar && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDeleteAvatar(channel.id)}
+                >
+                  Удалить аватар
+                </Button>
+              )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
