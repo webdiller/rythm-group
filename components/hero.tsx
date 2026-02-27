@@ -29,7 +29,15 @@ export function Hero() {
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
 
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-16 pb-20 md:pt-20 md:pb-24">
+    <section
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-16 pb-20 md:pt-20 md:pb-24"
+      style={{
+        backgroundImage: "url('/api/site/backgrounds/hero')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
       <LightRays
         raysOrigin="top-center"

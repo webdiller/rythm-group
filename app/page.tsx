@@ -82,16 +82,40 @@ export default async function Home() {
 
   return (
     <LocaleProvider>
-      <Header />
-      <main>
-        <Hero />
-        <Channels categories={channelCategories} channels={channels} />
-        <About />
-        <Stats />
-        <Cases categories={partnerCategories} partners={partners} />
-        <ContactForm />
-      </main>
-      <Footer siteSettings={siteSettings} />
+      <div className="min-h-screen w-full relative">
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center bg-fixed"
+          style={{ backgroundImage: "url('/api/site/backgrounds/global')" }}
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 z-10 radial-gradient-bg" />
+        <div
+          className="absolute inset-0 z-10 opacity-60"
+          style={{
+            background:
+              "radial-gradient(100% 100% at 80% 20%, rgba(230, 27, 0, 0.08) 0%, transparent 50%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 z-10 opacity-40"
+          style={{
+            background:
+              "radial-gradient(100% 100% at 20% 80%, rgba(230, 27, 0, 0.06) 0%, transparent 50%)",
+          }}
+        />
+        <div className="relative z-20">
+          <Header />
+          <main>
+            <Hero />
+            <Channels categories={channelCategories} channels={channels} />
+            <About />
+            <Stats />
+            <Cases categories={partnerCategories} partners={partners} />
+            <ContactForm />
+          </main>
+          <Footer siteSettings={siteSettings} />
+        </div>
+      </div>
     </LocaleProvider>
   )
 }

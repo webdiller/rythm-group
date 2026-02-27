@@ -12,6 +12,14 @@ export function SiteSettingsEditor() {
   const [faviconVersion, setFaviconVersion] = useState(0)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [hasHeroBackground, setHasHeroBackground] = useState(false)
+  const [heroBackgroundVersion, setHeroBackgroundVersion] = useState(0)
+  const [uploadingHeroBackground, setUploadingHeroBackground] = useState(false)
+  const [deletingHeroBackground, setDeletingHeroBackground] = useState(false)
+  const [hasGlobalBackground, setHasGlobalBackground] = useState(false)
+  const [globalBackgroundVersion, setGlobalBackgroundVersion] = useState(0)
+  const [uploadingGlobalBackground, setUploadingGlobalBackground] = useState(false)
+  const [deletingGlobalBackground, setDeletingGlobalBackground] = useState(false)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -26,6 +34,25 @@ export function SiteSettingsEditor() {
     img.src = `/api/site/favicon?ts=${Date.now()}`
     img.onload = () => setHasFavicon(true)
     img.onerror = () => setHasFavicon(false)
+  }, [])
+
+  useEffect(() => {
+    const checkBackgrounds = async () => {
+      try {
+        const [heroRes, globalRes] = await Promise.all([
+          fetch("/api/site/backgrounds/hero", { cache: "no-store" }),
+          fetch("/api/site/backgrounds/global", { cache: "no-store" }),
+        ])
+
+        setHasHeroBackground(heroRes.ok)
+        setHasGlobalBackground(globalRes.ok)
+      } catch {
+        setHasHeroBackground(false)
+        setHasGlobalBackground(false)
+      }
+    }
+
+    void checkBackgrounds()
   }, [])
 
   useEffect(() => {
@@ -130,6 +157,124 @@ export function SiteSettingsEditor() {
     }
   }
 
+  const handleUploadHeroBackground = async (file: File) => {
+    const maxSizeBytes = 5 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      toast.error("Файл не должен превышать 5 МБ")
+      return
+    }
+
+    setUploadingHeroBackground(true)
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/site/backgrounds/hero", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(json?.error ?? "Не удалось загрузить фон для hero")
+        return
+      }
+
+      setHasHeroBackground(true)
+      setHeroBackgroundVersion((v) => v + 1)
+      toast.success("Фон hero обновлён")
+    } catch {
+      toast.error("Не удалось загрузить фон для hero")
+    } finally {
+      setUploadingHeroBackground(false)
+    }
+  }
+
+  const handleDeleteHeroBackground = async () => {
+    setDeletingHeroBackground(true)
+    try {
+      const token = getToken()
+      const res = await fetch("/api/site/backgrounds/hero", {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!res.ok) {
+        toast.error("Не удалось удалить фон для hero")
+        return
+      }
+
+      setHasHeroBackground(false)
+      setHeroBackgroundVersion((v) => v + 1)
+      toast.success("Фон hero сброшен")
+    } catch {
+      toast.error("Не удалось удалить фон для hero")
+    } finally {
+      setDeletingHeroBackground(false)
+    }
+  }
+
+  const handleUploadGlobalBackground = async (file: File) => {
+    const maxSizeBytes = 5 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      toast.error("Файл не должен превышать 5 МБ")
+      return
+    }
+
+    setUploadingGlobalBackground(true)
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/site/backgrounds/global", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(json?.error ?? "Не удалось загрузить общий фон")
+        return
+      }
+
+      setHasGlobalBackground(true)
+      setGlobalBackgroundVersion((v) => v + 1)
+      toast.success("Общий фон обновлён")
+    } catch {
+      toast.error("Не удалось загрузить общий фон")
+    } finally {
+      setUploadingGlobalBackground(false)
+    }
+  }
+
+  const handleDeleteGlobalBackground = async () => {
+    setDeletingGlobalBackground(true)
+    try {
+      const token = getToken()
+      const res = await fetch("/api/site/backgrounds/global", {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!res.ok) {
+        toast.error("Не удалось удалить общий фон")
+        return
+      }
+
+      setHasGlobalBackground(false)
+      setGlobalBackgroundVersion((v) => v + 1)
+      toast.success("Общий фон сброшен")
+    } catch {
+      toast.error("Не удалось удалить общий фон")
+    } finally {
+      setDeletingGlobalBackground(false)
+    }
+  }
+
   const handleDelete = async () => {
     setDeleting(true)
     try {
@@ -212,6 +357,118 @@ export function SiteSettingsEditor() {
             >
               Сбросить до дефолтного
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Фоновые изображения</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Фон для Hero (16:9)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Горизонтальное изображение (рекомендуется 16×9), форматы JPG/PNG/WebP, до 5 МБ. При загрузке изображение
+                  будет сжато и обрезано под нужные пропорции.
+                </p>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasHeroBackground ? (
+                  <img
+                    key={heroBackgroundVersion}
+                    src={`/api/site/backgrounds/hero?ts=${heroBackgroundVersion}`}
+                    alt="Hero background preview"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasHeroBackground(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">
+                    Фон hero не загружен
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    void handleUploadHeroBackground(file)
+                    e.target.value = ""
+                  }
+                }}
+                disabled={uploadingHeroBackground}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasHeroBackground || deletingHeroBackground}
+                onClick={() => {
+                  void handleDeleteHeroBackground()
+                }}
+              >
+                Сбросить фон hero
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Общий фон сайта (9:16)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Вертикальное изображение (рекомендуется 9×16), форматы JPG/PNG/WebP, до 5 МБ. Применяется ко всем
+                  публичным секциям сайта, кроме hero и админки.
+                </p>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasGlobalBackground ? (
+                  <img
+                    key={globalBackgroundVersion}
+                    src={`/api/site/backgrounds/global?ts=${globalBackgroundVersion}`}
+                    alt="Global background preview"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasGlobalBackground(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">
+                    Общий фон не загружен
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    void handleUploadGlobalBackground(file)
+                    e.target.value = ""
+                  }
+                }}
+                disabled={uploadingGlobalBackground}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasGlobalBackground || deletingGlobalBackground}
+                onClick={() => {
+                  void handleDeleteGlobalBackground()
+                }}
+              >
+                Сбросить общий фон
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
