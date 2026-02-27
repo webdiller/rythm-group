@@ -21,8 +21,10 @@ export function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <a href="#" className="flex items-center gap-2" aria-label="Rythm Group Home">
           <span className="text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
-            <div className="rounded-full overflow-hidden bg-primary"><img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" /></div>
-            Rythm<span className="text-primary">Group</span>
+            <div className="rounded-full overflow-hidden bg-primary">
+              <img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" />
+            </div>
+            <span className="hidden sm:inline-block">Rythm<span className="text-primary">Group</span></span>
           </span>
         </a>
 
