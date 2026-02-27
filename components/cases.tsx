@@ -54,6 +54,10 @@ export function Cases() {
       .sort((a, b) => a.order_index - b.order_index),
   }))
 
+  const uncategorizedPartners = partners
+    .filter((p) => p.category_id == null)
+    .sort((a, b) => a.order_index - b.order_index)
+
   return (
     <section id="cases" className="relative px-6 py-24 md:py-32">
       <div className="mx-auto max-w-7xl">
@@ -102,7 +106,38 @@ export function Cases() {
                   </ScrollReveal>
                 )
             )}
-            {!partnersByCategory.some((g) => g.partners.length > 0) && !loading && (
+
+            {uncategorizedPartners.length > 0 && (
+              <ScrollReveal>
+                <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
+                  {t.cases.uncategorizedTitle}
+                </h3>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  {uncategorizedPartners.map((partner) => (
+                    <div
+                      key={partner.id}
+                      className="flex flex-col items-center justify-center rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary/30 min-h-[120px]"
+                    >
+                      {partner.logo_url ? (
+                        <img
+                          src={partner.logo_url}
+                          alt=""
+                          className="max-h-16 w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-center text-sm font-medium text-foreground">
+                          {partner.name}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollReveal>
+            )}
+
+            {!partnersByCategory.some((g) => g.partners.length > 0) &&
+              uncategorizedPartners.length === 0 &&
+              !loading && (
               <p className="text-center text-muted-foreground py-8">
                 {t.cases.empty}
               </p>

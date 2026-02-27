@@ -65,6 +65,7 @@ export const fallbackTranslations = {
       title: "С кем работаем",
       subtitle: "Нам доверяют крупнейшие бренды и компании",
       empty: "Партнёры пока не добавлены.",
+      uncategorizedTitle: "Без категории",
     },
     contact: {
       title: "Заказать рекламу",
@@ -135,6 +136,7 @@ export const fallbackTranslations = {
       title: "Who We Work With",
       subtitle: "Trusted by the biggest brands and companies",
       empty: "No partners added yet.",
+      uncategorizedTitle: "Other Partners",
     },
     contact: {
       title: "Order Advertising",

@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db"
-import { tablePartnerCategories } from "@/lib/db/schema"
+import { tablePartnerCategories, tablePartners } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import type {
   GetAllResponse,
@@ -65,6 +65,13 @@ export class ServicePartnerCategories {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
+
+    // Unassign partners from this category (set category_id to null)
+    db.update(tablePartners)
+      .set({ category_id: null })
+      .where(eq(tablePartners.category_id, id))
+      .run()
+
     db.delete(tablePartnerCategories).where(eq(tablePartnerCategories.id, id)).run()
     return { data: true, meta: null }
   }

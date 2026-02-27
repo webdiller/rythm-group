@@ -478,6 +478,8 @@ function PartnerForm({
     order_index: partner?.order_index ?? 0,
   })
 
+  const NO_CATEGORY_VALUE = "none"
+
   return (
     <form
       onSubmit={(e) => {
@@ -493,15 +495,25 @@ function PartnerForm({
       <div className="space-y-2">
         <Label>Категория</Label>
         <Select
-          value={formData.category_id != null ? String(formData.category_id) : ""}
+          value={
+            formData.category_id != null
+              ? String(formData.category_id)
+              : NO_CATEGORY_VALUE
+          }
           onValueChange={(value) =>
-            setFormData({ ...formData, category_id: value ? parseInt(value, 10) : null })
+            setFormData({
+              ...formData,
+              category_id: value === NO_CATEGORY_VALUE ? null : parseInt(value, 10),
+            })
           }
         >
           <SelectTrigger>
-            <SelectValue placeholder="Выберите категорию" />
+            <SelectValue placeholder="Выберите категорию или оставьте без категории" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value={NO_CATEGORY_VALUE}>
+              Без категории
+            </SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={String(cat.id)}>
                 {cat.name}
