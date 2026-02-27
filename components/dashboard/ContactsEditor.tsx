@@ -90,14 +90,18 @@ export function ContactsEditor() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email(s)</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
               value={contact.email}
               onChange={(e) => setContact({ ...contact, email: e.target.value })}
+              placeholder="admin1@example.com, admin2@example.com"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Укажите одну или несколько почт через запятую — на них будут приходить заявки с формы контактов.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="telegram_url">Telegram URL</Label>

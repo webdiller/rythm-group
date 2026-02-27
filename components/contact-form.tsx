@@ -15,15 +15,54 @@ export function ContactForm() {
     budget: "",
     message: "",
   })
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Build mailto link with form data
-    const subject = encodeURIComponent(`Rythm Group Ad Request: ${formData.company}`)
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\nCompany: ${formData.company}\nBudget: ${formData.budget}\n\nMessage:\n${formData.message}`
-    )
-    window.open(`mailto:ads@rythmgroup.com?subject=${subject}&body=${body}`, "_blank")
+    setStatus("loading")
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          company: formData.company,
+          budget: formData.budget,
+          message: formData.message,
+        }),
+      })
+
+      if (!response.ok) {
+        const json = (await response.json().catch(() => null)) as { error?: string } | null
+        setStatus("error")
+        setErrorMessage(json?.error ?? "Не удалось отправить сообщение. Попробуйте ещё раз.")
+        return
+      }
+
+      setStatus("success")
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        budget: "",
+        message: "",
+      })
+    } catch (error) {
+      setStatus("error")
+      setErrorMessage("Не удалось отправить сообщение. Попробуйте ещё раз.")
+    } finally {
+      if (status !== "error") {
+        setTimeout(() => {
+          setStatus("idle")
+        }, 4000)
+      }
+    }
   }
 
   return (
@@ -132,11 +171,22 @@ export function ContactForm() {
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)]"
+              disabled={status === "loading"}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4" />
-              {t.contact.submit}
+              {status === "loading" ? (locale === "ru" ? "Отправка..." : "Sending...") : t.contact.submit}
             </button>
+            {status === "success" && (
+              <p className="text-xs text-emerald-500">
+                {locale === "ru" ? "Сообщение успешно отправлено." : "Message sent successfully."}
+              </p>
+            )}
+            {status === "error" && errorMessage && (
+              <p className="text-xs text-destructive">
+                {errorMessage}
+              </p>
+            )}
             </form>
           </ScrollReveal>
 
