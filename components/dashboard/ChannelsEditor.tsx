@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Plus, Trash2, Edit } from "lucide-react"
+import { Plus, Trash2, Edit, Image as ImageIcon } from "lucide-react"
 
 interface Channel {
   id: number
@@ -121,6 +121,63 @@ export function ChannelsEditor() {
     acc[cat.id] = channels.filter((ch) => ch.category_id === cat.id)
     return acc
   }, {} as Record<string, Channel[]>)
+
+  const handleUploadAvatar = async (channelId: number, file: File) => {
+    try {
+      const maxSizeBytes = 5 * 1024 * 1024
+      if (file.size > maxSizeBytes) {
+        toast.error("Файл не должен превышать 5 МБ")
+        return
+      }
+
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("channelId", String(channelId))
+
+      const response = await fetch("/api/content/channels/avatar", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (response.ok) {
+        toast.success("Аватар обновлён")
+        await loadData()
+      } else {
+        toast.error("Не удалось загрузить аватар")
+      }
+    } catch {
+      toast.error("Не удалось загрузить аватар")
+    }
+  }
+
+  const handleDeleteAvatar = async (channelId: number) => {
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("channelId", String(channelId))
+
+      const response = await fetch("/api/content/channels/avatar", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (response.ok) {
+        toast.success("Аватар удалён")
+        await loadData()
+      } else {
+        toast.error("Не удалось удалить аватар")
+      }
+    } catch {
+      toast.error("Не удалось удалить аватар")
+    }
+  }
 
   const handleSaveCategory = async (category: Partial<Category>) => {
     try {
@@ -275,6 +332,8 @@ export function ChannelsEditor() {
                 channel={editingChannel}
                 categories={categories}
                 onSave={handleSave}
+                onUploadAvatar={handleUploadAvatar}
+                onDeleteAvatar={handleDeleteAvatar}
                 onCancel={() => {
                   setIsDialogOpen(false)
                   setEditingChannel(null)
@@ -415,11 +474,15 @@ function ChannelForm({
   channel,
   categories,
   onSave,
+  onUploadAvatar,
+  onDeleteAvatar,
   onCancel,
 }: {
   channel: Channel | null
   categories: Category[]
   onSave: (channel: Partial<Channel>) => void
+  onUploadAvatar: (channelId: number, file: File) => void
+  onDeleteAvatar: (channelId: number) => void
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState({
@@ -485,6 +548,51 @@ function ChannelForm({
           onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
         />
       </div>
+      {channel && (
+        <div className="space-y-2">
+          <Label>Аватар канала</Label>
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
+              <img
+                src={`/api/content/channels/${channel.id}/avatar?ts=${channel.id}`}
+                alt={channel.name}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  const target = e.currentTarget as HTMLImageElement
+                  target.style.display = "none"
+                }}
+              />
+              {/* <span className="text-sm font-semibold">
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              </span> */}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    onUploadAvatar(channel.id, file)
+                    e.target.value = ""
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onDeleteAvatar(channel.id)}
+              >
+                Удалить аватар
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Изображение до 5 МБ. При загрузке будет автоматически сжато до 256x256 и формата WebP.
+          </p>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
           Отменить

@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/locale-context"
 import { ExternalLink, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
+import clsx from "clsx"
 
 interface ChannelCategory {
   id: string
@@ -49,7 +50,12 @@ export function Channels() {
 
         if (chanRes.ok) {
           const json = (await chanRes.json()) as {
-            data?: Array<Channel & { category_name_ru?: string | null; category_name_en?: string | null }>
+            data?: Array<
+              Channel & {
+                category_name_ru?: string | null
+                category_name_en?: string | null
+              }
+            >
           }
           const chans = (json.data ?? []).map((c) => ({
             id: c.id,
@@ -127,9 +133,7 @@ export function Channels() {
                   className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
-                      <span className="text-sm font-bold">{channel.name.charAt(0)}</span>
-                    </div>
+                    <ChannelAvatar channelId={channel.id} name={channel.name} />
                     <div>
                       <h3 className="text-sm font-semibold text-card-foreground">{channel.name}</h3>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -148,5 +152,24 @@ export function Channels() {
         )}
       </div>
     </section>
+  )
+}
+
+function ChannelAvatar({ channelId, name }: { channelId: number; name: string }) {
+  const [hasImage, setHasImage] = useState(true)
+
+  return (
+    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 overflow-hidden">
+      {hasImage ? (
+        <img
+          src={`/api/content/channels/${channelId}/avatar`}
+          alt={name}
+          className="h-full w-full object-cover"
+          onError={() => setHasImage(false)}
+        />
+      ) : (
+        <span className="text-sm font-bold">{name.charAt(0)}</span>
+      )}
+    </div>
   )
 }

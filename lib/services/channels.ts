@@ -21,6 +21,7 @@ export class ServiceChannels {
       .select({
         id: tableChannels.id,
         category_id: tableChannels.category_id,
+        avatar: tableChannels.avatar,
         name: tableChannels.name,
         subscribers: tableChannels.subscribers,
         url: tableChannels.url,
@@ -60,6 +61,7 @@ export class ServiceChannels {
     if (body.subscribers !== undefined) set.subscribers = body.subscribers
     if (body.url !== undefined) set.url = body.url
     if (body.order_index !== undefined) set.order_index = body.order_index
+    if (body.avatar !== undefined) set.avatar = body.avatar
     const [updated] = db.update(tableChannels).set(set).where(eq(tableChannels.id, id)).returning().all()
     if (!updated) throw new Error("Channel not found")
     return { data: updated, meta: null }

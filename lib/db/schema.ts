@@ -57,6 +57,7 @@ export const tableChannels = sqliteTable("channels", {
   subscribers: text("subscribers").notNull(),
   url: text("url").notNull(),
   order_index: integer("order_index").default(0),
+  avatar: text("avatar"),
 })
 
 export const relationsChannels = relations(tableChannels, ({ one }) => ({
