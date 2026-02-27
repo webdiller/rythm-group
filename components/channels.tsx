@@ -5,7 +5,6 @@ import { useLocale } from "@/lib/locale-context"
 import { ExternalLink, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
-import clsx from "clsx"
 
 export interface ChannelCategory {
   id: string
@@ -21,6 +20,7 @@ export interface Channel {
   subscribers: string
   url: string
   order_index: number
+  hasAvatar?: boolean
 }
 
 interface ChannelsProps {
@@ -91,7 +91,11 @@ export function Channels({ categories, channels }: ChannelsProps) {
                   className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
                 >
                   <div className="flex items-center gap-4">
-                    <ChannelAvatar channelId={channel.id} name={channel.name} />
+                    <ChannelAvatar
+                      channelId={channel.id}
+                      name={channel.name}
+                      hasAvatar={channel.hasAvatar}
+                    />
                     <div>
                       <h3 className="text-sm font-semibold text-card-foreground">{channel.name}</h3>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -113,21 +117,27 @@ export function Channels({ categories, channels }: ChannelsProps) {
   )
 }
 
-function ChannelAvatar({ channelId, name }: { channelId: number; name: string }) {
-  const [hasImage, setHasImage] = useState(true)
-  console.log(hasImage)
+function ChannelAvatar({
+  channelId,
+  name,
+  hasAvatar,
+}: {
+  channelId: number
+  name: string
+  hasAvatar?: boolean
+}) {
+  const [hasImage, setHasImage] = useState(hasAvatar ?? true)
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 overflow-hidden">
-      {!!hasImage ? (
+      {hasImage && (
         <img
           src={`/api/content/channels/${channelId}/avatar`}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setHasImage(false)}
         />
-      ) : (
-        <span className="text-sm font-bold">{name.charAt(0)}</span>
       )}
+      {!hasImage && <span className="text-sm font-bold">{name.charAt(0)}</span>}
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Stats } from "@/components/stats"
 import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
 import { Footer } from "@/components/footer"
+import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
 
 function getBaseUrl() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL
@@ -44,8 +45,16 @@ async function getHomeData(): Promise<{
   const rawCategories = categoriesJson.data ?? []
   const channelCategories = rawCategories.sort((a, b) => a.order_index - b.order_index)
 
-  const channelsJson = (await chanRes.json()) as { data?: Channel[] }
-  const channels = channelsJson.data ?? []
+  const channelsJson = (await chanRes.json()) as ChannelsGetAllResponse
+  const channels: Channel[] = (channelsJson.data ?? []).map((c) => ({
+    id: c.id,
+    category_id: c.category_id,
+    name: c.name,
+    subscribers: c.subscribers,
+    url: c.url,
+    order_index: c.order_index ?? 0,
+    hasAvatar: !!c.avatar,
+  }))
 
   const partnerCategoriesJson = (await partnerCatRes.json()) as { data?: PartnerCategory[] }
   const rawPartnerCategories = partnerCategoriesJson.data ?? []

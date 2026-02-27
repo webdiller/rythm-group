@@ -34,6 +34,7 @@ export function ChannelsEditor() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [avatarsVersion, setAvatarsVersion] = useState(0)
 
   useEffect(() => {
     loadData()
@@ -146,6 +147,7 @@ export function ChannelsEditor() {
       if (response.ok) {
         toast.success("Аватар обновлён")
         await loadData()
+        setAvatarsVersion((v) => v + 1)
       } else {
         toast.error("Не удалось загрузить аватар")
       }
@@ -171,6 +173,7 @@ export function ChannelsEditor() {
       if (response.ok) {
         toast.success("Аватар удалён")
         await loadData()
+        setAvatarsVersion((v) => v + 1)
       } else {
         toast.error("Не удалось удалить аватар")
       }
@@ -229,12 +232,13 @@ export function ChannelsEditor() {
     }
   }
 
-  if (loading) {
-    return <div className="text-center py-8">Loading...</div>
-  }
-
   return (
     <div className="space-y-8">
+      {loading && (
+        <div className="text-center py-2 text-muted-foreground text-sm">
+          Загрузка данных...
+        </div>
+      )}
       {/* Категории каналов */}
       <div>
         <div className="flex justify-between items-center mb-4">
@@ -355,7 +359,11 @@ export function ChannelsEditor() {
                 {channelsByCategory[category.id]?.map((channel) => (
                   <div key={channel.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <AdminChannelAvatar channelId={channel.id} name={channel.name} />
+                      <AdminChannelAvatar
+                        channelId={channel.id}
+                        name={channel.name}
+                        version={avatarsVersion}
+                      />
                       <div>
                         <div className="font-semibold">{channel.name}</div>
                         <div className="text-sm text-muted-foreground">
@@ -394,14 +402,27 @@ export function ChannelsEditor() {
   )
 }
 
-function AdminChannelAvatar({ channelId, name }: { channelId: number; name: string }) {
+function AdminChannelAvatar({
+  channelId,
+  name,
+  version,
+}: {
+  channelId: number
+  name: string
+  version?: number
+}) {
   const [hasImage, setHasImage] = useState(true)
+
+  // При смене версии аватара пробуем снова показать изображение
+  useEffect(() => {
+    setHasImage(true)
+  }, [version, channelId])
 
   return (
     <div className="h-10 w-10 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
       {hasImage ? (
         <img
-          src={`/api/content/channels/${channelId}/avatar?ts=${channelId}`}
+          src={`/api/content/channels/${channelId}/avatar?ts=${version ?? 0}`}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setHasImage(false)}
@@ -503,7 +524,7 @@ function ChannelForm({
   channel: Channel | null
   categories: Category[]
   onSave: (channel: Partial<Channel>) => void
-  onUploadAvatar: (channelId: number, file: File) => void
+  onUploadAvatar: (channelId: number, file: File) => Promise<void> | void
   onDeleteAvatar: (channelId: number) => void
   onCancel: () => void
 }) {
@@ -516,6 +537,7 @@ function ChannelForm({
   })
 
   const [hasAvatar, setHasAvatar] = useState(true)
+  const [avatarVersion, setAvatarVersion] = useState(0)
 
   return (
     <form
@@ -577,30 +599,29 @@ function ChannelForm({
           <Label>Аватар канала</Label>
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
-              <img
-                src={`/api/content/channels/${channel.id}/avatar?ts=${channel.id}`}
-                alt={channel.name}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  const target = e.currentTarget as HTMLImageElement
-                  target.style.display = "none"
-                  setHasAvatar(false)
-                }}
-              />
-              {/* <span className="text-sm font-semibold">
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
-              </span> */}
+              {hasAvatar ? (
+                <img
+                  key={avatarVersion}
+                  src={`/api/content/channels/${channel.id}/avatar?ts=${avatarVersion}`}
+                  alt={channel.name}
+                  className="h-full w-full object-cover"
+                  onError={() => setHasAvatar(false)}
+                />
+              ) : (
+                <span className="text-xs font-semibold">{channel.name.charAt(0)}</span>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               <Input
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    onUploadAvatar(channel.id, file)
+                    await onUploadAvatar(channel.id, file)
                     e.target.value = ""
                     setHasAvatar(true)
+                    setAvatarVersion((v) => v + 1)
                   }
                 }}
               />
