@@ -12,6 +12,14 @@ export function SiteSettingsEditor() {
   const [faviconVersion, setFaviconVersion] = useState(0)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
+  const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
+  const [loadingSettings, setLoadingSettings] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [initialSettings, setInitialSettings] = useState<{
+    privacyPolicyUrl: string
+    dataProcessingPolicyUrl: string
+  } | null>(null)
 
   useEffect(() => {
     const img = new Image()
@@ -20,8 +28,72 @@ export function SiteSettingsEditor() {
     img.onerror = () => setHasFavicon(false)
   }, [])
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      setLoadingSettings(true)
+      try {
+        const res = await fetch("/api/site/settings")
+        if (!res.ok) return
+
+        const json = (await res.json()) as {
+          data?: {
+            privacyPolicyUrl?: string | null
+            dataProcessingPolicyUrl?: string | null
+          } | null
+        }
+
+        const data = json.data ?? null
+        const privacy = data?.privacyPolicyUrl ?? ""
+        const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
+
+        setPrivacyPolicyUrl(privacy)
+        setDataProcessingPolicyUrl(dataPolicy)
+        setInitialSettings({ privacyPolicyUrl: privacy, dataProcessingPolicyUrl: dataPolicy })
+      } catch {
+        // ignore, settings are optional
+      } finally {
+        setLoadingSettings(false)
+      }
+    }
+
+    void loadSettings()
+  }, [])
+
   const getToken = () => {
     return document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
+  }
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true)
+    try {
+      const token = getToken()
+      const res = await fetch("/api/site/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          privacyPolicyUrl: privacyPolicyUrl || null,
+          dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
+        }),
+      })
+
+      if (!res.ok) {
+        toast.error("Не удалось сохранить настройки сайта")
+        return
+      }
+
+      toast.success("Настройки сайта обновлены")
+      setInitialSettings({
+        privacyPolicyUrl,
+        dataProcessingPolicyUrl,
+      })
+    } catch {
+      toast.error("Не удалось сохранить настройки сайта")
+    } finally {
+      setSavingSettings(false)
+    }
   }
 
   const handleUpload = async (file: File) => {
@@ -139,6 +211,56 @@ export function SiteSettingsEditor() {
               }}
             >
               Сбросить до дефолтного
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Политики и юридическая информация</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="privacy_policy_url">Ссылка на политику конфиденциальности</Label>
+            <Input
+              id="privacy_policy_url"
+              type="url"
+              value={privacyPolicyUrl}
+              onChange={(e) => setPrivacyPolicyUrl(e.target.value)}
+              placeholder="https://example.com/privacy"
+            />
+            <p className="text-xs text-muted-foreground">
+              Укажите полный URL на страницу с политикой конфиденциальности. Это может быть внешний сайт.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="data_policy_url">Ссылка на политику обработки данных</Label>
+            <Input
+              id="data_policy_url"
+              type="url"
+              value={dataProcessingPolicyUrl}
+              onChange={(e) => setDataProcessingPolicyUrl(e.target.value)}
+              placeholder="https://example.com/data-policy"
+            />
+            <p className="text-xs text-muted-foreground">
+              Укажите полный URL на страницу с политикой обработки данных. Это может быть внешний сайт.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!initialSettings) return
+                setPrivacyPolicyUrl(initialSettings.privacyPolicyUrl)
+                setDataProcessingPolicyUrl(initialSettings.dataProcessingPolicyUrl)
+              }}
+              disabled={!initialSettings || loadingSettings || savingSettings}
+            >
+              Отменить
+            </Button>
+            <Button type="button" onClick={handleSaveSettings} disabled={savingSettings || loadingSettings}>
+              {savingSettings ? "Сохранение…" : "Сохранить"}
             </Button>
           </div>
         </CardContent>

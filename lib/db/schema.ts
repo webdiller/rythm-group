@@ -121,6 +121,8 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   // Base64-encoded PNG (32x32) favicon override
   favicon: text("favicon"),
+  privacyPolicyUrl: text("privacy_policy_url"),
+  dataProcessingPolicyUrl: text("data_processing_policy_url"),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

@@ -85,6 +85,9 @@ export const fallbackTranslations = {
     footer: {
       rights: "Все права защищены",
       description: "Крупнейший игровой и киберспортивный медиахолдинг в Telegram",
+      ctaTitle: "Давайте вместе сделаем что-то значимое?",
+      privacy: "Политика конфиденциальности",
+      dataPolicy: "Политика обработки данных",
     },
   },
   en: {
@@ -157,6 +160,9 @@ export const fallbackTranslations = {
     footer: {
       rights: "All rights reserved",
       description: "The largest gaming & esports media holding in Telegram",
+      ctaTitle: "Shall we create something meaningful together?",
+      privacy: "Privacy Policy",
+      dataPolicy: "Data Processing Policy",
     },
   },
 } as const
