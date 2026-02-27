@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
 const sections = ["hero", "about", "stats", "cases", "contact", "nav", "footer"]
@@ -129,13 +130,29 @@ export function TranslationsEditor() {
     setTranslations((prev) => ({ ...prev, [key]: { ...prev[key], value } }))
   }
 
+  const parseStatsItems = (
+    raw: string
+  ): Array<{ value: string; label: string }> => {
+    if (!raw) return []
+    try {
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return []
+      return parsed.map((item) => ({
+        value: typeof item?.value === "string" ? item.value : "",
+        label: typeof item?.label === "string" ? item.label : "",
+      }))
+    } catch {
+      return []
+    }
+  }
+
   const getNestedKeys = (section: string): string[] => {
     // Generate keys based on section structure
     const keysMap: Record<string, string[]> = {
       hero: ["title", "subtitle", "badge", "cta", "scroll"],
       nav: ["about", "channels", "cases", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
-      stats: ["title", "subtitle"],
+      stats: ["title", "subtitle", "items"],
       cases: ["title", "subtitle", "empty"],
       contact: ["title", "subtitle", "name", "email", "company", "message", "budget", "submit", "or", "telegram", "emailUs"],
       footer: ["rights", "description"],
@@ -188,17 +205,96 @@ export function TranslationsEditor() {
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-          {getNestedKeys(selectedSection).map((key) => (
-            <div key={key} className="space-y-2">
-              <Label htmlFor={key}>{key}</Label>
-              <Textarea
-                id={key}
-                value={translations[key]?.value ?? ""}
-                onChange={(e) => handleChange(key, e.target.value)}
-                rows={key.includes("text") ? 3 : 1}
-              />
-            </div>
-          ))}
+          {getNestedKeys(selectedSection).map((key) => {
+            if (selectedSection === "stats" && key === "items") {
+              const items = parseStatsItems(translations[key]?.value ?? "")
+
+              const updateItems = (nextItems: Array<{ value: string; label: string }>) => {
+                handleChange(key, JSON.stringify(nextItems, null, 2))
+              }
+
+              return (
+                <div key={key} className="space-y-2">
+                  <Label>{key}</Label>
+                  <div className="space-y-3">
+                    {items.map((item, index) => (
+                      <Card key={index}>
+                        <CardContent className="space-y-3">
+                          <div className="flex flex-col gap-3 md:flex-row">
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor={`${key}-value-${index}`}>value</Label>
+                              <Input
+                                id={`${key}-value-${index}`}
+                                value={item.value}
+                                onChange={(e) => {
+                                  const next = [...items]
+                                  next[index] = { ...next[index], value: e.target.value }
+                                  updateItems(next)
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <Label htmlFor={`${key}-label-${index}`}>label</Label>
+                              <Input
+                                id={`${key}-label-${index}`}
+                                value={item.label}
+                                onChange={(e) => {
+                                  const next = [...items]
+                                  next[index] = { ...next[index], label: e.target.value }
+                                  updateItems(next)
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                const next = items.filter((_, i) => i !== index)
+                                updateItems(next)
+                              }}
+                            >
+                              Удалить item
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const next = [...items, { value: "", label: "" }]
+                        updateItems(next)
+                      }}
+                    >
+                      Добавить item
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Элементы будут сохранены как JSON-массив объектов с полями
+                      {" "}
+                      <code>value</code> и <code>label</code>.
+                    </p>
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div key={key} className="space-y-2">
+                <Label htmlFor={key}>{key}</Label>
+                <Textarea
+                  id={key}
+                  value={translations[key]?.value ?? ""}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  rows={key.includes("text") ? 3 : 1}
+                />
+              </div>
+            )
+          })}
         </CardContent>
       </Card>
     </div>
