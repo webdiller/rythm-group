@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/locale-context"
 export type SiteSettings = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
+  heroAnimationEnabled?: boolean | null
 }
 
 type FooterProps = {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { toast } from "sonner"
 
 export function SiteSettingsEditor() {
@@ -20,11 +21,13 @@ export function SiteSettingsEditor() {
   const [globalBackgroundVersion, setGlobalBackgroundVersion] = useState(0)
   const [uploadingGlobalBackground, setUploadingGlobalBackground] = useState(false)
   const [deletingGlobalBackground, setDeletingGlobalBackground] = useState(false)
+  const [heroAnimationEnabled, setHeroAnimationEnabled] = useState(true)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   const [initialSettings, setInitialSettings] = useState<{
+    heroAnimationEnabled: boolean
     privacyPolicyUrl: string
     dataProcessingPolicyUrl: string
   } | null>(null)
@@ -64,18 +67,25 @@ export function SiteSettingsEditor() {
 
         const json = (await res.json()) as {
           data?: {
+            heroAnimationEnabled?: boolean | null
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
           } | null
         }
 
         const data = json.data ?? null
+        const heroAnimation = data?.heroAnimationEnabled ?? true
         const privacy = data?.privacyPolicyUrl ?? ""
         const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
 
+        setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
         setDataProcessingPolicyUrl(dataPolicy)
-        setInitialSettings({ privacyPolicyUrl: privacy, dataProcessingPolicyUrl: dataPolicy })
+        setInitialSettings({
+          heroAnimationEnabled: heroAnimation,
+          privacyPolicyUrl: privacy,
+          dataProcessingPolicyUrl: dataPolicy,
+        })
       } catch {
         // ignore, settings are optional
       } finally {
@@ -101,6 +111,7 @@ export function SiteSettingsEditor() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
+          heroAnimationEnabled,
           privacyPolicyUrl: privacyPolicyUrl || null,
           dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
         }),
@@ -113,6 +124,7 @@ export function SiteSettingsEditor() {
 
       toast.success("Настройки сайта обновлены")
       setInitialSettings({
+        heroAnimationEnabled,
         privacyPolicyUrl,
         dataProcessingPolicyUrl,
       })
@@ -365,6 +377,20 @@ export function SiteSettingsEditor() {
           <CardTitle>Фоновые изображения</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="hero_animation_enabled">Анимация Hero</Label>
+              <p className="text-xs text-muted-foreground">
+                Включает или отключает анимацию световых лучей и появления элементов на главном экране.
+              </p>
+            </div>
+            <Switch
+              id="hero_animation_enabled"
+              checked={heroAnimationEnabled}
+              onCheckedChange={setHeroAnimationEnabled}
+            />
+          </div>
+
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">

@@ -16,7 +16,11 @@ const LIGHT_RAYS_LIGHT = {
   saturation: 1.2,
 }
 
-export function Hero() {
+type HeroProps = {
+  animationEnabled?: boolean
+}
+
+export function Hero({ animationEnabled = true }: HeroProps) {
   const { t } = useLocale()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -39,21 +43,23 @@ export function Hero() {
       }}
     >
       <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
-      <LightRays
-        raysOrigin="top-center"
-        raysColor={raysProps.raysColor}
-        raysSpeed={1}
-        lightSpread={0.6}
-        rayLength={3}
-        followMouse={true}
-        mouseInfluence={0.1}
-        noiseAmount={0}
-        distortion={0}
-        className="custom-rays"
-        pulsating={false}
-        fadeDistance={1.4}
-        saturation={raysProps.saturation}
-      />
+      {animationEnabled && (
+        <LightRays
+          raysOrigin="top-center"
+          raysColor={raysProps.raysColor}
+          raysSpeed={1}
+          lightSpread={0.6}
+          rayLength={3}
+          followMouse={true}
+          mouseInfluence={0.1}
+          noiseAmount={0}
+          distortion={0}
+          className="custom-rays"
+          pulsating={false}
+          fadeDistance={1.4}
+          saturation={raysProps.saturation}
+        />
+      )}
       </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <StaggerItem

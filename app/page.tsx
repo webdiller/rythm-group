@@ -80,6 +80,8 @@ async function getHomeData(): Promise<{
 export default async function Home() {
   const { channelCategories, channels, partnerCategories, partners, siteSettings } = await getHomeData()
 
+  const heroAnimationEnabled = siteSettings?.heroAnimationEnabled ?? true
+
   return (
     <LocaleProvider>
       <div className="min-h-screen w-full relative">
@@ -106,7 +108,7 @@ export default async function Home() {
         <div className="relative z-20">
           <Header />
           <main>
-            <Hero />
+            <Hero animationEnabled={heroAnimationEnabled} />
             <Channels categories={channelCategories} channels={channels} />
             <About />
             <Stats />

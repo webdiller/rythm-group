@@ -9,6 +9,7 @@ export const runtime = "nodejs"
 type SiteSettingsPayload = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
+  heroAnimationEnabled?: boolean | null
 }
 
 export async function GET() {
@@ -32,6 +33,8 @@ export async function PUT(request: NextRequest) {
     const updateValues: SiteSettingsPayload = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
       dataProcessingPolicyUrl: body.dataProcessingPolicyUrl ?? null,
+      heroAnimationEnabled:
+        typeof body.heroAnimationEnabled === "boolean" ? body.heroAnimationEnabled : true,
     }
 
     if (existing) {
@@ -51,6 +54,7 @@ export async function PUT(request: NextRequest) {
         favicon: null,
         privacyPolicyUrl: updateValues.privacyPolicyUrl ?? null,
         dataProcessingPolicyUrl: updateValues.dataProcessingPolicyUrl ?? null,
+        heroAnimationEnabled: updateValues.heroAnimationEnabled ?? true,
       })
       .returning()
       .all()

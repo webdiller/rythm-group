@@ -123,6 +123,7 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   favicon: text("favicon"),
   privacyPolicyUrl: text("privacy_policy_url"),
   dataProcessingPolicyUrl: text("data_processing_policy_url"),
+  heroAnimationEnabled: integer("hero_animation_enabled", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

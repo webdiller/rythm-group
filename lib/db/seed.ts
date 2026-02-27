@@ -1,5 +1,6 @@
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import type * as schema from "./schema"
+import { sql } from "drizzle-orm"
 import {
   tableTranslations,
   tableChannelCategories,
@@ -123,5 +124,12 @@ export function runSeed(
         ]),
       })
       .run()
+  }
+
+  // Ensure new columns exist for site_settings without separate migrations
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN hero_animation_enabled integer DEFAULT 1`)
+  } catch {
+    // ignore if column already exists
   }
 }
