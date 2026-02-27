@@ -71,7 +71,7 @@ export function Cases({ categories, partners }: CasesProps) {
                       >
                         {partner.logo_url ? (
                           <img
-                            src={partner.logo_url}
+                            src={`/api/content/partners/${partner.id}/logo`}
                             alt=""
                             className="max-h-16 w-full object-contain"
                           />
@@ -100,7 +100,7 @@ export function Cases({ categories, partners }: CasesProps) {
                   >
                     {partner.logo_url ? (
                       <img
-                        src={partner.logo_url}
+                        src={`/api/content/partners/${partner.id}/logo`}
                         alt=""
                         className="max-h-16 w-full object-contain"
                       />

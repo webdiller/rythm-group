@@ -20,6 +20,7 @@ interface Partner {
   id: number
   category_id: number | null
   name: string
+  // base64 logo stored in DB; rendered through /api/content/partners/[id]/logo
   logo_url: string | null
   order_index: number
 }
@@ -302,8 +303,8 @@ export function PartnersEditor() {
                     <div className="flex items-center gap-3">
                       {partner.logo_url ? (
                         <img
-                          src={partner.logo_url}
-                          alt=""
+                          src={`/api/content/partners/${partner.id}/logo`}
+                          alt={partner.name}
                           className="h-8 w-8 object-contain"
                         />
                       ) : null}
@@ -358,8 +359,8 @@ export function PartnersEditor() {
                     <div className="flex items-center gap-3">
                       {partner.logo_url ? (
                         <img
-                          src={partner.logo_url}
-                          alt=""
+                          src={`/api/content/partners/${partner.id}/logo`}
+                          alt={partner.name}
                           className="h-8 w-8 object-contain"
                         />
                       ) : null}
@@ -469,14 +470,15 @@ function PartnerForm({
   const [formData, setFormData] = useState<{
     category_id: number | null
     name: string
-    logo_url: string
     order_index: number
   }>({
     category_id: partner?.category_id ?? (categories[0]?.id ?? null),
     name: partner?.name ?? "",
-    logo_url: partner?.logo_url ?? "",
     order_index: partner?.order_index ?? 0,
   })
+
+  const [hasLogo, setHasLogo] = useState(Boolean(partner?.logo_url))
+  const [logoVersion, setLogoVersion] = useState(0)
 
   const NO_CATEGORY_VALUE = "none"
 
@@ -487,7 +489,6 @@ function PartnerForm({
         onSave({
           ...formData,
           category_id: formData.category_id,
-          logo_url: formData.logo_url || null,
         })
       }}
       className="space-y-4"
@@ -531,12 +532,88 @@ function PartnerForm({
         />
       </div>
       <div className="space-y-2">
-        <Label>Ссылка на логотип (необязательно)</Label>
-        <Input
-          value={formData.logo_url}
-          onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-          placeholder="https://..."
-        />
+        <Label>Логотип партнёра</Label>
+        <p className="text-xs text-muted-foreground">
+          Загрузите логотип партнёра. Рекомендуемое разрешение: 320×120 px, формат PNG/WebP, прозрачный фон. Файл будет
+          автоматически сжат до WebP (не более 5 МБ).
+        </p>
+        <div className="flex items-center gap-4">
+          <div className="h-16 w-32 flex items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+            {hasLogo && partner ? (
+              <img
+                key={logoVersion}
+                src={`/api/content/partners/${partner.id}/logo?ts=${logoVersion}`}
+                alt={partner.name}
+                className="max-h-16 w-full object-contain"
+                onError={() => setHasLogo(false)}
+              />
+            ) : (
+              <span className="text-xs text-muted-foreground text-center px-2">Логотип не задан</span>
+            )}
+          </div>
+          {partner && (
+            <div className="flex flex-col gap-2">
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const token = document.cookie
+                    .split("; ")
+                    .find((row) => row.startsWith("auth_token="))
+                    ?.split("=")[1]
+                  const formData = new FormData()
+                  formData.append("file", file)
+                  formData.append("partnerId", String(partner.id))
+                  const res = await fetch("/api/content/partners/logo", {
+                    method: "POST",
+                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                    body: formData,
+                  })
+                  if (res.ok) {
+                    setHasLogo(true)
+                    setLogoVersion((v) => v + 1)
+                    toast.success("Логотип обновлён")
+                  } else {
+                    toast.error("Не удалось загрузить логотип")
+                  }
+                  e.target.value = ""
+                }}
+              />
+              {hasLogo && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (!partner) return
+                    const token = document.cookie
+                      .split("; ")
+                      .find((row) => row.startsWith("auth_token="))
+                      ?.split("=")[1]
+                    const formData = new FormData()
+                    formData.append("partnerId", String(partner.id))
+                    const res = await fetch("/api/content/partners/logo", {
+                      method: "DELETE",
+                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                      body: formData,
+                    })
+                    if (res.ok) {
+                      setHasLogo(false)
+                      setLogoVersion((v) => v + 1)
+                      toast.success("Логотип удалён")
+                    } else {
+                      toast.error("Не удалось удалить логотип")
+                    }
+                  }}
+                >
+                  Удалить логотип
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <div className="space-y-2">
         <Label>Порядок (order index)</Label>
