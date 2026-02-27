@@ -44,6 +44,7 @@ export class ServiceContacts {
     if (body.email !== undefined) set.email = body.email
     if (body.telegram_url !== undefined) set.telegram_url = body.telegram_url
     if (body.telegram_username !== undefined) set.telegram_username = body.telegram_username
+    if (body.direct_contacts !== undefined) set.direct_contacts = body.direct_contacts
     const [updated] = db.update(tableContacts).set(set).where(eq(tableContacts.id, id)).returning().all()
     if (!updated) throw new Error("Contact not found")
     return { data: updated, meta: null }

@@ -24,6 +24,7 @@ export class ServiceChannels {
         avatar: tableChannels.avatar,
         name: tableChannels.name,
         subscribers: tableChannels.subscribers,
+        reach: tableChannels.reach,
         url: tableChannels.url,
         order_index: tableChannels.order_index,
         category_name_ru: tableChannelCategories.name_ru,
@@ -59,6 +60,7 @@ export class ServiceChannels {
     if (body.category_id !== undefined) set.category_id = body.category_id
     if (body.name !== undefined) set.name = body.name
     if (body.subscribers !== undefined) set.subscribers = body.subscribers
+    if (body.reach !== undefined) set.reach = body.reach
     if (body.url !== undefined) set.url = body.url
     if (body.order_index !== undefined) set.order_index = body.order_index
     if (body.avatar !== undefined) set.avatar = body.avatar

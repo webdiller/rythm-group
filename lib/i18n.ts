@@ -34,6 +34,7 @@ export const fallbackTranslations = {
       title: "Наши каналы",
       subtitle: "Telegram-каналы по категориям с многомиллионной аудиторией",
       subscribers: "подписчиков",
+      reach: "охват",
     },
     about: {
       title: "Кто мы",
@@ -105,6 +106,7 @@ export const fallbackTranslations = {
       title: "Our Channels",
       subtitle: "Telegram channels by category with millions of subscribers",
       subscribers: "subscribers",
+      reach: "reach",
     },
     about: {
       title: "Who We Are",

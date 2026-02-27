@@ -55,6 +55,8 @@ export const tableChannels = sqliteTable("channels", {
     .references(() => tableChannelCategories.id, { onDelete: "cascade", onUpdate: "cascade" }),
   name: text("name").notNull(),
   subscribers: text("subscribers").notNull(),
+  // Average reach/coverage per channel (e.g. average views)
+  reach: text("reach"),
   url: text("url").notNull(),
   order_index: integer("order_index").default(0),
   avatar: text("avatar"),
@@ -106,6 +108,8 @@ export const tableContacts = sqliteTable("contacts", {
   email: text("email").notNull(),
   telegram_url: text("telegram_url").notNull(),
   telegram_username: text("telegram_username"),
+  // JSON-encoded array of direct contact links (social networks, etc.)
+  direct_contacts: text("direct_contacts"),
 })
 
 export const relationsContacts = relations(tableContacts, () => ({}))

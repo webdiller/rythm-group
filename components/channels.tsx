@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
-import { ExternalLink, Users } from "lucide-react"
+import { BarChart3, ExternalLink, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 
@@ -18,6 +18,8 @@ export interface Channel {
   category_id: string | null
   name: string
   subscribers: string
+  // Average reach/coverage per channel
+  reach?: string | null
   url: string
   order_index: number
   hasAvatar?: boolean
@@ -33,14 +35,23 @@ export function Channels({ categories, channels }: ChannelsProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(
     categories[0]?.id ?? null,
   )
+  const [showAll, setShowAll] = useState(false)
 
   const activeCategoryId = activeCategory ?? categories[0]?.id ?? null
-
   const activeChannels = activeCategoryId
     ? channels
         .filter((c) => c.category_id === activeCategoryId)
         .sort((a, b) => a.order_index - b.order_index)
     : []
+
+  useEffect(() => {
+    // Reset "show all" when category changes
+    setShowAll(false)
+  }, [activeCategoryId])
+
+  const MAX_VISIBLE = 6
+  const visibleChannels = showAll ? activeChannels : activeChannels.slice(0, MAX_VISIBLE)
+  const hiddenCount = Math.max(0, activeChannels.length - MAX_VISIBLE)
 
   return (
     <section id="channels" className="relative px-6 py-24 md:py-32">
@@ -81,36 +92,65 @@ export function Channels({ categories, channels }: ChannelsProps) {
             {locale === "ru" ? "Каналы не найдены." : "No channels found."}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {activeChannels.map((channel, index) => (
-              <ScrollStagger key={channel.id} index={index} delayStep={80}>
-                <a
-                  href={channel.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
-                >
-                  <div className="flex items-center gap-4">
-                    <ChannelAvatar
-                      channelId={channel.id}
-                      name={channel.name}
-                      hasAvatar={channel.hasAvatar}
-                    />
-                    <div>
-                      <h3 className="text-sm font-semibold text-card-foreground">{channel.name}</h3>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        <span>
-                          {channel.subscribers} {t.channels.subscribers}
-                        </span>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleChannels.map((channel, index) => (
+                <ScrollStagger key={channel.id} index={index} delayStep={80}>
+                  <a
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
+                  >
+                    <div className="flex items-center gap-4">
+                      <ChannelAvatar
+                        channelId={channel.id}
+                        name={channel.name}
+                        hasAvatar={channel.hasAvatar}
+                      />
+                      <div>
+                        <h3 className="text-sm font-semibold text-card-foreground">{channel.name}</h3>
+                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Users className="h-3 w-3" />
+                            <span>
+                              {channel.subscribers} {t.channels.subscribers}
+                            </span>
+                          </div>
+                          {channel.reach && (
+                            <div className="flex items-center gap-1.5">
+                              <BarChart3 className="h-3 w-3" />
+                              <span>
+                                {channel.reach} {t.channels.reach}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                </a>
-              </ScrollStagger>
-            ))}
-          </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
+                  </a>
+                </ScrollStagger>
+              ))}
+            </div>
+            {hiddenCount > 0 && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAll((prev) => !prev)}
+                  className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                >
+                  {showAll
+                    ? locale === "ru"
+                      ? "Свернуть список"
+                      : "Show less"
+                    : locale === "ru"
+                      ? `Показать ещё ${hiddenCount}`
+                      : `Show ${hiddenCount} more`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

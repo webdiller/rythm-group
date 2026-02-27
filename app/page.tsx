@@ -51,6 +51,7 @@ async function getHomeData(): Promise<{
     category_id: c.category_id,
     name: c.name,
     subscribers: c.subscribers,
+    reach: c.reach ?? null,
     url: c.url,
     order_index: c.order_index ?? 0,
     hasAvatar: !!c.avatar,

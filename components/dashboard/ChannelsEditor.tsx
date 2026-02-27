@@ -15,6 +15,8 @@ interface Channel {
   category_id: string
   name: string
   subscribers: string
+  // Average reach/coverage for the channel
+  reach: string | null
   url: string
   order_index: number
 }
@@ -49,7 +51,12 @@ export function ChannelsEditor() {
       ])
       if (channelsRes.ok) {
         const channelsJson = (await channelsRes.json()) as { data?: Channel[] }
-        setChannels(channelsJson.data ?? [])
+        setChannels(
+          (channelsJson.data ?? []).map((ch) => ({
+            ...ch,
+            reach: ch.reach ?? null,
+          })),
+        )
       }
       if (categoriesRes.ok) {
         const categoriesJson = (await categoriesRes.json()) as { data?: Category[] }
@@ -367,7 +374,8 @@ export function ChannelsEditor() {
                       <div>
                         <div className="font-semibold">{channel.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {channel.subscribers} подписчиков • {channel.url}
+                          {channel.subscribers} подписчиков
+                          {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
                         </div>
                       </div>
                     </div>
@@ -532,6 +540,7 @@ function ChannelForm({
     category_id: channel?.category_id || categories[0]?.id || "",
     name: channel?.name || "",
     subscribers: channel?.subscribers || "",
+    reach: channel?.reach || "",
     url: channel?.url || "",
     order_index: channel?.order_index || 0,
   })
@@ -576,6 +585,14 @@ function ChannelForm({
           value={formData.subscribers}
           onChange={(e) => setFormData({ ...formData, subscribers: e.target.value })}
           required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Reach (average views)</Label>
+        <Input
+          value={formData.reach}
+          onChange={(e) => setFormData({ ...formData, reach: e.target.value })}
+          placeholder="например, 500K"
         />
       </div>
       <div className="space-y-2">

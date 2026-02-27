@@ -110,8 +110,17 @@ export function runSeed(
     db.insert(tableContacts)
       .values({
         email: "contact@rythmgroup.com",
-        telegram_url: "https://t.me/rythmgroup",
-        telegram_username: "@rythmgroup",
+        telegram_url: "https://t.me/RythmGroup",
+        telegram_username: "@RythmGroup",
+        direct_contacts: JSON.stringify([
+          {
+            id: "telegram-main",
+            label: "Telegram",
+            description: "@RythmGroup",
+            url: "https://t.me/RythmGroup",
+            type: "telegram",
+          },
+        ]),
       })
       .run()
   }

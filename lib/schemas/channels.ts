@@ -21,6 +21,7 @@ export const CreateOneBody = allZodSchemas.tableChannels.insert
     category_id: true,
     name: true,
     subscribers: true,
+    reach: true,
     url: true,
     order_index: true,
   })
@@ -39,6 +40,7 @@ export const UpdateOneBody = z.object({
   category_id: z.string().optional(),
   name: z.string().optional(),
   subscribers: z.string().optional(),
+  reach: z.string().optional().nullable(),
   url: z.string().optional(),
   order_index: z.number().optional(),
   avatar: z.string().nullable().optional(),

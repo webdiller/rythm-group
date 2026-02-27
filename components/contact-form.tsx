@@ -1,10 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
-import { Send, MessageCircle, Mail } from "lucide-react"
+import { Send, MessageCircle, Mail, Instagram, Globe } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
+
+type DirectContactLink = {
+  id: string
+  label: string
+  url: string
+  description?: string
+  type: "telegram" | "email" | "instagram" | "max" | "other"
+}
 
 export function ContactForm() {
   const { locale, t } = useLocale()
@@ -17,6 +25,90 @@ export function ContactForm() {
   })
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
+
+  useEffect(() => {
+    const loadDirectContacts = async () => {
+      try {
+        const response = await fetch("/api/content/contacts")
+        if (!response.ok) return
+        const json = (await response.json()) as {
+          data?: Array<{
+            email?: string | null
+            telegram_url?: string | null
+            telegram_username?: string | null
+            direct_contacts?: string | null
+          }>
+        }
+        const row = json.data?.[0]
+        if (!row) return
+
+        let links: DirectContactLink[] = []
+
+        if (row.direct_contacts) {
+          try {
+            const parsed = JSON.parse(row.direct_contacts) as unknown
+            if (Array.isArray(parsed)) {
+              links = (parsed as unknown[])
+                .map((item): DirectContactLink | null => {
+                  if (!item || typeof item !== "object") return null
+                  const raw = item as Record<string, unknown>
+                  const url = typeof raw.url === "string" ? raw.url : ""
+                  const label = typeof raw.label === "string" ? raw.label : ""
+                  if (!url || !label) return null
+                  const id =
+                    typeof raw.id === "string" && raw.id.length > 0
+                      ? raw.id
+                      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+                  const description = typeof raw.description === "string" ? raw.description : undefined
+                  const typeValue = typeof raw.type === "string" ? raw.type : "other"
+                  const type: DirectContactLink["type"] =
+                    typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max"
+                      ? typeValue
+                      : "other"
+                  return { id, label, url, description, type }
+                })
+                .filter((v): v is DirectContactLink => v !== null)
+            }
+          } catch {
+            // ignore and fall back to defaults
+          }
+        }
+
+        if (links.length === 0) {
+          const fallback: DirectContactLink[] = []
+          if (row.telegram_url) {
+            fallback.push({
+              id: "telegram-fallback",
+              type: "telegram",
+              label: t.contact.telegram,
+              url: row.telegram_url,
+              description: row.telegram_username ?? undefined,
+            })
+          }
+          if (row.email) {
+            const firstEmail = row.email.split(",")[0]?.trim()
+            if (firstEmail) {
+              fallback.push({
+                id: "email-fallback",
+                type: "email",
+                label: t.contact.emailUs,
+                url: `mailto:${firstEmail}`,
+                description: row.email,
+              })
+            }
+          }
+          links = fallback
+        }
+
+        setDirectContacts(links)
+      } catch {
+        // silent failure, we still have the form as main CTA
+      }
+    }
+
+    void loadDirectContacts()
+  }, [t.contact.telegram, t.contact.emailUs])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -193,64 +285,70 @@ export function ContactForm() {
           {/* Direct contact */}
           <ScrollReveal rootMargin="100px" className="lg:col-span-2">
             <div className="flex flex-col gap-5">
-            <div className="flex-1 rounded-xl border border-border bg-card p-8">
-              <p className="mb-6 text-sm text-muted-foreground">{t.contact.or}</p>
+              {directContacts.length > 0 && (
+                <div className="flex-1 rounded-xl border border-border bg-card p-8">
+                  <p className="mb-6 text-sm text-muted-foreground">{t.contact.or}</p>
 
-              <div className="flex flex-col gap-4">
-                <ScrollStagger index={0} delayStep={80}>
-                  <a
-                    href="https://t.me/rythmgroup_ads"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-4 rounded-lg border border-border bg-secondary/50 p-4 transition-all hover:border-primary/30 hover:bg-secondary"
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#229ED9]/10 text-[#229ED9]">
-                      <MessageCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <span className="block text-sm font-semibold text-foreground">{t.contact.telegram}</span>
-                      <span className="text-xs text-muted-foreground">@rythmgroup_ads</span>
-                    </div>
-                  </a>
+                  <div className="flex flex-col gap-4">
+                    {directContacts.map((link, index) => {
+                      const isTelegram = link.type === "telegram"
+                      const isEmail = link.type === "email"
+                      const isInstagram = link.type === "instagram"
+
+                      const Icon = isEmail ? Mail : isInstagram ? Instagram : isTelegram ? MessageCircle : Globe
+                      const iconClasses = isTelegram
+                        ? "bg-[#229ED9]/10 text-[#229ED9]"
+                        : isEmail
+                          ? "bg-primary/10 text-primary"
+                          : isInstagram
+                            ? "bg-pink-500/10 text-pink-500"
+                            : "bg-secondary text-secondary-foreground"
+
+                      return (
+                        <ScrollStagger key={link.id} index={index} delayStep={80}>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-4 rounded-lg border border-border bg-secondary/50 p-4 transition-all hover:border-primary/30 hover:bg-secondary"
+                          >
+                            <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${iconClasses}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <span className="block text-sm font-semibold text-foreground">{link.label}</span>
+                              {link.description && (
+                                <span className="text-xs text-muted-foreground">{link.description}</span>
+                              )}
+                            </div>
+                          </a>
+                        </ScrollStagger>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Mini stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <ScrollStagger index={0} delayStep={100}>
+                  <div className="rounded-xl border border-border bg-card p-5 text-center">
+                    <span className="block text-2xl font-bold text-primary text-glow">{"<"} 1h</span>
+                    <span className="text-xs text-muted-foreground">
+                      {locale === "ru" ? "Время ответа" : "Response Time"}
+                    </span>
+                  </div>
                 </ScrollStagger>
-
-                <ScrollStagger index={1} delayStep={80}>
-                  <a
-                    href="mailto:ads@rythmgroup.com"
-                    className="flex items-center gap-4 rounded-lg border border-border bg-secondary/50 p-4 transition-all hover:border-primary/30 hover:bg-secondary"
-                  >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Mail className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <span className="block text-sm font-semibold text-foreground">{t.contact.emailUs}</span>
-                      <span className="text-xs text-muted-foreground">ads@rythmgroup.com</span>
-                    </div>
-                  </a>
+                <ScrollStagger index={1} delayStep={100}>
+                  <div className="rounded-xl border border-border bg-card p-5 text-center">
+                    <span className="block text-2xl font-bold text-primary text-glow">24/7</span>
+                    <span className="text-xs text-muted-foreground">
+                      {locale === "ru" ? "Поддержка" : "Support"}
+                    </span>
+                  </div>
                 </ScrollStagger>
               </div>
             </div>
-
-            {/* Mini stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <ScrollStagger index={0} delayStep={100}>
-                <div className="rounded-xl border border-border bg-card p-5 text-center">
-                  <span className="block text-2xl font-bold text-primary text-glow">{"<"} 1h</span>
-                  <span className="text-xs text-muted-foreground">
-                    {locale === "ru" ? "Время ответа" : "Response Time"}
-                  </span>
-                </div>
-              </ScrollStagger>
-              <ScrollStagger index={1} delayStep={100}>
-                <div className="rounded-xl border border-border bg-card p-5 text-center">
-                  <span className="block text-2xl font-bold text-primary text-glow">24/7</span>
-                  <span className="text-xs text-muted-foreground">
-                    {locale === "ru" ? "Поддержка" : "Support"}
-                  </span>
-                </div>
-              </ScrollStagger>
-            </div>
-          </div>
           </ScrollReveal>
         </div>
       </div>
