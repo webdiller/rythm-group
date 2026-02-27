@@ -1,32 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 
-type SiteSettings = {
+export type SiteSettings = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
 }
 
-export function Footer() {
+type FooterProps = {
+  siteSettings?: SiteSettings | null
+}
+
+export function Footer({ siteSettings }: FooterProps) {
   const { t } = useLocale()
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null)
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const response = await fetch("/api/site/settings")
-        if (!response.ok) return
-
-        const json = (await response.json()) as { data?: SiteSettings | null }
-        setSiteSettings(json.data ?? null)
-      } catch {
-        // Ignore errors – footer works without external links
-      }
-    }
-
-    void loadSettings()
-  }, [])
 
   const navItems = [
     { label: t.nav.about, href: "#about" },

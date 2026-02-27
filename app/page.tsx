@@ -6,7 +6,7 @@ import { About } from "@/components/about"
 import { Stats } from "@/components/stats"
 import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
-import { Footer } from "@/components/footer"
+import { Footer, type SiteSettings } from "@/components/footer"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
 
 function getBaseUrl() {
@@ -23,10 +23,11 @@ async function getHomeData(): Promise<{
   channels: Channel[]
   partnerCategories: PartnerCategory[]
   partners: Partner[]
+  siteSettings: SiteSettings | null
 }> {
   const baseUrl = getBaseUrl()
 
-  const [catRes, chanRes, partnerCatRes, partnerRes] = await Promise.all([
+  const [catRes, chanRes, partnerCatRes, partnerRes, settingsRes] = await Promise.all([
     fetch(`${baseUrl}/api/content/channel-categories`, {
       cache: "no-store",
     }),
@@ -37,6 +38,9 @@ async function getHomeData(): Promise<{
       cache: "no-store",
     }),
     fetch(`${baseUrl}/api/content/partners`, {
+      cache: "no-store",
+    }),
+    fetch(`${baseUrl}/api/site/settings`, {
       cache: "no-store",
     }),
   ])
@@ -64,11 +68,17 @@ async function getHomeData(): Promise<{
   const partnersJson = (await partnerRes.json()) as { data?: Partner[] }
   const partners = partnersJson.data ?? []
 
-  return { channelCategories, channels, partnerCategories, partners }
+  let siteSettings: SiteSettings | null = null
+  if (settingsRes.ok) {
+    const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
+    siteSettings = settingsJson.data ?? null
+  }
+
+  return { channelCategories, channels, partnerCategories, partners, siteSettings }
 }
 
 export default async function Home() {
-  const { channelCategories, channels, partnerCategories, partners } = await getHomeData()
+  const { channelCategories, channels, partnerCategories, partners, siteSettings } = await getHomeData()
 
   return (
     <LocaleProvider>
@@ -81,7 +91,7 @@ export default async function Home() {
         <Cases categories={partnerCategories} partners={partners} />
         <ContactForm />
       </main>
-      <Footer />
+      <Footer siteSettings={siteSettings} />
     </LocaleProvider>
   )
 }
