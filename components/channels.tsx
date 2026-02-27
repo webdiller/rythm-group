@@ -1,20 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import { ExternalLink, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 import clsx from "clsx"
 
-interface ChannelCategory {
+export interface ChannelCategory {
   id: string
   name_ru: string
   name_en: string
   order_index: number
 }
 
-interface Channel {
+export interface Channel {
   id: number
   category_id: string | null
   name: string
@@ -23,56 +23,16 @@ interface Channel {
   order_index: number
 }
 
-export function Channels() {
+interface ChannelsProps {
+  categories: ChannelCategory[]
+  channels: Channel[]
+}
+
+export function Channels({ categories, channels }: ChannelsProps) {
   const { locale, t } = useLocale()
-  const [categories, setCategories] = useState<ChannelCategory[]>([])
-  const [channels, setChannels] = useState<Channel[]>([])
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      try {
-        const [catRes, chanRes] = await Promise.all([
-          fetch("/api/content/channel-categories"),
-          fetch("/api/content/channels"),
-        ])
-
-        if (catRes.ok) {
-          const json = (await catRes.json()) as { data?: ChannelCategory[] }
-          const cats = (json.data ?? []).sort((a, b) => a.order_index - b.order_index)
-          setCategories(cats)
-          if (!activeCategory && cats.length > 0) {
-            setActiveCategory(cats[0].id)
-          }
-        }
-
-        if (chanRes.ok) {
-          const json = (await chanRes.json()) as {
-            data?: Array<
-              Channel & {
-                category_name_ru?: string | null
-                category_name_en?: string | null
-              }
-            >
-          }
-          const chans = (json.data ?? []).map((c) => ({
-            id: c.id,
-            category_id: c.category_id,
-            name: c.name,
-            subscribers: c.subscribers,
-            url: c.url,
-            order_index: c.order_index,
-          }))
-          setChannels(chans)
-        }
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [activeCategory])
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    categories[0]?.id ?? null,
+  )
 
   const activeCategoryId = activeCategory ?? categories[0]?.id ?? null
 
@@ -116,9 +76,7 @@ export function Channels() {
         </ScrollReveal>
 
         {/* Channels grid */}
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Загрузка каналов...</div>
-        ) : activeChannels.length === 0 ? (
+        {activeChannels.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             {locale === "ru" ? "Каналы не найдены." : "No channels found."}
           </div>
@@ -157,10 +115,10 @@ export function Channels() {
 
 function ChannelAvatar({ channelId, name }: { channelId: number; name: string }) {
   const [hasImage, setHasImage] = useState(true)
-
+  console.log(hasImage)
   return (
     <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 overflow-hidden">
-      {hasImage ? (
+      {!!hasImage ? (
         <img
           src={`/api/content/channels/${channelId}/avatar`}
           alt={name}
