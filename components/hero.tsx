@@ -29,7 +29,7 @@ export function Hero() {
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
 
   return (
-    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-20">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-16 pb-20 md:pt-20 md:pb-24">
       <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
       <LightRays
         raysOrigin="top-center"
@@ -101,7 +101,7 @@ export function Hero() {
           >
             <a
               href="#contact"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)]"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
             >
               {t.hero.cta}
             </a>
@@ -116,7 +116,7 @@ export function Hero() {
           >
             <a
               href="#channels"
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-8 py-4 text-base font-medium text-secondary-foreground transition-colors hover:bg-secondary"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
             >
               {t.hero.scroll}
               <ArrowDown className="h-4 w-4" />
