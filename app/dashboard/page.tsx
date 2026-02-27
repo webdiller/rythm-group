@@ -7,6 +7,7 @@ import { TranslationsEditor } from "@/components/dashboard/TranslationsEditor"
 import { ChannelsEditor } from "@/components/dashboard/ChannelsEditor"
 import { PartnersEditor } from "@/components/dashboard/PartnersEditor"
 import { ContactsEditor } from "@/components/dashboard/ContactsEditor"
+import { SiteSettingsEditor } from "@/components/dashboard/SiteSettingsEditor"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -71,6 +72,8 @@ export default function DashboardPage() {
         return <PartnersEditor />
       case "contacts":
         return <ContactsEditor />
+      case "settings":
+        return <SiteSettingsEditor />
       default:
         return <TranslationsEditor />
     }

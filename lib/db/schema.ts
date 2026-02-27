@@ -113,3 +113,14 @@ export const tableContacts = sqliteTable("contacts", {
 })
 
 export const relationsContacts = relations(tableContacts, () => ({}))
+
+// ---------------------------------------------------------------------------
+// site_settings
+// ---------------------------------------------------------------------------
+export const tableSiteSettings = sqliteTable("site_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  // Base64-encoded PNG (32x32) favicon override
+  favicon: text("favicon"),
+})
+
+export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))
