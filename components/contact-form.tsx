@@ -44,8 +44,102 @@ export function ContactForm() {
           </div>
         </ScrollReveal>
 
-        <div className="mx-auto grid max-w-2xl gap-8">
+        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-5">
           {/* Form */}
+          <ScrollReveal className="lg:col-span-3">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5 rounded-xl border border-border bg-card p-8"
+            >
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-foreground">
+                  {t.contact.name}
+                </label>
+                <input
+                  id="contact-name"
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-foreground">
+                  {t.contact.email}
+                </label>
+                <input
+                  id="contact-email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="john@company.com"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="contact-company" className="mb-2 block text-sm font-medium text-foreground">
+                  {t.contact.company}
+                </label>
+                <input
+                  id="contact-company"
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                  placeholder="Company Inc."
+                />
+              </div>
+              <div>
+                <label htmlFor="contact-budget" className="mb-2 block text-sm font-medium text-foreground">
+                  {t.contact.budget}
+                </label>
+                <select
+                  id="contact-budget"
+                  value={formData.budget}
+                  onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                  className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                >
+                  <option value="" className="text-muted-foreground">--</option>
+                  {t.contact.budgetOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="contact-message" className="mb-2 block text-sm font-medium text-foreground">
+                {t.contact.message}
+              </label>
+              <textarea
+                id="contact-message"
+                rows={4}
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                className="w-full resize-none rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+                placeholder="..."
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)]"
+            >
+              <Send className="h-4 w-4" />
+              {t.contact.submit}
+            </button>
+            </form>
+          </ScrollReveal>
+
           {/* Direct contact */}
           <ScrollReveal rootMargin="100px" className="lg:col-span-2">
             <div className="flex flex-col gap-5">
