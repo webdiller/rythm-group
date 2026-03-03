@@ -4,7 +4,7 @@ import { useLocale } from "@/lib/locale-context"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 
-export function Stats() {
+export function Stats({ animationsEnabled = true }: { animationsEnabled?: boolean }) {
   const { t } = useLocale()
 
   return (
@@ -15,7 +15,7 @@ export function Stats() {
       </div>
 
       <div className="relative mx-auto max-w-7xl">
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.stats.title}
@@ -28,7 +28,7 @@ export function Stats() {
 
         <div className="grid sm:grid-cols-2 gap-6 md:grid-cols-4">
           {t.stats.items.map((item, i) => (
-            <ScrollStagger key={i} index={i} delayStep={100}>
+            <ScrollStagger key={i} index={i} delayStep={100} disabled={!animationsEnabled}>
               <div className="flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-primary/30 glow-border">
                 <span className="mb-2 text-3xl font-bold text-primary md:text-4xl lg:text-5xl text-glow">
                   {item.value}

@@ -17,6 +17,8 @@ export type ScrollStaggerProps = {
   hiddenClassName?: string
   /** Длительность анимации */
   durationClassName?: string
+  /** Отключить анимацию и всегда показывать содержимое */
+  disabled?: boolean
 }
 
 /**
@@ -38,7 +40,12 @@ export function ScrollStagger({
   visibleClassName = "translate-y-0 opacity-100",
   hiddenClassName = "translate-y-6 opacity-0",
   durationClassName = "duration-700",
+  disabled = false,
 }: ScrollStaggerProps) {
+  if (disabled) {
+    return <div className={className}>{children}</div>
+  }
+
   return (
     <ScrollReveal
       className={className}

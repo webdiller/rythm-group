@@ -28,9 +28,10 @@ export interface Channel {
 interface ChannelsProps {
   categories: ChannelCategory[]
   channels: Channel[]
+  animationsEnabled?: boolean
 }
 
-export function Channels({ categories, channels }: ChannelsProps) {
+export function Channels({ categories, channels, animationsEnabled = true }: ChannelsProps) {
   const { locale, t } = useLocale()
   const [activeCategory, setActiveCategory] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -56,7 +57,7 @@ export function Channels({ categories, channels }: ChannelsProps) {
   return (
     <section id="channels" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.channels.title}
@@ -68,7 +69,7 @@ export function Channels({ categories, channels }: ChannelsProps) {
         </ScrollReveal>
 
         {/* Category tabs */}
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-10 flex flex-wrap justify-center gap-2">
             {categories.map((cat) => (
               <button
@@ -95,7 +96,12 @@ export function Channels({ categories, channels }: ChannelsProps) {
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visibleChannels.map((channel, index) => (
-                <ScrollStagger key={channel.id} index={index} delayStep={80}>
+                <ScrollStagger
+                  key={channel.id}
+                  index={index}
+                  delayStep={80}
+                  disabled={!animationsEnabled}
+                >
                   <a
                     href={channel.url}
                     target="_blank"

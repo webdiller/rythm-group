@@ -5,7 +5,7 @@ import { Target, Users, Crosshair } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 
-export function About() {
+export function About({ animationsEnabled = true }: { animationsEnabled?: boolean }) {
   const { t } = useLocale()
 
   const cards = [
@@ -29,7 +29,7 @@ export function About() {
   return (
     <section id="about" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.about.title}
@@ -42,7 +42,13 @@ export function About() {
 
         <div className="grid gap-6 md:grid-cols-3">
           {cards.map((card, index) => (
-            <ScrollStagger className="h-full [&>div]:h-full" key={card.title} index={index} delayStep={120}>
+            <ScrollStagger
+              className="h-full [&>div]:h-full"
+              key={card.title}
+              index={index}
+              delayStep={120}
+              disabled={!animationsEnabled}
+            >
               <div className="group rounded-xl h-full border border-border bg-card p-8 transition-all hover:border-primary/30 glow-border">
                 <div className="mb-5 flex mx-auto h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
                   <card.icon className="h-6 w-6" />

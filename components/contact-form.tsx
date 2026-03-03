@@ -14,7 +14,7 @@ type DirectContactLink = {
   type: "telegram" | "email" | "instagram" | "max" | "other"
 }
 
-export function ContactForm() {
+export function ContactForm({ animationsEnabled = true }: { animationsEnabled?: boolean }) {
   const { locale, t } = useLocale()
   const [formData, setFormData] = useState({
     name: "",
@@ -164,7 +164,7 @@ export function ContactForm() {
       </div>
 
       <div className="relative mx-auto max-w-7xl">
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.contact.title}
@@ -177,7 +177,7 @@ export function ContactForm() {
 
         <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-5">
           {/* Form */}
-          <ScrollReveal className="lg:col-span-3">
+          <ScrollReveal className="lg:col-span-3" disabled={!animationsEnabled}>
             <form
               onSubmit={handleSubmit}
               className="space-y-5 rounded-xl border border-border bg-card p-8"
@@ -283,7 +283,7 @@ export function ContactForm() {
           </ScrollReveal>
 
           {/* Direct contact */}
-          <ScrollReveal rootMargin="100px" className="lg:col-span-2">
+          <ScrollReveal rootMargin="100px" className="lg:col-span-2" disabled={!animationsEnabled}>
             <div className="flex flex-col gap-5">
               {directContacts.length > 0 && (
                 <div className="flex-1 rounded-xl border border-border bg-card p-8">
@@ -305,7 +305,12 @@ export function ContactForm() {
                             : "bg-secondary text-secondary-foreground"
 
                       return (
-                        <ScrollStagger key={link.id} index={index} delayStep={80}>
+                        <ScrollStagger
+                          key={link.id}
+                          index={index}
+                          delayStep={80}
+                          disabled={!animationsEnabled}
+                        >
                           <a
                             href={link.url}
                             target="_blank"
@@ -331,7 +336,7 @@ export function ContactForm() {
 
               {/* Mini stats */}
               <div className="grid grid-cols-2 gap-4">
-                <ScrollStagger index={0} delayStep={100}>
+                <ScrollStagger index={0} delayStep={100} disabled={!animationsEnabled}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
                     <span className="block text-2xl font-bold text-primary text-glow">
                       {t.contact.miniStats.fastResponseValue}
@@ -341,7 +346,7 @@ export function ContactForm() {
                     </span>
                   </div>
                 </ScrollStagger>
-                <ScrollStagger index={1} delayStep={100}>
+                <ScrollStagger index={1} delayStep={100} disabled={!animationsEnabled}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
                     <span className="block text-2xl font-bold text-primary text-glow">
                       {t.contact.miniStats.supportValue}

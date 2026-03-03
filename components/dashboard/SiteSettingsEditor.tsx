@@ -570,9 +570,9 @@ export function SiteSettingsEditor() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
-              <Label htmlFor="hero_animation_enabled">Анимация Hero</Label>
+              <Label htmlFor="hero_animation_enabled">Анимация сайта</Label>
               <p className="text-xs text-muted-foreground">
-                Включает или отключает анимацию световых лучей и появления элементов на главном экране.
+                Включает или отключает анимацию световых лучей и появления элементов на сайте.
               </p>
             </div>
             <Switch

@@ -116,7 +116,7 @@ export default async function Home() {
     hasAnyCustomBackgrounds,
   } = await getHomeData()
 
-  const heroAnimationEnabled = siteSettings?.heroAnimationEnabled ?? true
+  const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
 
   return (
     <LocaleProvider>
@@ -148,12 +148,20 @@ export default async function Home() {
           <div className="relative z-20">
             <Header />
             <main>
-              <Hero animationEnabled={heroAnimationEnabled} />
-              <About />
-              <Channels categories={channelCategories} channels={channels} />
-              <Stats />
-              <Cases categories={partnerCategories} partners={partners} />
-              <ContactForm />
+              <Hero animationEnabled={animationsEnabled} />
+              <About animationsEnabled={animationsEnabled} />
+              <Channels
+                categories={channelCategories}
+                channels={channels}
+                animationsEnabled={animationsEnabled}
+              />
+              <Stats animationsEnabled={animationsEnabled} />
+              <Cases
+                categories={partnerCategories}
+                partners={partners}
+                animationsEnabled={animationsEnabled}
+              />
+              <ContactForm animationsEnabled={animationsEnabled} />
             </main>
             <Footer siteSettings={siteSettings} />
           </div>

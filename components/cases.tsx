@@ -21,9 +21,10 @@ export interface Partner {
 interface CasesProps {
   categories: PartnerCategory[]
   partners: Partner[]
+  animationsEnabled?: boolean
 }
 
-export function Cases({ categories, partners }: CasesProps) {
+export function Cases({ categories, partners, animationsEnabled = true }: CasesProps) {
   const { t } = useLocale()
 
   const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
@@ -45,7 +46,7 @@ export function Cases({ categories, partners }: CasesProps) {
   return (
     <section id="cases" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
-        <ScrollReveal>
+        <ScrollReveal disabled={!animationsEnabled}>
           <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.cases.title}
@@ -60,7 +61,7 @@ export function Cases({ categories, partners }: CasesProps) {
           {partnersByCategory.map(
             ({ category, partners: categoryPartners }) =>
               categoryPartners.length > 0 && (
-                <ScrollReveal key={category.id}>
+                <ScrollReveal key={category.id} disabled={!animationsEnabled}>
                   <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
                     {category.name}
                   </h3>
@@ -94,7 +95,7 @@ export function Cases({ categories, partners }: CasesProps) {
           )}
 
           {uncategorizedPartners.length > 0 && (
-            <ScrollReveal>
+            <ScrollReveal disabled={!animationsEnabled}>
               <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
                 {t.cases.uncategorizedTitle}
               </h3>

@@ -20,6 +20,8 @@ export type ScrollRevealProps = {
   rootMargin?: string
   /** Запускать анимацию только один раз (по умолчанию true) */
   triggerOnce?: boolean
+  /** Отключить анимацию и всегда показывать содержимое */
+  disabled?: boolean
 }
 
 /**
@@ -40,7 +42,12 @@ export function ScrollReveal({
   threshold = 0.1,
   rootMargin = "50px",
   triggerOnce = true,
+  disabled = false,
 }: ScrollRevealProps) {
+  if (disabled) {
+    return <div className={className}>{children}</div>
+  }
+
   const [elementRef, isVisible] = useIntersectionObserver({
     threshold,
     rootMargin,
