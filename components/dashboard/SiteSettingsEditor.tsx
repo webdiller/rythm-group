@@ -17,10 +17,26 @@ export function SiteSettingsEditor() {
   const [heroBackgroundVersion, setHeroBackgroundVersion] = useState(0)
   const [uploadingHeroBackground, setUploadingHeroBackground] = useState(false)
   const [deletingHeroBackground, setDeletingHeroBackground] = useState(false)
+  const [hasHeroBackgroundLight, setHasHeroBackgroundLight] = useState(false)
+  const [heroBackgroundLightVersion, setHeroBackgroundLightVersion] = useState(0)
+  const [uploadingHeroBackgroundLight, setUploadingHeroBackgroundLight] = useState(false)
+  const [deletingHeroBackgroundLight, setDeletingHeroBackgroundLight] = useState(false)
+  const [hasHeroBackgroundDark, setHasHeroBackgroundDark] = useState(false)
+  const [heroBackgroundDarkVersion, setHeroBackgroundDarkVersion] = useState(0)
+  const [uploadingHeroBackgroundDark, setUploadingHeroBackgroundDark] = useState(false)
+  const [deletingHeroBackgroundDark, setDeletingHeroBackgroundDark] = useState(false)
   const [hasGlobalBackground, setHasGlobalBackground] = useState(false)
   const [globalBackgroundVersion, setGlobalBackgroundVersion] = useState(0)
   const [uploadingGlobalBackground, setUploadingGlobalBackground] = useState(false)
   const [deletingGlobalBackground, setDeletingGlobalBackground] = useState(false)
+  const [hasGlobalBackgroundLight, setHasGlobalBackgroundLight] = useState(false)
+  const [globalBackgroundLightVersion, setGlobalBackgroundLightVersion] = useState(0)
+  const [uploadingGlobalBackgroundLight, setUploadingGlobalBackgroundLight] = useState(false)
+  const [deletingGlobalBackgroundLight, setDeletingGlobalBackgroundLight] = useState(false)
+  const [hasGlobalBackgroundDark, setHasGlobalBackgroundDark] = useState(false)
+  const [globalBackgroundDarkVersion, setGlobalBackgroundDarkVersion] = useState(0)
+  const [uploadingGlobalBackgroundDark, setUploadingGlobalBackgroundDark] = useState(false)
+  const [deletingGlobalBackgroundDark, setDeletingGlobalBackgroundDark] = useState(false)
   const [heroAnimationEnabled, setHeroAnimationEnabled] = useState(true)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
@@ -42,16 +58,29 @@ export function SiteSettingsEditor() {
   useEffect(() => {
     const checkBackgrounds = async () => {
       try {
-        const [heroRes, globalRes] = await Promise.all([
-          fetch("/api/site/backgrounds/hero", { cache: "no-store" }),
-          fetch("/api/site/backgrounds/global", { cache: "no-store" }),
-        ])
+        const [heroRes, heroLightRes, heroDarkRes, globalRes, globalLightRes, globalDarkRes] =
+          await Promise.all([
+            fetch("/api/site/backgrounds/hero", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/hero?theme=light", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/hero?theme=dark", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/global", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/global?theme=light", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/global?theme=dark", { cache: "no-store" }),
+          ])
 
         setHasHeroBackground(heroRes.ok)
+        setHasHeroBackgroundLight(heroLightRes.ok)
+        setHasHeroBackgroundDark(heroDarkRes.ok)
         setHasGlobalBackground(globalRes.ok)
+        setHasGlobalBackgroundLight(globalLightRes.ok)
+        setHasGlobalBackgroundDark(globalDarkRes.ok)
       } catch {
         setHasHeroBackground(false)
+        setHasHeroBackgroundLight(false)
+        setHasHeroBackgroundDark(false)
         setHasGlobalBackground(false)
+        setHasGlobalBackgroundLight(false)
+        setHasGlobalBackgroundDark(false)
       }
     }
 
@@ -204,6 +233,51 @@ export function SiteSettingsEditor() {
     }
   }
 
+  const handleUploadHeroBackgroundWithTheme = async (file: File, theme: "light" | "dark") => {
+    const maxSizeBytes = 5 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      toast.error("Файл не должен превышать 5 МБ")
+      return
+    }
+
+    const setUploadingFn =
+      theme === "light" ? setUploadingHeroBackgroundLight : setUploadingHeroBackgroundDark
+
+    setUploadingFn(true)
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(json?.error ?? "Не удалось загрузить фон для hero")
+        return
+      }
+
+      if (theme === "light") {
+        setHasHeroBackgroundLight(true)
+        setHeroBackgroundLightVersion((v) => v + 1)
+      } else {
+        setHasHeroBackgroundDark(true)
+        setHeroBackgroundDarkVersion((v) => v + 1)
+      }
+      toast.success(
+        theme === "light" ? "Фон hero для светлой темы обновлён" : "Фон hero для тёмной темы обновлён",
+      )
+    } catch {
+      toast.error("Не удалось загрузить фон для hero")
+    } finally {
+      setUploadingFn(false)
+    }
+  }
+
   const handleDeleteHeroBackground = async () => {
     setDeletingHeroBackground(true)
     try {
@@ -225,6 +299,40 @@ export function SiteSettingsEditor() {
       toast.error("Не удалось удалить фон для hero")
     } finally {
       setDeletingHeroBackground(false)
+    }
+  }
+
+  const handleDeleteHeroBackgroundWithTheme = async (theme: "light" | "dark") => {
+    const setDeletingFn =
+      theme === "light" ? setDeletingHeroBackgroundLight : setDeletingHeroBackgroundDark
+
+    setDeletingFn(true)
+    try {
+      const token = getToken()
+      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!res.ok) {
+        toast.error("Не удалось удалить фон для hero")
+        return
+      }
+
+      if (theme === "light") {
+        setHasHeroBackgroundLight(false)
+        setHeroBackgroundLightVersion((v) => v + 1)
+      } else {
+        setHasHeroBackgroundDark(false)
+        setHeroBackgroundDarkVersion((v) => v + 1)
+      }
+      toast.success(
+        theme === "light" ? "Фон hero для светлой темы сброшен" : "Фон hero для тёмной темы сброшен",
+      )
+    } catch {
+      toast.error("Не удалось удалить фон для hero")
+    } finally {
+      setDeletingFn(false)
     }
   }
 
@@ -263,6 +371,53 @@ export function SiteSettingsEditor() {
     }
   }
 
+  const handleUploadGlobalBackgroundWithTheme = async (file: File, theme: "light" | "dark") => {
+    const maxSizeBytes = 5 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      toast.error("Файл не должен превышать 5 МБ")
+      return
+    }
+
+    const setUploadingFn =
+      theme === "light" ? setUploadingGlobalBackgroundLight : setUploadingGlobalBackgroundDark
+
+    setUploadingFn(true)
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as { error?: string } | null
+        toast.error(json?.error ?? "Не удалось загрузить общий фон")
+        return
+      }
+
+      if (theme === "light") {
+        setHasGlobalBackgroundLight(true)
+        setGlobalBackgroundLightVersion((v) => v + 1)
+      } else {
+        setHasGlobalBackgroundDark(true)
+        setGlobalBackgroundDarkVersion((v) => v + 1)
+      }
+      toast.success(
+        theme === "light"
+          ? "Общий фон для светлой темы обновлён"
+          : "Общий фон для тёмной темы обновлён",
+      )
+    } catch {
+      toast.error("Не удалось загрузить общий фон")
+    } finally {
+      setUploadingFn(false)
+    }
+  }
+
   const handleDeleteGlobalBackground = async () => {
     setDeletingGlobalBackground(true)
     try {
@@ -284,6 +439,42 @@ export function SiteSettingsEditor() {
       toast.error("Не удалось удалить общий фон")
     } finally {
       setDeletingGlobalBackground(false)
+    }
+  }
+
+  const handleDeleteGlobalBackgroundWithTheme = async (theme: "light" | "dark") => {
+    const setDeletingFn =
+      theme === "light" ? setDeletingGlobalBackgroundLight : setDeletingGlobalBackgroundDark
+
+    setDeletingFn(true)
+    try {
+      const token = getToken()
+      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!res.ok) {
+        toast.error("Не удалось удалить общий фон")
+        return
+      }
+
+      if (theme === "light") {
+        setHasGlobalBackgroundLight(false)
+        setGlobalBackgroundLightVersion((v) => v + 1)
+      } else {
+        setHasGlobalBackgroundDark(false)
+        setGlobalBackgroundDarkVersion((v) => v + 1)
+      }
+      toast.success(
+        theme === "light"
+          ? "Общий фон для светлой темы сброшен"
+          : "Общий фон для тёмной темы сброшен",
+      )
+    } catch {
+      toast.error("Не удалось удалить общий фон")
+    } finally {
+      setDeletingFn(false)
     }
   }
 
@@ -391,27 +582,26 @@ export function SiteSettingsEditor() {
             />
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">
-                <Label>Фон для Hero (16:9)</Label>
+                <Label>Фон Hero для светлой темы (16:9)</Label>
                 <p className="text-xs text-muted-foreground">
-                  Горизонтальное изображение (рекомендуется 16×9), форматы JPG/PNG/WebP, до 5 МБ. При загрузке изображение
-                  будет сжато и обрезано под нужные пропорции.
+                  Используется, когда включена светлая тема. Если не задан, берётся основной фон Hero.
                 </p>
               </div>
               <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                {hasHeroBackground ? (
+                {hasHeroBackgroundLight ? (
                   <img
-                    key={heroBackgroundVersion}
-                    src={`/api/site/backgrounds/hero?ts=${heroBackgroundVersion}`}
-                    alt="Hero background preview"
+                    key={heroBackgroundLightVersion}
+                    src={`/api/site/backgrounds/hero?theme=light&ts=${heroBackgroundLightVersion}`}
+                    alt="Hero background preview (light theme)"
                     className="h-full w-full object-cover"
-                    onError={() => setHasHeroBackground(false)}
+                    onError={() => setHasHeroBackgroundLight(false)}
                   />
                 ) : (
                   <span className="px-2 text-center text-[10px] text-muted-foreground">
-                    Фон hero не загружен
+                    Фон hero для светлой темы не загружен
                   </span>
                 )}
               </div>
@@ -423,23 +613,23 @@ export function SiteSettingsEditor() {
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    void handleUploadHeroBackground(file)
+                    void handleUploadHeroBackgroundWithTheme(file, "light")
                     e.target.value = ""
                   }
                 }}
-                disabled={uploadingHeroBackground}
+                disabled={uploadingHeroBackgroundLight}
               />
             </div>
             <div className="flex justify-end">
               <Button
                 type="button"
                 variant="outline"
-                disabled={!hasHeroBackground || deletingHeroBackground}
+                disabled={!hasHeroBackgroundLight || deletingHeroBackgroundLight}
                 onClick={() => {
-                  void handleDeleteHeroBackground()
+                  void handleDeleteHeroBackgroundWithTheme("light")
                 }}
               >
-                Сбросить фон hero
+                Сбросить фон hero (светлая тема)
               </Button>
             </div>
           </div>
@@ -447,24 +637,23 @@ export function SiteSettingsEditor() {
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">
-                <Label>Общий фон сайта (9:16)</Label>
+                <Label>Фон Hero для тёмной темы (16:9)</Label>
                 <p className="text-xs text-muted-foreground">
-                  Вертикальное изображение (рекомендуется 9×16), форматы JPG/PNG/WebP, до 5 МБ. Применяется ко всем
-                  публичным секциям сайта, кроме hero и админки.
+                  Используется, когда включена тёмная тема. Если не задан, берётся основной фон Hero.
                 </p>
               </div>
               <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
-                {hasGlobalBackground ? (
+                {hasHeroBackgroundDark ? (
                   <img
-                    key={globalBackgroundVersion}
-                    src={`/api/site/backgrounds/global?ts=${globalBackgroundVersion}`}
-                    alt="Global background preview"
+                    key={heroBackgroundDarkVersion}
+                    src={`/api/site/backgrounds/hero?theme=dark&ts=${heroBackgroundDarkVersion}`}
+                    alt="Hero background preview (dark theme)"
                     className="h-full w-full object-cover"
-                    onError={() => setHasGlobalBackground(false)}
+                    onError={() => setHasHeroBackgroundDark(false)}
                   />
                 ) : (
                   <span className="px-2 text-center text-[10px] text-muted-foreground">
-                    Общий фон не загружен
+                    Фон hero для тёмной темы не загружен
                   </span>
                 )}
               </div>
@@ -476,23 +665,127 @@ export function SiteSettingsEditor() {
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    void handleUploadGlobalBackground(file)
+                    void handleUploadHeroBackgroundWithTheme(file, "dark")
                     e.target.value = ""
                   }
                 }}
-                disabled={uploadingGlobalBackground}
+                disabled={uploadingHeroBackgroundDark}
               />
             </div>
             <div className="flex justify-end">
               <Button
                 type="button"
                 variant="outline"
-                disabled={!hasGlobalBackground || deletingGlobalBackground}
+                disabled={!hasHeroBackgroundDark || deletingHeroBackgroundDark}
                 onClick={() => {
-                  void handleDeleteGlobalBackground()
+                  void handleDeleteHeroBackgroundWithTheme("dark")
                 }}
               >
-                Сбросить общий фон
+                Сбросить фон hero (тёмная тема)
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Общий фон для светлой темы (9:16)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Используется, когда включена светлая тема. Если не задан, берётся основной общий фон.
+                </p>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasGlobalBackgroundLight ? (
+                  <img
+                    key={globalBackgroundLightVersion}
+                    src={`/api/site/backgrounds/global?theme=light&ts=${globalBackgroundLightVersion}`}
+                    alt="Global background preview (light theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasGlobalBackgroundLight(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">
+                    Общий фон для светлой темы не загружен
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    void handleUploadGlobalBackgroundWithTheme(file, "light")
+                    e.target.value = ""
+                  }
+                }}
+                disabled={uploadingGlobalBackgroundLight}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasGlobalBackgroundLight || deletingGlobalBackgroundLight}
+                onClick={() => {
+                  void handleDeleteGlobalBackgroundWithTheme("light")
+                }}
+              >
+                Сбросить общий фон (светлая тема)
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Общий фон для тёмной темы (9:16)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Используется, когда включена тёмная тема. Если не задан, берётся основной общий фон.
+                </p>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasGlobalBackgroundDark ? (
+                  <img
+                    key={globalBackgroundDarkVersion}
+                    src={`/api/site/backgrounds/global?theme=dark&ts=${globalBackgroundDarkVersion}`}
+                    alt="Global background preview (dark theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasGlobalBackgroundDark(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">
+                    Общий фон для тёмной темы не загружен
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    void handleUploadGlobalBackgroundWithTheme(file, "dark")
+                    e.target.value = ""
+                  }
+                }}
+                disabled={uploadingGlobalBackgroundDark}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasGlobalBackgroundDark || deletingGlobalBackgroundDark}
+                onClick={() => {
+                  void handleDeleteGlobalBackgroundWithTheme("dark")
+                }}
+              >
+                Сбросить общий фон (тёмная тема)
               </Button>
             </div>
           </div>

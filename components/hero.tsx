@@ -33,15 +33,18 @@ export function Hero({ animationEnabled = true }: HeroProps) {
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
 
   return (
-    <section
-      className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-8 pb-10 md:pt-10 md:pb-12"
-      style={{
-        backgroundImage: "url('/api/site/backgrounds/hero')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
+    <div className="relative">
+      <section className=" flex min-h-screen items-center justify-center overflow-hidden px-6 pt-8 pb-10 md:pt-10 md:pb-12">
+      <div className="absolute inset-0 -z-10" aria-hidden="true">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
+          style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=light')" }}
+        />
+        <div
+          className="absolute inset-0 hidden bg-cover bg-center bg-fixed dark:block"
+          style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
+        />
+      </div>
       <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
       {animationEnabled && (
         <LightRays
@@ -139,5 +142,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
         </div>
       </div>
     </section>
+
+    </div>
   )
 }

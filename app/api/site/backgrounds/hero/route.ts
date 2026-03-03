@@ -7,11 +7,20 @@ import { promises as fs } from "node:fs"
 export const runtime = "nodejs"
 
 const HERO_BG_DIR = path.join(process.cwd(), "public", "backgrounds")
-const HERO_BG_PATH = path.join(HERO_BG_DIR, "hero.webp")
 
-export async function GET() {
+function getHeroPath(theme?: string | null) {
+  if (theme === "light") return path.join(HERO_BG_DIR, "hero-light.webp")
+  if (theme === "dark") return path.join(HERO_BG_DIR, "hero-dark.webp")
+  return path.join(HERO_BG_DIR, "hero.webp")
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const theme = searchParams.get("theme")
+  const targetPath = getHeroPath(theme)
+
   try {
-    const fileBuffer = await fs.readFile(HERO_BG_PATH)
+    const fileBuffer = await fs.readFile(targetPath)
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
@@ -20,6 +29,7 @@ export async function GET() {
       },
     })
   } catch {
+    // Если файла нет (в том числе после сброса), просто не используем картинку
     return new NextResponse(null, { status: 404 })
   }
 }
@@ -27,6 +37,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     requireAuth(request)
+
+    const { searchParams } = new URL(request.url)
+    const theme = searchParams.get("theme")
 
     const formData = await request.formData()
     const file = formData.get("file")
@@ -72,7 +85,7 @@ export async function POST(request: NextRequest) {
       .toBuffer()
 
     await fs.mkdir(HERO_BG_DIR, { recursive: true })
-    await fs.writeFile(HERO_BG_PATH, optimizedBuffer)
+    await fs.writeFile(getHeroPath(theme), optimizedBuffer)
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
@@ -90,8 +103,13 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     requireAuth(request)
+
+    const { searchParams } = new URL(request.url)
+    const theme = searchParams.get("theme")
+    const targetPath = getHeroPath(theme)
+
     try {
-      await fs.unlink(HERO_BG_PATH)
+      await fs.unlink(targetPath)
     } catch {
       // ignore if file does not exist
     }

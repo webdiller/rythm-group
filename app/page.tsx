@@ -8,6 +8,7 @@ import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
 import { Footer, type SiteSettings } from "@/components/footer"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
+import { SiteShell } from "@/components/SiteShell"
 
 function getBaseUrl() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL
@@ -24,10 +25,20 @@ async function getHomeData(): Promise<{
   partnerCategories: PartnerCategory[]
   partners: Partner[]
   siteSettings: SiteSettings | null
+  hasCustomGlobalBackgroundForBothThemes: boolean
+  hasAnyCustomBackgrounds: boolean
 }> {
   const baseUrl = getBaseUrl()
 
-  const [catRes, chanRes, partnerCatRes, partnerRes, settingsRes] = await Promise.all([
+  const [
+    catRes,
+    chanRes,
+    partnerCatRes,
+    partnerRes,
+    settingsRes,
+    globalLightBgRes,
+    globalDarkBgRes,
+  ] = await Promise.all([
     fetch(`${baseUrl}/api/content/channel-categories`, {
       cache: "no-store",
     }),
@@ -41,6 +52,12 @@ async function getHomeData(): Promise<{
       cache: "no-store",
     }),
     fetch(`${baseUrl}/api/site/settings`, {
+      cache: "no-store",
+    }),
+    fetch(`${baseUrl}/api/site/backgrounds/global?theme=light`, {
+      cache: "no-store",
+    }),
+    fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, {
       cache: "no-store",
     }),
   ])
@@ -74,50 +91,74 @@ async function getHomeData(): Promise<{
     siteSettings = settingsJson.data ?? null
   }
 
-  return { channelCategories, channels, partnerCategories, partners, siteSettings }
+  const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
+  const hasAnyCustomBackgrounds = globalLightBgRes.ok || globalDarkBgRes.ok
+
+  return {
+    channelCategories,
+    channels,
+    partnerCategories,
+    partners,
+    siteSettings,
+    hasCustomGlobalBackgroundForBothThemes,
+    hasAnyCustomBackgrounds,
+  }
 }
 
 export default async function Home() {
-  const { channelCategories, channels, partnerCategories, partners, siteSettings } = await getHomeData()
+  const {
+    channelCategories,
+    channels,
+    partnerCategories,
+    partners,
+    siteSettings,
+    hasCustomGlobalBackgroundForBothThemes,
+    hasAnyCustomBackgrounds,
+  } = await getHomeData()
 
   const heroAnimationEnabled = siteSettings?.heroAnimationEnabled ?? true
 
   return (
     <LocaleProvider>
-      <div className="min-h-screen w-full relative">
-        <div
-          className="absolute inset-0 z-0 bg-cover bg-center bg-fixed"
-          style={{ backgroundImage: "url('/api/site/backgrounds/global')" }}
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 z-10 radial-gradient-bg" />
-        <div
-          className="absolute inset-0 z-10 opacity-60"
-          style={{
-            background:
-              "radial-gradient(100% 100% at 80% 20%, rgba(230, 27, 0, 0.08) 0%, transparent 50%)",
-          }}
-        />
-        <div
-          className="absolute inset-0 z-10 opacity-40"
-          style={{
-            background:
-              "radial-gradient(100% 100% at 20% 80%, rgba(230, 27, 0, 0.06) 0%, transparent 50%)",
-          }}
-        />
-        <div className="relative z-20">
-          <Header />
-          <main>
-            <Hero animationEnabled={heroAnimationEnabled} />
-            <About />
-            <Channels categories={channelCategories} channels={channels} />
-            <Stats />
-            <Cases categories={partnerCategories} partners={partners} />
-            <ContactForm />
-          </main>
-          <Footer siteSettings={siteSettings} />
+      <SiteShell hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>
+        <div className="min-h-screen w-full relative">
+          <div className="absolute inset-0 z-0" aria-hidden="true">
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
+              style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=light')" }}
+            />
+            <div
+              className="absolute inset-0 hidden bg-cover bg-center bg-fixed dark:block"
+              style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=dark')" }}
+            />
+          </div>
+          {!hasCustomGlobalBackgroundForBothThemes && (
+            <>
+              <div className="absolute inset-0 z-10 radial-gradient-bg" />
+              <div
+                className="absolute inset-0 z-10 opacity-60"
+                style={{
+                  background:
+                    "radial-gradient(100% 100% at 80% 20%, rgba(230, 27, 0, 0.08) 0%, transparent 50%)",
+                }}
+              />
+            </>
+          )}
+
+          <div className="relative z-20">
+            <Header />
+            <main>
+              <Hero animationEnabled={heroAnimationEnabled} />
+              <About />
+              <Channels categories={channelCategories} channels={channels} />
+              <Stats />
+              <Cases categories={partnerCategories} partners={partners} />
+              <ContactForm />
+            </main>
+            <Footer siteSettings={siteSettings} />
+          </div>
         </div>
-      </div>
+      </SiteShell>
     </LocaleProvider>
   )
 }
