@@ -333,17 +333,21 @@ export function ContactForm() {
               <div className="grid grid-cols-2 gap-4">
                 <ScrollStagger index={0} delayStep={100}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
-                    <span className="block text-2xl font-bold text-primary text-glow">{"<"} 1h</span>
+                    <span className="block text-2xl font-bold text-primary text-glow">
+                      {t.contact.miniStats.fastResponseValue}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {locale === "ru" ? "Время ответа" : "Response Time"}
+                      {t.contact.miniStats.fastResponseLabel}
                     </span>
                   </div>
                 </ScrollStagger>
                 <ScrollStagger index={1} delayStep={100}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
-                    <span className="block text-2xl font-bold text-primary text-glow">24/7</span>
+                    <span className="block text-2xl font-bold text-primary text-glow">
+                      {t.contact.miniStats.supportValue}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {locale === "ru" ? "Поддержка" : "Support"}
+                      {t.contact.miniStats.supportLabel}
                     </span>
                   </div>
                 </ScrollStagger>

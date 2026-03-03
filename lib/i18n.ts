@@ -81,6 +81,12 @@ export const fallbackTranslations = {
       or: "или свяжитесь напрямую",
       telegram: "Написать в Telegram",
       emailUs: "Написать на Email",
+      miniStats: {
+        fastResponseValue: "< 1h",
+        fastResponseLabel: "Время ответа",
+        supportValue: "24/7",
+        supportLabel: "Поддержка",
+      },
     },
     footer: {
       rights: "Все права защищены",
@@ -156,6 +162,12 @@ export const fallbackTranslations = {
       or: "or contact us directly",
       telegram: "Message on Telegram",
       emailUs: "Send an Email",
+      miniStats: {
+        fastResponseValue: "< 1h",
+        fastResponseLabel: "Response Time",
+        supportValue: "24/7",
+        supportLabel: "Support",
+      },
     },
     footer: {
       rights: "All rights reserved",
