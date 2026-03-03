@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
-const sections = ["hero", "about", "stats", "cases", "contact", "nav", "footer"]
+const sections = ["hero", "about", "stats", "channels", "cases", "contact", "nav", "footer"]
 const locales = ["ru", "en"]
 
 type TranslationRow = { id?: number; value: string }
@@ -153,6 +153,7 @@ export function TranslationsEditor() {
       nav: ["about", "channels", "cases", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
       stats: ["title", "subtitle", "items"],
+      channels: ["title", "subtitle"],
       cases: ["title", "subtitle", "empty"],
       contact: ["title", "subtitle", "name", "email", "company", "message", "budget", "submit", "or", "telegram", "emailUs"],
       footer: ["rights", "description"],

@@ -109,8 +109,8 @@ export default async function Home() {
           <Header />
           <main>
             <Hero animationEnabled={heroAnimationEnabled} />
-            <Channels categories={channelCategories} channels={channels} />
             <About />
+            <Channels categories={channelCategories} channels={channels} />
             <Stats />
             <Cases categories={partnerCategories} partners={partners} />
             <ContactForm />
