@@ -58,7 +58,7 @@ export function Footer({ siteSettings }: FooterProps) {
           </nav>
 
           <div className="max-w-sm space-y-3 md:text-left md:order-1">
-            <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}</p>
+            <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}1</p>
             <a
               href="#contact"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"

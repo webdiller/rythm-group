@@ -156,7 +156,7 @@ export function TranslationsEditor() {
       channels: ["title", "subtitle"],
       cases: ["title", "subtitle", "empty"],
       contact: ["title", "subtitle", "name", "email", "company", "message", "budget", "submit", "or", "telegram", "emailUs"],
-      footer: ["rights", "description"],
+      footer: ["rights", "description", "ctaTitle", "privacy", "dataPolicy"],
     }
     return keysMap[section] || []
   }
