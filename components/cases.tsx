@@ -43,7 +43,7 @@ export function Cases({ categories, partners }: CasesProps) {
     uncategorizedPartners.length > 0
 
   return (
-    <section id="cases" className="relative px-6 py-24 md:py-32">
+    <section id="cases" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
           <div className="mb-12 text-center md:mb-16">

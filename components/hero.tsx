@@ -34,7 +34,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
 
   return (
     <section
-      className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-16 pb-20 md:pt-20 md:pb-24"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-8 pb-10 md:pt-10 md:pb-12"
       style={{
         backgroundImage: "url('/api/site/backgrounds/hero')",
         backgroundSize: "cover",

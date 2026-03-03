@@ -8,7 +8,7 @@ export function Stats() {
   const { t } = useLocale()
 
   return (
-    <section className="relative px-6 py-24 md:py-32">
+    <section className="relative px-6 py-12 md:py-16">
       {/* Background accent */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/3 blur-[150px]" />

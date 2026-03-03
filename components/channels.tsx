@@ -54,7 +54,7 @@ export function Channels({ categories, channels }: ChannelsProps) {
   const hiddenCount = Math.max(0, activeChannels.length - MAX_VISIBLE)
 
   return (
-    <section id="channels" className="relative px-6 py-24 md:py-32">
+    <section id="channels" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal>
           <div className="mb-12 text-center md:mb-16">

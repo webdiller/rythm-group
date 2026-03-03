@@ -158,7 +158,7 @@ export function ContactForm() {
   }
 
   return (
-    <section id="contact" className="relative px-6 py-24 md:py-32">
+    <section id="contact" className="relative px-6 py-12 md:py-16">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-0 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-primary/3 blur-[150px]" />
       </div>
