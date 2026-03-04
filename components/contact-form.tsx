@@ -185,7 +185,13 @@ export function ContactForm({
           </div>
         </ScrollReveal>
 
-        <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-5">
+        <div
+          className={
+            hideForm
+              ? "mx-auto max-w-2xl"
+              : "mx-auto grid max-w-5xl gap-8 lg:grid-cols-5"
+          }
+        >
           {/* Form */}
           {!hideForm && (
             <ScrollReveal
@@ -300,7 +306,13 @@ export function ContactForm({
           {/* Direct contact */}
           <ScrollReveal
             rootMargin="100px"
-            className={layout === "formFirst" || hideForm ? "lg:col-span-2 lg:order-2" : "lg:col-span-2 lg:order-1"}
+            className={
+              hideForm
+                ? "w-full"
+                : layout === "formFirst"
+                  ? "lg:col-span-2 lg:order-2"
+                  : "lg:col-span-2 lg:order-1"
+            }
             disabled={!animationsEnabled}
           >
             <div className="flex flex-col gap-5">
