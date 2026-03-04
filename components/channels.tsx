@@ -45,6 +45,10 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
         .sort((a, b) => a.order_index - b.order_index)
     : []
 
+  const uncategorizedChannels = channels
+    .filter((c) => !c.category_id)
+    .sort((a, b) => a.order_index - b.order_index)
+
   useEffect(() => {
     // Reset "show all" when category changes
     setShowAll(false)
@@ -88,72 +92,133 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
         </ScrollReveal>
 
         {/* Channels grid */}
-        {activeChannels.length === 0 ? (
+        {activeChannels.length === 0 && uncategorizedChannels.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             {locale === "ru" ? "Каналы не найдены." : "No channels found."}
           </div>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleChannels.map((channel, index) => (
-                <ScrollStagger
-                  key={channel.id}
-                  index={index}
-                  delayStep={80}
-                  disabled={!animationsEnabled}
-                >
-                  <a
-                    href={channel.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
-                  >
-                    <div className="flex items-center gap-4">
-                      <ChannelAvatar
-                        channelId={channel.id}
-                        name={channel.name}
-                        hasAvatar={channel.hasAvatar}
-                      />
-                      <div>
-                        <h3 className="text-sm font-semibold text-card-foreground">{channel.name}</h3>
-                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <Users className="h-3 w-3" />
-                            <span>
-                              {channel.subscribers} {t.channels.subscribers}
-                            </span>
-                          </div>
-                          {channel.reach && (
-                            <div className="flex items-center gap-1.5">
-                              <BarChart3 className="h-3 w-3" />
-                              <span>
-                                {channel.reach} {t.channels.reach}
-                              </span>
+            {activeChannels.length > 0 && (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {visibleChannels.map((channel, index) => (
+                    <ScrollStagger
+                      key={channel.id}
+                      index={index}
+                      delayStep={80}
+                      disabled={!animationsEnabled}
+                    >
+                      <a
+                        href={channel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
+                      >
+                        <div className="flex items-center gap-4">
+                          <ChannelAvatar
+                            channelId={channel.id}
+                            name={channel.name}
+                            hasAvatar={channel.hasAvatar}
+                          />
+                          <div>
+                            <h3 className="text-sm font-semibold text-card-foreground">
+                              {channel.name}
+                            </h3>
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <Users className="h-3 w-3" />
+                                <span>
+                                  {channel.subscribers} {t.channels.subscribers}
+                                </span>
+                              </div>
+                              {channel.reach && (
+                                <div className="flex items-center gap-1.5">
+                                  <BarChart3 className="h-3 w-3" />
+                                  <span>
+                                    {channel.reach} {t.channels.reach}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                  </a>
-                </ScrollStagger>
-              ))}
-            </div>
-            {hiddenCount > 0 && (
-              <div className="mt-8 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setShowAll((prev) => !prev)}
-                  className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                >
-                  {showAll
-                    ? locale === "ru"
-                      ? "Свернуть список"
-                      : "Show less"
-                    : locale === "ru"
-                      ? `Показать ещё ${hiddenCount}`
-                      : `Show ${hiddenCount} more`}
-                </button>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
+                      </a>
+                    </ScrollStagger>
+                  ))}
+                </div>
+                {hiddenCount > 0 && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAll((prev) => !prev)}
+                      className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    >
+                      {showAll
+                        ? locale === "ru"
+                          ? "Свернуть список"
+                          : "Show less"
+                        : locale === "ru"
+                          ? `Показать ещё ${hiddenCount}`
+                          : `Show ${hiddenCount} more`}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {uncategorizedChannels.length > 0 && (
+              <div className="mt-12">
+                <h3 className="mb-6 text-lg font-semibold text-foreground">
+                  {locale === "ru" ? "Каналы без категории" : "Channels without category"}
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {uncategorizedChannels.map((channel, index) => (
+                    <ScrollStagger
+                      key={channel.id}
+                      index={index}
+                      delayStep={80}
+                      disabled={!animationsEnabled}
+                    >
+                      <a
+                        href={channel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
+                      >
+                        <div className="flex items-center gap-4">
+                          <ChannelAvatar
+                            channelId={channel.id}
+                            name={channel.name}
+                            hasAvatar={channel.hasAvatar}
+                          />
+                          <div>
+                            <h3 className="text-sm font-semibold text-card-foreground">
+                              {channel.name}
+                            </h3>
+                            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <Users className="h-3 w-3" />
+                                <span>
+                                  {channel.subscribers} {t.channels.subscribers}
+                                </span>
+                              </div>
+                              {channel.reach && (
+                                <div className="flex items-center gap-1.5">
+                                  <BarChart3 className="h-3 w-3" />
+                                  <span>
+                                    {channel.reach} {t.channels.reach}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
+                      </a>
+                    </ScrollStagger>
+                  ))}
+                </div>
               </div>
             )}
           </>

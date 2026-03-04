@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const parsed = CreateOneBody.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: "category_id, name, subscribers, and url are required", errors: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json(
+        { error: "name, subscribers, and url are required", errors: parsed.error.flatten() },
+        { status: 400 },
+      )
     }
     const result = ServiceChannels.createOne(parsed.data)
     return NextResponse.json(result, { status: 201 })

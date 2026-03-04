@@ -12,7 +12,7 @@ import { Plus, Trash2, Edit, Image as ImageIcon, ArrowUp, ArrowDown } from "luci
 
 interface Channel {
   id: number
-  category_id: string
+  category_id: string | null
   name: string
   subscribers: string
   // Average reach/coverage for the channel
@@ -84,14 +84,14 @@ export function ChannelsEditor() {
         ? { ...channel, id: editingChannel.id }
         : channel
 
-      // Если создаём новый канал и не задан order_index — ставим в конец списка внутри категории
+      // Если создаём новый канал и не задан order_index — ставим в конец списка внутри выбранной группы (категории или без категории)
       if (!editingChannel) {
-        const categoryId = body.category_id ?? (categories[0]?.id ?? "")
+        const categoryId = (body.category_id ?? null) as string | null
         const existing = channels.filter((ch) => ch.category_id === categoryId)
         const maxOrder =
           existing.length > 0 ? Math.max(...existing.map((ch) => ch.order_index ?? 0)) : 0
         if (body.order_index == null) {
-          body = { ...body, category_id: categoryId, order_index: maxOrder + 1 }
+          body = { ...body, category_id: categoryId ?? null, order_index: maxOrder + 1 }
         }
       }
 
@@ -160,6 +160,11 @@ export function ChannelsEditor() {
       .sort((a, b) => a.order_index - b.order_index)
     return acc
   }, {} as Record<string, Channel[]>)
+
+  const uncategorizedChannels = channels
+    .filter((ch) => !ch.category_id)
+    .slice()
+    .sort((a, b) => a.order_index - b.order_index)
 
   const handleUploadAvatar = async (channelId: number, file: File) => {
     try {
@@ -547,6 +552,55 @@ export function ChannelsEditor() {
           </Dialog>
         </div>
 
+        {/* Каналы без категории — отдельным списком сверху */}
+        {uncategorizedChannels.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Каналы без категории</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {uncategorizedChannels.map((channel) => (
+                  <div
+                    key={channel.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <AdminChannelAvatar
+                        channelId={channel.id}
+                        name={channel.name}
+                        version={avatarsVersion}
+                      />
+                      <div>
+                        <div className="font-semibold">{channel.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {channel.subscribers} подписчиков
+                          {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingChannel(channel)
+                          setIsDialogOpen(true)
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(channel.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {categories.map((category) => (
           <Card key={category.id} className="mb-6">
             <CardHeader>
@@ -748,7 +802,7 @@ function ChannelForm({
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState({
-    category_id: channel?.category_id || categories[0]?.id || "",
+    category_id: channel?.category_id ?? null,
     name: channel?.name || "",
     subscribers: channel?.subscribers || "",
     reach: channel?.reach || "",
@@ -785,11 +839,17 @@ function ChannelForm({
     >
       <div className="space-y-2">
         <Label>Category</Label>
-        <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+        <Select
+          value={formData.category_id ?? "none"}
+          onValueChange={(value) =>
+            setFormData({ ...formData, category_id: value === "none" ? null : value })
+          }
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">Без категории</SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
                 {cat.name_ru} / {cat.name_en}

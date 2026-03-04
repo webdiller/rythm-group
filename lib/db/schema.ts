@@ -50,9 +50,10 @@ export const relationsChannelCategories = relations(tableChannelCategories, ({ m
 // ---------------------------------------------------------------------------
 export const tableChannels = sqliteTable("channels", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  category_id: text("category_id")
-    .notNull()
-    .references(() => tableChannelCategories.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  category_id: text("category_id").references(() => tableChannelCategories.id, {
+    onDelete: "set null",
+    onUpdate: "cascade",
+  }),
   name: text("name").notNull(),
   subscribers: text("subscribers").notNull(),
   // Average reach/coverage per channel (e.g. average views)

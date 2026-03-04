@@ -16,18 +16,15 @@ export const GetOneResponse = SharedDefaultResponse.extend({
   data: allZodSchemas.tableChannels.select.nullable(),
 })
 
-export const CreateOneBody = allZodSchemas.tableChannels.insert
-  .pick({
-    category_id: true,
-    name: true,
-    subscribers: true,
-    reach: true,
-    url: true,
-    order_index: true,
-  })
-  .extend({
-    avatar: allZodSchemas.tableChannels.insert.shape.avatar.optional(),
-  })
+export const CreateOneBody = z.object({
+  category_id: z.string().nullable().optional(),
+  name: allZodSchemas.tableChannels.insert.shape.name,
+  subscribers: allZodSchemas.tableChannels.insert.shape.subscribers,
+  reach: allZodSchemas.tableChannels.insert.shape.reach.optional(),
+  url: allZodSchemas.tableChannels.insert.shape.url,
+  order_index: allZodSchemas.tableChannels.insert.shape.order_index.optional(),
+  avatar: allZodSchemas.tableChannels.insert.shape.avatar.optional(),
+})
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
   data: allZodSchemas.tableChannels.select,
