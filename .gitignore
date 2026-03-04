@@ -17,3 +17,4 @@ data/
 
 # ETC
 .env
+tsconfig.tsbuildinfo
