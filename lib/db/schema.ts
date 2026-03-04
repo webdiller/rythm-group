@@ -125,6 +125,8 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   privacyPolicyUrl: text("privacy_policy_url"),
   dataProcessingPolicyUrl: text("data_processing_policy_url"),
   heroAnimationEnabled: integer("hero_animation_enabled", { mode: "boolean" }).default(true),
+  // How to display partners on landing: "name", "logo", "logoAndName"
+  partnersDisplayMode: text("partners_display_mode"),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

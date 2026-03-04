@@ -6,6 +6,7 @@ export type SiteSettings = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
+  partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
 }
 
 type FooterProps = {

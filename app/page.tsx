@@ -117,6 +117,9 @@ export default async function Home() {
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
+  const partnersDisplayMode =
+    (siteSettings?.partnersDisplayMode as "name" | "logo" | "logoAndName" | null) ??
+    "logoAndName"
 
   return (
     <LocaleProvider>
@@ -160,6 +163,7 @@ export default async function Home() {
                 categories={partnerCategories}
                 partners={partners}
                 animationsEnabled={animationsEnabled}
+                displayMode={partnersDisplayMode}
               />
               <ContactForm animationsEnabled={animationsEnabled} />
             </main>

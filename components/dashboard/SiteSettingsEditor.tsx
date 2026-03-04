@@ -38,6 +38,9 @@ export function SiteSettingsEditor() {
   const [uploadingGlobalBackgroundDark, setUploadingGlobalBackgroundDark] = useState(false)
   const [deletingGlobalBackgroundDark, setDeletingGlobalBackgroundDark] = useState(false)
   const [heroAnimationEnabled, setHeroAnimationEnabled] = useState(true)
+  const [partnersDisplayMode, setPartnersDisplayMode] = useState<"name" | "logo" | "logoAndName">(
+    "logoAndName",
+  )
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -46,6 +49,7 @@ export function SiteSettingsEditor() {
     heroAnimationEnabled: boolean
     privacyPolicyUrl: string
     dataProcessingPolicyUrl: string
+    partnersDisplayMode: "name" | "logo" | "logoAndName"
   } | null>(null)
 
   useEffect(() => {
@@ -99,6 +103,7 @@ export function SiteSettingsEditor() {
             heroAnimationEnabled?: boolean | null
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
+            partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
           } | null
         }
 
@@ -106,6 +111,7 @@ export function SiteSettingsEditor() {
         const heroAnimation = data?.heroAnimationEnabled ?? true
         const privacy = data?.privacyPolicyUrl ?? ""
         const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
+        const partnersMode = data?.partnersDisplayMode ?? "logoAndName"
 
         setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
@@ -114,7 +120,9 @@ export function SiteSettingsEditor() {
           heroAnimationEnabled: heroAnimation,
           privacyPolicyUrl: privacy,
           dataProcessingPolicyUrl: dataPolicy,
+          partnersDisplayMode: partnersMode,
         })
+        setPartnersDisplayMode(partnersMode)
       } catch {
         // ignore, settings are optional
       } finally {
@@ -143,6 +151,7 @@ export function SiteSettingsEditor() {
           heroAnimationEnabled,
           privacyPolicyUrl: privacyPolicyUrl || null,
           dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
+          partnersDisplayMode,
         }),
       })
 
@@ -156,6 +165,7 @@ export function SiteSettingsEditor() {
         heroAnimationEnabled,
         privacyPolicyUrl,
         dataProcessingPolicyUrl,
+        partnersDisplayMode,
       })
     } catch {
       toast.error("Не удалось сохранить настройки сайта")
@@ -788,6 +798,31 @@ export function SiteSettingsEditor() {
                 Сбросить общий фон (тёмная тема)
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Отображение партнёров (кейсы)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="partners_display_mode">Режим отображения</Label>
+            <select
+              id="partners_display_mode"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value={partnersDisplayMode}
+              onChange={(e) =>
+                setPartnersDisplayMode(e.target.value as "name" | "logo" | "logoAndName")
+              }
+            >
+              <option value="name">Только название</option>
+              <option value="logo">Только эмблема</option>
+              <option value="logoAndName">Эмблема и название снизу</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Определяет, как партнёры будут отображаться на лендинге в блоке кейсов.
+            </p>
           </div>
         </CardContent>
       </Card>

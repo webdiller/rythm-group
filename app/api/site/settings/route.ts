@@ -6,10 +6,13 @@ import { requireAuth } from "@/lib/auth"
 
 export const runtime = "nodejs"
 
+type PartnersDisplayMode = "name" | "logo" | "logoAndName"
+
 type SiteSettingsPayload = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
+  partnersDisplayMode?: PartnersDisplayMode | null
 }
 
 export async function GET() {
@@ -30,11 +33,16 @@ export async function PUT(request: NextRequest) {
     const db = getDb()
     const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
 
+    const currentDisplayMode =
+      (existing?.partnersDisplayMode as PartnersDisplayMode | null | undefined) ??
+      "logoAndName"
+
     const updateValues: SiteSettingsPayload = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
       dataProcessingPolicyUrl: body.dataProcessingPolicyUrl ?? null,
       heroAnimationEnabled:
         typeof body.heroAnimationEnabled === "boolean" ? body.heroAnimationEnabled : true,
+      partnersDisplayMode: body.partnersDisplayMode ?? currentDisplayMode,
     }
 
     if (existing) {
@@ -55,6 +63,7 @@ export async function PUT(request: NextRequest) {
         privacyPolicyUrl: updateValues.privacyPolicyUrl ?? null,
         dataProcessingPolicyUrl: updateValues.dataProcessingPolicyUrl ?? null,
         heroAnimationEnabled: updateValues.heroAnimationEnabled ?? true,
+        partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
       })
       .returning()
       .all()

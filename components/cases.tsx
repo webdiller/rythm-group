@@ -5,6 +5,8 @@ import clsx from "clsx"
 import { useLocale } from "@/lib/locale-context"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 
+type PartnerDisplayMode = "name" | "logo" | "logoAndName"
+
 export interface PartnerCategory {
   id: number
   name: string
@@ -23,9 +25,15 @@ interface CasesProps {
   categories: PartnerCategory[]
   partners: Partner[]
   animationsEnabled?: boolean
+  displayMode?: PartnerDisplayMode
 }
 
-export function Cases({ categories, partners, animationsEnabled = true }: CasesProps) {
+export function Cases({
+  categories,
+  partners,
+  animationsEnabled = true,
+  displayMode = "logoAndName",
+}: CasesProps) {
   const { locale, t } = useLocale()
   const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({})
   const [showAllUncategorized, setShowAllUncategorized] = useState(false)
@@ -79,28 +87,7 @@ export function Cases({ categories, partners, animationsEnabled = true }: CasesP
                   </h3>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {visiblePartners.map((partner) => (
-                      <div
-                        key={partner.id}
-                        className={clsx(
-                          "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
-                          partner.logo_url ? "p-0" : "p-6",
-                        )}
-                      >
-                        {partner.logo_url ? (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <img
-                              src={`/api/content/partners/${partner.id}/logo`}
-                              alt={partner.name}
-                              title={partner.name}
-                              className="max-h-16 max-w-full object-contain rounded-xl overflow-hidden"
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-center text-sm font-medium text-foreground">
-                            {partner.name}
-                          </span>
-                        )}
-                      </div>
+                      <PartnerCard key={partner.id} partner={partner} displayMode={displayMode} />
                     ))}
                   </div>
                   {hiddenCount > 0 && (
@@ -140,28 +127,7 @@ export function Cases({ categories, partners, animationsEnabled = true }: CasesP
                   ? uncategorizedPartners
                   : uncategorizedPartners.slice(0, MAX_VISIBLE)
                 ).map((partner) => (
-                  <div
-                    key={partner.id}
-                    className={clsx(
-                      "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
-                      partner.logo_url ? "p-0" : "p-6",
-                    )}
-                  >
-                    {partner.logo_url ? (
-                      <div className="flex h-16 w-full items-center justify-center">
-                        <img
-                          src={`/api/content/partners/${partner.id}/logo`}
-                          alt={partner.name}
-                          title={partner.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-center text-sm font-medium text-foreground">
-                        {partner.name}
-                      </span>
-                    )}
-                  </div>
+                  <PartnerCard key={partner.id} partner={partner} displayMode={displayMode} />
                 ))}
               </div>
               {uncategorizedPartners.length > MAX_VISIBLE && (
@@ -192,5 +158,72 @@ export function Cases({ categories, partners, animationsEnabled = true }: CasesP
         </div>
       </div>
     </section>
+  )
+}
+
+function PartnerCard({
+  partner,
+  displayMode,
+}: {
+  partner: Partner
+  displayMode: PartnerDisplayMode
+}) {
+  const hasLogo = Boolean(partner.logo_url)
+
+  const paddingClass =
+    displayMode === "logo"
+      ? hasLogo
+        ? "p-0"
+        : "p-6"
+      : displayMode === "name"
+        ? "p-6"
+        : "p-4"
+
+  return (
+    <div
+      className={clsx(
+        "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
+        paddingClass,
+      )}
+    >
+      {displayMode === "name" && (
+        <span className="text-center text-sm font-medium text-foreground">{partner.name}</span>
+      )}
+
+      {displayMode === "logo" && (
+        <>
+          {hasLogo ? (
+            <div className="flex h-16 w-full items-center justify-center">
+              <img
+                src={`/api/content/partners/${partner.id}/logo`}
+                alt={partner.name}
+                title={partner.name}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ) : (
+            <span className="text-center text-sm font-medium text-foreground">
+              {partner.name}
+            </span>
+          )}
+        </>
+      )}
+
+      {displayMode === "logoAndName" && (
+        <div className="flex flex-col items-center justify-center gap-2">
+          {hasLogo && (
+            <div className="flex h-16 w-full items-center justify-center">
+              <img
+                src={`/api/content/partners/${partner.id}/logo`}
+                alt={partner.name}
+                title={partner.name}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          )}
+          <span className="text-center text-xs font-medium text-foreground">{partner.name}</span>
+        </div>
+      )}
+    </div>
   )
 }
