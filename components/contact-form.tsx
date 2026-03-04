@@ -12,6 +12,7 @@ type DirectContactLink = {
   url: string
   description?: string
   type: "telegram" | "email" | "instagram" | "max" | "other"
+  icon?: string | null
 }
 
 type ContactLayout = "formFirst" | "contactsFirst"
@@ -76,7 +77,8 @@ export function ContactForm({
                     typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max"
                       ? typeValue
                       : "other"
-                  return { id, label, url, description, type }
+                  const icon = typeof raw.icon === "string" ? raw.icon : null
+                  return { id, label, url, description, type, icon }
                 })
                 .filter((v): v is DirectContactLink => v !== null)
             }
@@ -315,7 +317,7 @@ export function ContactForm({
             }
             disabled={!animationsEnabled}
           >
-            <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5">
               {directContacts.length > 0 && (
                 <div className="flex-1 rounded-xl border border-border bg-card p-8">
                   <p className="mb-6 text-sm text-muted-foreground">{t.contact.or}</p>
@@ -348,9 +350,19 @@ export function ContactForm({
                             rel="noopener noreferrer"
                             className="flex items-center gap-4 rounded-lg border border-border bg-secondary/50 p-4 transition-all hover:border-primary/30 hover:bg-secondary"
                           >
-                            <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${iconClasses}`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
+                            {link.icon ? (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground overflow-hidden">
+                                <img
+                                  src={`/${link.icon}`}
+                                  alt={link.label}
+                                  className="h-10 w-10 object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${iconClasses}`}>
+                                <Icon className="h-5 w-5" />
+                              </div>
+                            )}
                             <div>
                               <span className="block text-sm font-semibold text-foreground">{link.label}</span>
                               {link.description && (

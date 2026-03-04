@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
 interface Contact {
@@ -21,6 +22,7 @@ type DirectContactLink = {
   url: string
   description?: string
   type: "telegram" | "email" | "instagram" | "max" | "other"
+  icon?: string | null
 }
 
 export function ContactsEditor() {
@@ -73,7 +75,8 @@ export function ContactsEditor() {
                     typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max"
                       ? typeValue
                       : "other"
-                  return { id, label, url, description, type }
+                  const icon = typeof raw.icon === "string" ? raw.icon : null
+                  return { id, label, url, description, type, icon }
                 })
                 .filter((v): v is DirectContactLink => v !== null)
 
@@ -212,22 +215,60 @@ export function ContactsEditor() {
                     />
                   </div>
                   <div className="space-y-1 md:col-span-1">
-                    <Label className="text-xs">Type</Label>
-                    <Input
-                      value={link.type}
-                      onChange={(e) => {
-                        const value = e.target.value as DirectContactLink["type"]
+                    <Label className="text-xs">Иконка</Label>
+                    {/*
+                      Используем специальное значение "none" вместо пустой строки,
+                      потому что Select.Item не поддерживает пустой value.
+                    */}
+                    <Select
+                      value={link.icon ?? "none"}
+                      onValueChange={(value) => {
                         const next = [...directContacts]
                         next[index] = {
                           ...next[index],
-                          type: (["telegram", "email", "instagram", "max", "other"] as const).includes(value)
-                            ? value
-                            : "other",
+                          icon: value === "none" ? null : value,
                         }
                         setDirectContacts(next)
                       }}
-                      placeholder="telegram / email / instagram / max / other"
-                    />
+                    >
+                      <SelectTrigger className="h-8 px-2 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted text-[10px]">
+                              —
+                            </span>
+                            <span>Без иконки</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="icon-phone.svg">
+                          <div className="flex items-center gap-2">
+                            <img src="/icon-phone.svg" alt="" className="h-6 w-6 object-contain" />
+                            <span>Телефон</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="icon-telegram.svg">
+                          <div className="flex items-center gap-2">
+                            <img src="/icon-telegram.svg" alt="" className="h-6 w-6 object-contain" />
+                            <span>Telegram</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="icon-viber.svg">
+                          <div className="flex items-center gap-2">
+                            <img src="/icon-viber.svg" alt="" className="h-6 w-6 object-contain" />
+                            <span>Viber</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="icon-whatsapp.svg">
+                          <div className="flex items-center gap-2">
+                            <img src="/icon-whatsapp.svg" alt="" className="h-6 w-6 object-contain" />
+                            <span>WhatsApp</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1 md:col-span-2">
                     <Label className="text-xs">Description (optional)</Label>
@@ -267,6 +308,7 @@ export function ContactsEditor() {
                       label: "",
                       url: "",
                       type: "telegram",
+                      icon: "icon-telegram.svg",
                     },
                   ])
                 }
