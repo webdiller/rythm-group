@@ -79,6 +79,7 @@ export function Cases({ categories, partners, animationsEnabled = true }: CasesP
                             <img
                               src={`/api/content/partners/${partner.id}/logo`}
                               alt={partner.name}
+                              title={partner.name}
                               className="max-h-16 max-w-full object-contain rounded-xl overflow-hidden"
                             />
                           </div>
@@ -113,6 +114,7 @@ export function Cases({ categories, partners, animationsEnabled = true }: CasesP
                         <img
                           src={`/api/content/partners/${partner.id}/logo`}
                           alt={partner.name}
+                          title={partner.name}
                           className="max-h-full max-w-full object-contain"
                         />
                       </div>

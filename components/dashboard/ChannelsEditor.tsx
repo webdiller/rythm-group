@@ -84,15 +84,13 @@ export function ChannelsEditor() {
         ? { ...channel, id: editingChannel.id }
         : channel
 
-      // Если создаём новый канал и не задан order_index — ставим в конец списка внутри выбранной группы (категории или без категории)
+      // Если создаём новый канал — всегда ставим в конец списка внутри выбранной группы (категории или без категории)
       if (!editingChannel) {
         const categoryId = (body.category_id ?? null) as string | null
         const existing = channels.filter((ch) => ch.category_id === categoryId)
         const maxOrder =
           existing.length > 0 ? Math.max(...existing.map((ch) => ch.order_index ?? 0)) : 0
-        if (body.order_index == null) {
-          body = { ...body, category_id: categoryId ?? null, order_index: maxOrder + 1 }
-        }
+        body = { ...body, category_id: categoryId ?? null, order_index: maxOrder + 1 }
       }
 
       const response = await fetch(url, {

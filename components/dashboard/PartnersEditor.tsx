@@ -66,7 +66,7 @@ export function PartnersEditor() {
     return document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
   }
 
-  const handleSavePartner = async (partner: Partial<Partner>) => {
+  const handleSavePartner = async (partner: Partial<Partner>, logoFile?: File | null) => {
     try {
       const token = getToken()
       const url = "/api/content/partners"
@@ -75,15 +75,13 @@ export function PartnersEditor() {
         ? { ...partner, id: editingPartner.id }
         : partner
 
-      // Если создаём новый кейс и не задан order_index — ставим его в конец списка внутри категории
+      // Если создаём новый кейс — всегда ставим его в конец списка внутри выбранной категории (или среди без категории)
       if (!editingPartner) {
         const categoryId = body.category_id ?? null
         const existing = partners.filter((p) => p.category_id === categoryId)
         const maxOrder =
           existing.length > 0 ? Math.max(...existing.map((p) => p.order_index ?? 0)) : 0
-        if (body.order_index == null) {
-          body = { ...body, order_index: maxOrder + 1 }
-        }
+        body = { ...body, category_id: categoryId, order_index: maxOrder + 1 }
       }
 
       const response = await fetch(url, {
@@ -96,6 +94,35 @@ export function PartnersEditor() {
       })
 
       if (response.ok) {
+        let createdOrUpdatedId: number | undefined
+        try {
+          const json = (await response.json()) as { data?: { id?: number } }
+          createdOrUpdatedId = json.data?.id ?? editingPartner?.id
+        } catch {
+          createdOrUpdatedId = editingPartner?.id
+        }
+
+        // Если создаём нового партнёра и выбран логотип — загружаем его сразу после создания
+        if (!editingPartner && logoFile && createdOrUpdatedId != null) {
+          const maxSizeBytes = 5 * 1024 * 1024
+          if (logoFile.size > maxSizeBytes) {
+            toast.error("Файл логотипа не должен превышать 5 МБ")
+          } else {
+            const logoToken = getToken()
+            const formData = new FormData()
+            formData.append("file", logoFile)
+            formData.append("partnerId", String(createdOrUpdatedId))
+            const logoRes = await fetch("/api/content/partners/logo", {
+              method: "POST",
+              headers: logoToken ? { Authorization: `Bearer ${logoToken}` } : undefined,
+              body: formData,
+            })
+            if (!logoRes.ok) {
+              toast.error("Не удалось загрузить логотип")
+            }
+          }
+        }
+
         toast.success(editingPartner ? "Кейс обновлён" : "Кейс добавлен")
         setIsPartnerDialogOpen(false)
         setEditingPartner(null)
@@ -658,7 +685,7 @@ function PartnerForm({
 }: {
   partner: Partner | null
   categories: PartnerCategory[]
-  onSave: (partner: Partial<Partner>) => void
+  onSave: (partner: Partial<Partner>, logoFile?: File | null) => void
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState<{
@@ -673,6 +700,20 @@ function PartnerForm({
 
   const [hasLogo, setHasLogo] = useState(Boolean(partner?.logo_url))
   const [logoVersion, setLogoVersion] = useState(0)
+  const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
+  const [newLogoPreviewUrl, setNewLogoPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!newLogoFile) {
+      setNewLogoPreviewUrl(null)
+      return
+    }
+    const objectUrl = URL.createObjectURL(newLogoFile)
+    setNewLogoPreviewUrl(objectUrl)
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [newLogoFile])
 
   const NO_CATEGORY_VALUE = "none"
 
@@ -680,10 +721,13 @@ function PartnerForm({
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        onSave({
-          ...formData,
-          category_id: formData.category_id,
-        })
+        onSave(
+          {
+            ...formData,
+            category_id: formData.category_id,
+          },
+          newLogoFile ?? undefined,
+        )
       }}
       className="space-y-4"
     >
@@ -808,6 +852,27 @@ function PartnerForm({
             </div>
           )}
         </div>
+        {!partner && (
+          <div className="mt-3 flex flex-col gap-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null
+                setNewLogoFile(file)
+              }}
+            />
+            {newLogoPreviewUrl && (
+              <div className="h-16 w-32 flex items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+                <img
+                  src={newLogoPreviewUrl}
+                  alt={formData.name || "Новый партнёр"}
+                  className="max-h-16 w-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
