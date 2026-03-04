@@ -75,7 +75,7 @@ export function ChannelsEditor() {
     return document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
   }
 
-  const handleSave = async (channel: Partial<Channel>) => {
+  const handleSave = async (channel: Partial<Channel>, avatarFile?: File | null) => {
     try {
       const token = getToken()
       const url = "/api/content/channels"
@@ -105,6 +105,19 @@ export function ChannelsEditor() {
       })
 
       if (response.ok) {
+        let createdOrUpdatedId: number | undefined
+        try {
+          const json = (await response.json()) as { data?: { id?: number } }
+          createdOrUpdatedId = json.data?.id
+        } catch {
+          createdOrUpdatedId = editingChannel?.id
+        }
+
+        // Если создаём новый канал и был выбран аватар — загружаем его сразу после создания
+        if (!editingChannel && avatarFile && createdOrUpdatedId != null) {
+          await handleUploadAvatar(createdOrUpdatedId, avatarFile)
+        }
+
         toast.success(editingChannel ? "Channel updated" : "Channel created")
         setIsDialogOpen(false)
         setEditingChannel(null)
@@ -729,7 +742,7 @@ function ChannelForm({
 }: {
   channel: Channel | null
   categories: Category[]
-  onSave: (channel: Partial<Channel>) => void
+  onSave: (channel: Partial<Channel>, avatarFile?: File | null) => void
   onUploadAvatar: (channelId: number, file: File) => Promise<void> | void
   onDeleteAvatar: (channelId: number) => void
   onCancel: () => void
@@ -745,12 +758,28 @@ function ChannelForm({
 
   const [hasAvatar, setHasAvatar] = useState(true)
   const [avatarVersion, setAvatarVersion] = useState(0)
+  const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null)
+  const [newAvatarPreviewUrl, setNewAvatarPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!newAvatarFile) {
+      setNewAvatarPreviewUrl(null)
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(newAvatarFile)
+    setNewAvatarPreviewUrl(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [newAvatarFile])
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        onSave(formData)
+        onSave(formData, newAvatarFile ?? undefined)
       }}
       className="space-y-4"
     >
@@ -844,6 +873,33 @@ function ChannelForm({
               )}
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Изображение до 5 МБ. При загрузке будет автоматически сжато до 256x256 и формата WebP.
+          </p>
+        </div>
+      )}
+      {!channel && (
+        <div className="space-y-2">
+          <Label>Аватар канала (опционально)</Label>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null
+              setNewAvatarFile(file)
+            }}
+          />
+          {newAvatarPreviewUrl && (
+            <div className="mt-2">
+              <div className="h-12 w-12 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
+                <img
+                  src={newAvatarPreviewUrl}
+                  alt={formData.name || "Новый канал"}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             Изображение до 5 МБ. При загрузке будет автоматически сжато до 256x256 и формата WebP.
           </p>
