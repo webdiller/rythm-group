@@ -153,7 +153,7 @@ export function TranslationsEditor() {
       nav: ["about", "channels", "cases", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
       stats: ["title", "subtitle", "items"],
-      channels: ["title", "subtitle"],
+      channels: ["title", "subtitle", "subscribers", "reach"],
       cases: ["title", "subtitle", "empty"],
       contact: [
         "title",
