@@ -146,6 +146,17 @@ export function TranslationsEditor() {
     }
   }
 
+  const parseBudgetOptions = (raw: string): string[] => {
+    if (!raw) return []
+    try {
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return []
+      return parsed.map((item) => (typeof item === "string" ? item : ""))
+    } catch {
+      return []
+    }
+  }
+
   const getNestedKeys = (section: string): string[] => {
     // Generate keys based on section structure
     const keysMap: Record<string, string[]> = {
@@ -163,6 +174,7 @@ export function TranslationsEditor() {
         "company",
         "message",
         "budget",
+        "budgetOptions",
         "submit",
         "or",
         "telegram",
@@ -295,6 +307,56 @@ export function TranslationsEditor() {
                       {" "}
                       <code>value</code> и <code>label</code>.
                     </p>
+                  </div>
+                </div>
+              )
+            }
+
+            if (selectedSection === "contact" && key === "budgetOptions") {
+              const options = parseBudgetOptions(translations[key]?.value ?? "")
+
+              const updateOptions = (next: string[]) => {
+                handleChange(key, JSON.stringify(next, null, 2))
+              }
+
+              return (
+                <div key={key} className="space-y-2">
+                  <Label>{key}</Label>
+                  <div className="space-y-3">
+                    {options.map((opt, index) => (
+                      <Card key={index}>
+                        <CardContent className="flex items-center gap-3">
+                          <Input
+                            value={opt}
+                            onChange={(e) => {
+                              const next = [...options]
+                              next[index] = e.target.value
+                              updateOptions(next)
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              const next = options.filter((_, i) => i !== index)
+                              updateOptions(next)
+                            }}
+                          >
+                            ×
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateOptions([...options, ""])
+                      }
+                    >
+                      Добавить бюджет
+                    </Button>
                   </div>
                 </div>
               )

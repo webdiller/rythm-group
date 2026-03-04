@@ -7,6 +7,8 @@ export type SiteSettings = {
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
   partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
+  contactLayout?: "formFirst" | "contactsFirst" | null
+  contactFormHidden?: boolean | null
 }
 
 type FooterProps = {

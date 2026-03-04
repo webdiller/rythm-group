@@ -117,6 +117,9 @@ export default async function Home() {
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
+  const contactLayout =
+    (siteSettings?.contactLayout as "formFirst" | "contactsFirst" | null) ?? "formFirst"
+  const contactFormHidden = siteSettings?.contactFormHidden ?? false
   const partnersDisplayMode =
     (siteSettings?.partnersDisplayMode as "name" | "logo" | "logoAndName" | null) ??
     "logoAndName"
@@ -165,7 +168,11 @@ export default async function Home() {
                 animationsEnabled={animationsEnabled}
                 displayMode={partnersDisplayMode}
               />
-              <ContactForm animationsEnabled={animationsEnabled} />
+              <ContactForm
+                animationsEnabled={animationsEnabled}
+                layout={contactLayout}
+                hideForm={contactFormHidden}
+              />
             </main>
             <Footer siteSettings={siteSettings} />
           </div>

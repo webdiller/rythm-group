@@ -127,6 +127,10 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   heroAnimationEnabled: integer("hero_animation_enabled", { mode: "boolean" }).default(true),
   // How to display partners on landing: "name", "logo", "logoAndName"
   partnersDisplayMode: text("partners_display_mode"),
+  // How to layout contact section: "formFirst" or "contactsFirst"
+  contactLayout: text("contact_layout"),
+  // If true, hide email form and show only direct contacts
+  contactFormHidden: integer("contact_form_hidden", { mode: "boolean" }).default(false),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

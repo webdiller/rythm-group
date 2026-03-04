@@ -7,12 +7,15 @@ import { requireAuth } from "@/lib/auth"
 export const runtime = "nodejs"
 
 type PartnersDisplayMode = "name" | "logo" | "logoAndName"
+type ContactLayout = "formFirst" | "contactsFirst"
 
 type SiteSettingsPayload = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
   partnersDisplayMode?: PartnersDisplayMode | null
+  contactLayout?: ContactLayout | null
+  contactFormHidden?: boolean | null
 }
 
 export async function GET() {
@@ -36,6 +39,9 @@ export async function PUT(request: NextRequest) {
     const currentDisplayMode =
       (existing?.partnersDisplayMode as PartnersDisplayMode | null | undefined) ??
       "logoAndName"
+    const currentContactLayout =
+      (existing?.contactLayout as ContactLayout | null | undefined) ?? "formFirst"
+    const currentContactFormHidden = existing?.contactFormHidden ?? false
 
     const updateValues: SiteSettingsPayload = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
@@ -43,6 +49,11 @@ export async function PUT(request: NextRequest) {
       heroAnimationEnabled:
         typeof body.heroAnimationEnabled === "boolean" ? body.heroAnimationEnabled : true,
       partnersDisplayMode: body.partnersDisplayMode ?? currentDisplayMode,
+      contactLayout: body.contactLayout ?? currentContactLayout,
+      contactFormHidden:
+        typeof body.contactFormHidden === "boolean"
+          ? body.contactFormHidden
+          : currentContactFormHidden,
     }
 
     if (existing) {
@@ -64,6 +75,8 @@ export async function PUT(request: NextRequest) {
         dataProcessingPolicyUrl: updateValues.dataProcessingPolicyUrl ?? null,
         heroAnimationEnabled: updateValues.heroAnimationEnabled ?? true,
         partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
+        contactLayout: updateValues.contactLayout ?? "formFirst",
+        contactFormHidden: updateValues.contactFormHidden ?? false,
       })
       .returning()
       .all()

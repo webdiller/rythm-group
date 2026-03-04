@@ -41,6 +41,8 @@ export function SiteSettingsEditor() {
   const [partnersDisplayMode, setPartnersDisplayMode] = useState<"name" | "logo" | "logoAndName">(
     "logoAndName",
   )
+  const [contactLayout, setContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
+  const [contactFormHidden, setContactFormHidden] = useState(false)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -50,6 +52,8 @@ export function SiteSettingsEditor() {
     privacyPolicyUrl: string
     dataProcessingPolicyUrl: string
     partnersDisplayMode: "name" | "logo" | "logoAndName"
+    contactLayout: "formFirst" | "contactsFirst"
+    contactFormHidden: boolean
   } | null>(null)
 
   useEffect(() => {
@@ -104,6 +108,8 @@ export function SiteSettingsEditor() {
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
             partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
+            contactLayout?: "formFirst" | "contactsFirst" | null
+            contactFormHidden?: boolean | null
           } | null
         }
 
@@ -112,6 +118,8 @@ export function SiteSettingsEditor() {
         const privacy = data?.privacyPolicyUrl ?? ""
         const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
         const partnersMode = data?.partnersDisplayMode ?? "logoAndName"
+        const layoutMode = data?.contactLayout ?? "formFirst"
+        const formHidden = data?.contactFormHidden ?? false
 
         setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
@@ -121,8 +129,12 @@ export function SiteSettingsEditor() {
           privacyPolicyUrl: privacy,
           dataProcessingPolicyUrl: dataPolicy,
           partnersDisplayMode: partnersMode,
+          contactLayout: layoutMode,
+          contactFormHidden: formHidden,
         })
         setPartnersDisplayMode(partnersMode)
+        setContactLayout(layoutMode)
+        setContactFormHidden(formHidden)
       } catch {
         // ignore, settings are optional
       } finally {
@@ -152,6 +164,8 @@ export function SiteSettingsEditor() {
           privacyPolicyUrl: privacyPolicyUrl || null,
           dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
           partnersDisplayMode,
+          contactLayout,
+          contactFormHidden,
         }),
       })
 
@@ -166,6 +180,8 @@ export function SiteSettingsEditor() {
         privacyPolicyUrl,
         dataProcessingPolicyUrl,
         partnersDisplayMode,
+        contactLayout,
+        contactFormHidden,
       })
     } catch {
       toast.error("Не удалось сохранить настройки сайта")
@@ -823,6 +839,40 @@ export function SiteSettingsEditor() {
             <p className="text-xs text-muted-foreground">
               Определяет, как партнёры будут отображаться на лендинге в блоке кейсов.
             </p>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Контакты</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="contact_layout">Порядок блоков</Label>
+            <select
+              id="contact_layout"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value={contactLayout}
+              onChange={(e) =>
+                setContactLayout(e.target.value === "contactsFirst" ? "contactsFirst" : "formFirst")
+              }
+            >
+              <option value="formFirst">Сначала форма, затем соцсети</option>
+              <option value="contactsFirst">Сначала соцсети, затем форма</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="contact_form_hidden">Скрыть форму заявки</Label>
+              <p className="text-xs text-muted-foreground">
+                Если включено, на лендинге будут отображаться только ссылки на Telegram и другие соцсети.
+              </p>
+            </div>
+            <Switch
+              id="contact_form_hidden"
+              checked={contactFormHidden}
+              onCheckedChange={setContactFormHidden}
+            />
           </div>
         </CardContent>
       </Card>

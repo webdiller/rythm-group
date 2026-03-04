@@ -14,7 +14,17 @@ type DirectContactLink = {
   type: "telegram" | "email" | "instagram" | "max" | "other"
 }
 
-export function ContactForm({ animationsEnabled = true }: { animationsEnabled?: boolean }) {
+type ContactLayout = "formFirst" | "contactsFirst"
+
+export function ContactForm({
+  animationsEnabled = true,
+  layout = "formFirst",
+  hideForm = false,
+}: {
+  animationsEnabled?: boolean
+  layout?: ContactLayout
+  hideForm?: boolean
+}) {
   const { locale, t } = useLocale()
   const [formData, setFormData] = useState({
     name: "",
@@ -177,11 +187,15 @@ export function ContactForm({ animationsEnabled = true }: { animationsEnabled?: 
 
         <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-5">
           {/* Form */}
-          <ScrollReveal className="lg:col-span-3" disabled={!animationsEnabled}>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-5 rounded-xl border border-border bg-card p-8"
+          {!hideForm && (
+            <ScrollReveal
+              className={layout === "formFirst" ? "lg:col-span-3 lg:order-1" : "lg:col-span-3 lg:order-2"}
+              disabled={!animationsEnabled}
             >
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5 rounded-xl border border-border bg-card p-8"
+              >
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
                 <label htmlFor="contact-name" className="mb-2 block text-sm font-medium text-foreground">
@@ -281,9 +295,14 @@ export function ContactForm({ animationsEnabled = true }: { animationsEnabled?: 
             )}
             </form>
           </ScrollReveal>
+          )}
 
           {/* Direct contact */}
-          <ScrollReveal rootMargin="100px" className="lg:col-span-2" disabled={!animationsEnabled}>
+          <ScrollReveal
+            rootMargin="100px"
+            className={layout === "formFirst" || hideForm ? "lg:col-span-2 lg:order-2" : "lg:col-span-2 lg:order-1"}
+            disabled={!animationsEnabled}
+          >
             <div className="flex flex-col gap-5">
               {directContacts.length > 0 && (
                 <div className="flex-1 rounded-xl border border-border bg-card p-8">
