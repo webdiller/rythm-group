@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Plus, Trash2, Edit, Image as ImageIcon } from "lucide-react"
+import { Plus, Trash2, Edit, Image as ImageIcon, ArrowUp, ArrowDown } from "lucide-react"
 
 interface Channel {
   id: number
@@ -37,6 +37,8 @@ export function ChannelsEditor() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [avatarsVersion, setAvatarsVersion] = useState(0)
+  const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null)
+  const [draggingChannelId, setDraggingChannelId] = useState<number | null>(null)
 
   useEffect(() => {
     loadData()
@@ -76,9 +78,22 @@ export function ChannelsEditor() {
   const handleSave = async (channel: Partial<Channel>) => {
     try {
       const token = getToken()
-      const url = editingChannel ? "/api/content/channels" : "/api/content/channels"
+      const url = "/api/content/channels"
       const method = editingChannel ? "PUT" : "POST"
-      const body = editingChannel ? { ...channel, id: editingChannel.id } : channel
+      let body: Partial<Channel> & { id?: number } = editingChannel
+        ? { ...channel, id: editingChannel.id }
+        : channel
+
+      // Если создаём новый канал и не задан order_index — ставим в конец списка внутри категории
+      if (!editingChannel) {
+        const categoryId = body.category_id ?? (categories[0]?.id ?? "")
+        const existing = channels.filter((ch) => ch.category_id === categoryId)
+        const maxOrder =
+          existing.length > 0 ? Math.max(...existing.map((ch) => ch.order_index ?? 0)) : 0
+        if (body.order_index == null) {
+          body = { ...body, category_id: categoryId, order_index: maxOrder + 1 }
+        }
+      }
 
       const response = await fetch(url, {
         method,
@@ -126,7 +141,10 @@ export function ChannelsEditor() {
   }
 
   const channelsByCategory = categories.reduce((acc, cat) => {
-    acc[cat.id] = channels.filter((ch) => ch.category_id === cat.id)
+    acc[cat.id] = channels
+      .filter((ch) => ch.category_id === cat.id)
+      .slice()
+      .sort((a, b) => a.order_index - b.order_index)
     return acc
   }, {} as Record<string, Channel[]>)
 
@@ -194,7 +212,38 @@ export function ChannelsEditor() {
       const token = getToken()
       const url = "/api/content/channel-categories"
       const method = editingCategory ? "PUT" : "POST"
-      const body = editingCategory ? { ...category, id: editingCategory.id } : category
+      let body: Partial<Category> & { id?: string } = editingCategory
+        ? { ...category, id: editingCategory.id }
+        : category
+
+      // Если создаём новую категорию — генерируем ID и ставим её в конец списка
+      if (!editingCategory) {
+        if (!body.id || body.id.trim() === "") {
+          const source = (body.name_en || body.name_ru || "").toString().trim() || "category"
+          const baseSlug = source
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^a-z0-9-_]/g, "")
+            .replace(/-+/g, "-")
+            .replace(/^-+|-+$/g, "") || "category"
+
+          let slug = baseSlug
+          let counter = 1
+          const existingIds = new Set(categories.map((cat) => cat.id))
+          while (existingIds.has(slug)) {
+            counter += 1
+            slug = `${baseSlug}-${counter}`
+          }
+
+          body = { ...body, id: slug }
+        }
+
+        const maxOrder =
+          categories.length > 0 ? Math.max(...categories.map((cat) => cat.order_index ?? 0)) : 0
+        if (body.order_index == null) {
+          body = { ...body, order_index: maxOrder + 1 }
+        }
+      }
 
       const response = await fetch(url, {
         method,
@@ -216,6 +265,113 @@ export function ChannelsEditor() {
     } catch (error) {
       toast.error("Не удалось сохранить категорию")
     }
+  }
+
+  const persistCategoryOrder = async (next: Category[]) => {
+    try {
+      const token = getToken()
+      await Promise.all(
+        next.map((cat, index) =>
+          fetch("/api/content/channel-categories", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: cat.id, order_index: index + 1 }),
+          }),
+        ),
+      )
+    } catch {
+      toast.error("Не удалось сохранить порядок категорий")
+    }
+  }
+
+  const moveCategory = (id: string, direction: "up" | "down") => {
+    const index = categories.findIndex((c) => c.id === id)
+    if (index === -1) return
+    const swapWith = direction === "up" ? index - 1 : index + 1
+    if (swapWith < 0 || swapWith >= categories.length) return
+    const next = categories.slice()
+    const [removed] = next.splice(index, 1)
+    next.splice(swapWith, 0, removed)
+    setCategories(next)
+    void persistCategoryOrder(next)
+  }
+
+  const onCategoryDrop = (targetId: string) => {
+    if (!draggingCategoryId || draggingCategoryId === targetId) return
+    const fromIndex = categories.findIndex((c) => c.id === draggingCategoryId)
+    const toIndex = categories.findIndex((c) => c.id === targetId)
+    if (fromIndex === -1 || toIndex === -1) return
+    const next = categories.slice()
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    setDraggingCategoryId(null)
+    setCategories(next)
+    void persistCategoryOrder(next)
+  }
+
+  const persistChannelOrder = async (categoryId: string, ordered: Channel[]) => {
+    try {
+      const token = getToken()
+      await Promise.all(
+        ordered.map((ch, index) =>
+          fetch("/api/content/channels", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: ch.id, order_index: index + 1 }),
+          }),
+        ),
+      )
+    } catch {
+      toast.error("Не удалось сохранить порядок каналов")
+    }
+  }
+
+  const moveChannel = (categoryId: string, channelId: number, direction: "up" | "down") => {
+    const list = channelsByCategory[categoryId] ?? []
+    const index = list.findIndex((ch) => ch.id === channelId)
+    if (index === -1) return
+    const swapWith = direction === "up" ? index - 1 : index + 1
+    if (swapWith < 0 || swapWith >= list.length) return
+    const reordered = list.slice()
+    const [removed] = reordered.splice(index, 1)
+    reordered.splice(swapWith, 0, removed)
+    // обновляем глобальный список каналов
+    const nextChannels = channels.slice()
+    reordered.forEach((ch, idx) => {
+      const globalIndex = nextChannels.findIndex((c) => c.id === ch.id)
+      if (globalIndex !== -1) {
+        nextChannels[globalIndex] = { ...nextChannels[globalIndex], order_index: idx + 1 }
+      }
+    })
+    setChannels(nextChannels)
+    void persistChannelOrder(categoryId, reordered)
+  }
+
+  const onChannelDrop = (categoryId: string, targetId: number) => {
+    if (draggingChannelId == null || draggingChannelId === targetId) return
+    const list = channelsByCategory[categoryId] ?? []
+    const fromIndex = list.findIndex((ch) => ch.id === draggingChannelId)
+    const toIndex = list.findIndex((ch) => ch.id === targetId)
+    if (fromIndex === -1 || toIndex === -1) return
+    const reordered = list.slice()
+    const [moved] = reordered.splice(fromIndex, 1)
+    reordered.splice(toIndex, 0, moved)
+    const nextChannels = channels.slice()
+    reordered.forEach((ch, idx) => {
+      const globalIndex = nextChannels.findIndex((c) => c.id === ch.id)
+      if (globalIndex !== -1) {
+        nextChannels[globalIndex] = { ...nextChannels[globalIndex], order_index: idx + 1 }
+      }
+    })
+    setDraggingChannelId(null)
+    setChannels(nextChannels)
+    void persistChannelOrder(categoryId, reordered)
   }
 
   const handleDeleteCategory = async (id: string) => {
@@ -280,10 +436,14 @@ export function ChannelsEditor() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-3">
-              {categories.map((cat) => (
+              {categories.map((cat, index) => (
                 <div
                   key={cat.id}
                   className="flex items-center justify-between p-3 border rounded-lg"
+                  draggable
+                  onDragStart={() => setDraggingCategoryId(cat.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onCategoryDrop(cat.id)}
                 >
                   <div>
                     <span className="font-medium">
@@ -293,7 +453,27 @@ export function ChannelsEditor() {
                       (id: {cat.id}, порядок: {cat.order_index})
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === 0}
+                        onClick={() => moveCategory(cat.id, "up")}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === categories.length - 1}
+                        onClick={() => moveCategory(cat.id, "down")}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
@@ -363,8 +543,15 @@ export function ChannelsEditor() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {channelsByCategory[category.id]?.map((channel) => (
-                  <div key={channel.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {channelsByCategory[category.id]?.map((channel, index) => (
+                  <div
+                    key={channel.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                    draggable
+                    onDragStart={() => setDraggingChannelId(channel.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => onChannelDrop(category.id, channel.id)}
+                  >
                     <div className="flex items-center gap-3">
                       <AdminChannelAvatar
                         channelId={channel.id}
@@ -379,7 +566,30 @@ export function ChannelsEditor() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={index === 0}
+                          onClick={() => moveChannel(category.id, channel.id, "up")}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={
+                            !channelsByCategory[category.id] ||
+                            index === channelsByCategory[category.id].length - 1
+                          }
+                          onClick={() => moveChannel(category.id, channel.id, "down")}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -468,18 +678,21 @@ function CategoryForm({
       }}
       className="space-y-4"
     >
-      <div className="space-y-2">
-        <Label>ID категории</Label>
-        <Input
-          value={formData.id}
-          disabled={isEdit}
-          onChange={(e) => setFormData({ ...formData, id: e.target.value })}
-          required
-        />
-        <p className="text-xs text-muted-foreground">
-          Уникальный идентификатор (например, <code>gaming</code>, <code>esports</code>). Используется для связи каналов с категорией.
-        </p>
-      </div>
+      {isEdit && (
+        <div className="space-y-2">
+          <Label>ID категории</Label>
+          <Input
+            value={formData.id}
+            disabled
+            onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            Уникальный идентификатор (например, <code>gaming</code>, <code>esports</code>). Используется для связи
+            каналов с категорией.
+          </p>
+        </div>
+      )}
       <div className="space-y-2">
         <Label>Название (RU)</Label>
         <Input
@@ -494,21 +707,6 @@ function CategoryForm({
           value={formData.name_en}
           onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
           required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Порядок (order index)</Label>
-        <Input
-          type="number"
-          value={formData.order_index}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              order_index: Number.isNaN(parseInt(e.target.value, 10))
-                ? 0
-                : parseInt(e.target.value, 10),
-            })
-          }
         />
       </div>
       <div className="flex justify-end gap-2">
@@ -601,14 +799,6 @@ function ChannelForm({
           value={formData.url}
           onChange={(e) => setFormData({ ...formData, url: e.target.value })}
           required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Order Index</Label>
-        <Input
-          type="number"
-          value={formData.order_index}
-          onChange={(e) => setFormData({ ...formData, order_index: parseInt(e.target.value) || 0 })}
         />
       </div>
       {channel && (

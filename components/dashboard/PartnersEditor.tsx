@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Plus, Trash2, Edit } from "lucide-react"
+import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
 
 interface PartnerCategory {
   id: number
@@ -33,6 +33,8 @@ export function PartnersEditor() {
   const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [draggingCategoryId, setDraggingCategoryId] = useState<number | null>(null)
+  const [draggingPartnerId, setDraggingPartnerId] = useState<number | null>(null)
 
   useEffect(() => {
     loadData()
@@ -69,7 +71,20 @@ export function PartnersEditor() {
       const token = getToken()
       const url = "/api/content/partners"
       const method = editingPartner ? "PUT" : "POST"
-      const body = editingPartner ? { ...partner, id: editingPartner.id } : partner
+      let body: Partial<Partner> & { id?: number } = editingPartner
+        ? { ...partner, id: editingPartner.id }
+        : partner
+
+      // Если создаём новый кейс и не задан order_index — ставим его в конец списка внутри категории
+      if (!editingPartner) {
+        const categoryId = body.category_id ?? null
+        const existing = partners.filter((p) => p.category_id === categoryId)
+        const maxOrder =
+          existing.length > 0 ? Math.max(...existing.map((p) => p.order_index ?? 0)) : 0
+        if (body.order_index == null) {
+          body = { ...body, order_index: maxOrder + 1 }
+        }
+      }
 
       const response = await fetch(url, {
         method,
@@ -117,7 +132,18 @@ export function PartnersEditor() {
       const token = getToken()
       const url = "/api/content/partner-categories"
       const method = editingCategory ? "PUT" : "POST"
-      const body = editingCategory ? { ...category, id: editingCategory.id } : category
+      let body: Partial<PartnerCategory> & { id?: number } = editingCategory
+        ? { ...category, id: editingCategory.id }
+        : category
+
+      // Если создаём новую категорию и не задан order_index — ставим её в конец списка
+      if (!editingCategory) {
+        const maxOrder =
+          categories.length > 0 ? Math.max(...categories.map((cat) => cat.order_index ?? 0)) : 0
+        if (body.order_index == null) {
+          body = { ...body, order_index: maxOrder + 1 }
+        }
+      }
 
       const response = await fetch(url, {
         method,
@@ -139,6 +165,112 @@ export function PartnersEditor() {
     } catch (error) {
       toast.error("Не удалось сохранить категорию")
     }
+  }
+
+  const persistCategoryOrder = async (next: PartnerCategory[]) => {
+    try {
+      const token = getToken()
+      await Promise.all(
+        next.map((cat, index) =>
+          fetch("/api/content/partner-categories", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: cat.id, order_index: index + 1 }),
+          }),
+        ),
+      )
+    } catch {
+      toast.error("Не удалось сохранить порядок категорий")
+    }
+  }
+
+  const moveCategory = (id: number, direction: "up" | "down") => {
+    const index = categories.findIndex((c) => c.id === id)
+    if (index === -1) return
+    const swapWith = direction === "up" ? index - 1 : index + 1
+    if (swapWith < 0 || swapWith >= categories.length) return
+    const next = categories.slice()
+    const [removed] = next.splice(index, 1)
+    next.splice(swapWith, 0, removed)
+    setCategories(next)
+    void persistCategoryOrder(next)
+  }
+
+  const onCategoryDrop = (targetId: number) => {
+    if (draggingCategoryId == null || draggingCategoryId === targetId) return
+    const fromIndex = categories.findIndex((c) => c.id === draggingCategoryId)
+    const toIndex = categories.findIndex((c) => c.id === targetId)
+    if (fromIndex === -1 || toIndex === -1) return
+    const next = categories.slice()
+    const [moved] = next.splice(fromIndex, 1)
+    next.splice(toIndex, 0, moved)
+    setDraggingCategoryId(null)
+    setCategories(next)
+    void persistCategoryOrder(next)
+  }
+
+  const persistPartnerOrder = async (ordered: Partner[]) => {
+    try {
+      const token = getToken()
+      await Promise.all(
+        ordered.map((p, index) =>
+          fetch("/api/content/partners", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: p.id, order_index: index + 1 }),
+          }),
+        ),
+      )
+    } catch {
+      toast.error("Не удалось сохранить порядок кейсов")
+    }
+  }
+
+  const movePartner = (list: Partner[], partnerId: number, direction: "up" | "down") => {
+    const index = list.findIndex((p) => p.id === partnerId)
+    if (index === -1) return list
+    const swapWith = direction === "up" ? index - 1 : index + 1
+    if (swapWith < 0 || swapWith >= list.length) return list
+    const nextList = list.slice()
+    const [removed] = nextList.splice(index, 1)
+    nextList.splice(swapWith, 0, removed)
+    const nextPartners = partners.slice()
+    nextList.forEach((p, idx) => {
+      const globalIndex = nextPartners.findIndex((g) => g.id === p.id)
+      if (globalIndex !== -1) {
+        nextPartners[globalIndex] = { ...nextPartners[globalIndex], order_index: idx + 1 }
+      }
+    })
+    setPartners(nextPartners)
+    void persistPartnerOrder(nextList)
+    return nextList
+  }
+
+  const onPartnerDrop = (list: Partner[], targetId: number) => {
+    if (draggingPartnerId == null || draggingPartnerId === targetId) return list
+    const fromIndex = list.findIndex((p) => p.id === draggingPartnerId)
+    const toIndex = list.findIndex((p) => p.id === targetId)
+    if (fromIndex === -1 || toIndex === -1) return list
+    const nextList = list.slice()
+    const [moved] = nextList.splice(fromIndex, 1)
+    nextList.splice(toIndex, 0, moved)
+    const nextPartners = partners.slice()
+    nextList.forEach((p, idx) => {
+      const globalIndex = nextPartners.findIndex((g) => g.id === p.id)
+      if (globalIndex !== -1) {
+        nextPartners[globalIndex] = { ...nextPartners[globalIndex], order_index: idx + 1 }
+      }
+    })
+    setDraggingPartnerId(null)
+    setPartners(nextPartners)
+    void persistPartnerOrder(nextList)
+    return nextList
   }
 
   const handleDeleteCategory = async (id: number) => {
@@ -213,10 +345,14 @@ export function PartnersEditor() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-3">
-              {categories.map((cat) => (
+              {categories.map((cat, index) => (
                 <div
                   key={cat.id}
                   className="flex items-center justify-between p-3 border rounded-lg"
+                  draggable
+                  onDragStart={() => setDraggingCategoryId(cat.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onCategoryDrop(cat.id)}
                 >
                   <div>
                     <span className="font-medium">{cat.name}</span>
@@ -224,7 +360,27 @@ export function PartnersEditor() {
                       (порядок: {cat.order_index})
                     </span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === 0}
+                        onClick={() => moveCategory(cat.id, "up")}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === categories.length - 1}
+                        onClick={() => moveCategory(cat.id, "down")}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
@@ -294,11 +450,15 @@ export function PartnersEditor() {
               <CardTitle>{category.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {(partnersByCategory[category.id] ?? []).map((partner) => (
+            <div className="space-y-3">
+                {(partnersByCategory[category.id] ?? []).map((partner, index, list) => (
                   <div
                     key={partner.id}
                     className="flex items-center justify-between p-3 border rounded-lg"
+                    draggable
+                    onDragStart={() => setDraggingPartnerId(partner.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => onPartnerDrop(list, partner.id)}
                   >
                     <div className="flex items-center gap-3">
                       {partner.logo_url ? (
@@ -313,7 +473,27 @@ export function PartnersEditor() {
                         (порядок: {partner.order_index})
                       </span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={index === 0}
+                          onClick={() => movePartner(list, partner.id, "up")}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={index === list.length - 1}
+                          onClick={() => movePartner(list, partner.id, "down")}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -351,10 +531,14 @@ export function PartnersEditor() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {uncategorizedPartners.map((partner) => (
+                {uncategorizedPartners.map((partner, index, list) => (
                   <div
                     key={partner.id}
                     className="flex items-center justify-between p-3 border rounded-lg"
+                    draggable
+                    onDragStart={() => setDraggingPartnerId(partner.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => onPartnerDrop(list, partner.id)}
                   >
                     <div className="flex items-center gap-3">
                       {partner.logo_url ? (
@@ -366,7 +550,27 @@ export function PartnersEditor() {
                       ) : null}
                       <span className="font-medium">{partner.name}</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex flex-col gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={index === 0}
+                          onClick={() => movePartner(list, partner.id, "up")}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={index === list.length - 1}
+                          onClick={() => movePartner(list, partner.id, "down")}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Button
                         variant="outline"
                         size="sm"
@@ -434,16 +638,6 @@ function CategoryForm({
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label>Порядок (order index)</Label>
-        <Input
-          type="number"
-          value={formData.order_index}
-          onChange={(e) =>
-            setFormData({ ...formData, order_index: parseInt(e.target.value, 10) || 0 })
-          }
         />
       </div>
       <div className="flex justify-end gap-2">
@@ -614,16 +808,6 @@ function PartnerForm({
             </div>
           )}
         </div>
-      </div>
-      <div className="space-y-2">
-        <Label>Порядок (order index)</Label>
-        <Input
-          type="number"
-          value={formData.order_index}
-          onChange={(e) =>
-            setFormData({ ...formData, order_index: parseInt(e.target.value, 10) || 0 })
-          }
-        />
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
