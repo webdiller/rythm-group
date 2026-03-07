@@ -18,11 +18,13 @@ interface Contact {
 
 type DirectContactLink = {
   id: string
-  label: string
   url: string
-  description?: string
   type: "telegram" | "email" | "instagram" | "max" | "other"
   icon?: string | null
+  label_ru: string
+  label_en: string
+  description_ru?: string
+  description_en?: string
 }
 
 const MAX_ICON_SIZE_BYTES = 500 * 1024
@@ -70,20 +72,41 @@ export function ContactsEditor() {
                   if (!item || typeof item !== "object") return null
                   const raw = item as Record<string, unknown>
                   const url = typeof raw.url === "string" ? raw.url : ""
-                  const label = typeof raw.label === "string" ? raw.label : ""
-                  if (!url || !label) return null
+                  const labelRu =
+                    typeof raw.label_ru === "string"
+                      ? raw.label_ru
+                      : typeof raw.label === "string"
+                        ? raw.label
+                        : ""
+                  const labelEn = typeof raw.label_en === "string" ? raw.label_en : ""
+                  if (!url || (!labelRu && !labelEn && typeof (raw as { label?: string }).label !== "string")) return null
                   const id =
                     typeof raw.id === "string" && raw.id.length > 0
                       ? raw.id
                       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                  const description = typeof raw.description === "string" ? raw.description : undefined
+                  const descriptionRu =
+                    typeof raw.description_ru === "string"
+                      ? raw.description_ru
+                      : typeof raw.description === "string"
+                        ? raw.description
+                        : ""
+                  const descriptionEn = typeof raw.description_en === "string" ? raw.description_en : ""
                   const typeValue = typeof raw.type === "string" ? raw.type : "other"
                   const type: DirectContactLink["type"] =
                     typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max"
                       ? typeValue
                       : "other"
                   const icon = typeof raw.icon === "string" ? raw.icon : null
-                  return { id, label, url, description, type, icon }
+                  return {
+                    id,
+                    url,
+                    type,
+                    icon,
+                    label_ru: labelRu,
+                    label_en: labelEn,
+                    description_ru: descriptionRu || undefined,
+                    description_en: descriptionEn || undefined,
+                  }
                 })
                 .filter((v): v is DirectContactLink => v !== null)
 
@@ -106,6 +129,13 @@ export function ContactsEditor() {
   }
 
   const handleSave = async () => {
+    const invalid = directContacts.some(
+      (l) => !(l.label_ru?.trim()) || !(l.label_en?.trim())
+    )
+    if (invalid) {
+      toast.error("У каждой ссылки должны быть заполнены подпись (RU) и подпись (EN).")
+      return
+    }
     setSaving(true)
     try {
       const token = document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -202,18 +232,35 @@ export function ContactsEditor() {
               {directContacts.map((link, index) => (
                 <div
                   key={link.id}
-                  className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 md:grid-cols-[1.2fr,1.8fr,auto]"
+                  className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 md:grid-cols-[1fr,1fr,1.5fr,auto]"
                 >
                   <div className="space-y-1">
-                    <Label className="text-xs">Label</Label>
+                    <Label className="text-xs">Label (RU)</Label>
                     <Input
-                      value={link.label}
+                      value={link.label_ru}
                       onChange={(e) => {
+                        const v = e.target.value
                         const next = [...directContacts]
-                        next[index] = { ...next[index], label: e.target.value }
+                        next[index] = {
+                          ...next[index],
+                          label_ru: v,
+                          label_en: !(next[index].label_en?.trim()) ? v : next[index].label_en,
+                        }
                         setDirectContacts(next)
                       }}
                       placeholder="Написать в Telegram"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Label (EN)</Label>
+                    <Input
+                      value={link.label_en}
+                      onChange={(e) => {
+                        const next = [...directContacts]
+                        next[index] = { ...next[index], label_en: e.target.value }
+                        setDirectContacts(next)
+                      }}
+                      placeholder="Message on Telegram"
                     />
                   </div>
                   <div className="space-y-1">
@@ -351,19 +398,36 @@ export function ContactsEditor() {
                       </div>
                     )}
                   </div>
-                  <div className="space-y-1 md:col-span-2">
-                    <Label className="text-xs">Description (optional)</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Description (RU)</Label>
                     <Input
-                      value={link.description ?? ""}
+                      value={link.description_ru ?? ""}
                       onChange={(e) => {
+                        const v = e.target.value
                         const next = [...directContacts]
-                        next[index] = { ...next[index], description: e.target.value }
+                        next[index] = {
+                          ...next[index],
+                          description_ru: v,
+                          description_en: !(next[index].description_en?.trim()) ? v : next[index].description_en,
+                        }
                         setDirectContacts(next)
                       }}
                       placeholder="@RythmGroup"
                     />
                   </div>
-                  <div className="flex items-end justify-end md:col-span-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Description (EN)</Label>
+                    <Input
+                      value={link.description_en ?? ""}
+                      onChange={(e) => {
+                        const next = [...directContacts]
+                        next[index] = { ...next[index], description_en: e.target.value }
+                        setDirectContacts(next)
+                      }}
+                      placeholder="@RythmGroup"
+                    />
+                  </div>
+                  <div className="flex items-end justify-end md:col-start-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -386,7 +450,8 @@ export function ContactsEditor() {
                     ...prev,
                     {
                       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-                      label: "",
+                      label_ru: "",
+                      label_en: "",
                       url: "",
                       type: "telegram",
                       icon: "icon-telegram.svg",

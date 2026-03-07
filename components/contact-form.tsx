@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
+import { fallbackTranslations } from "@/lib/i18n"
 import { Send, MessageCircle, Mail, Instagram, Globe } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 
 type DirectContactLink = {
   id: string
-  label: string
   url: string
-  description?: string
   type: "telegram" | "email" | "instagram" | "max" | "other"
   icon?: string | null
+  label_ru: string
+  label_en: string
+  description_ru?: string
+  description_en?: string
 }
 
 type ContactLayout = "formFirst" | "contactsFirst"
@@ -65,20 +68,41 @@ export function ContactForm({
                   if (!item || typeof item !== "object") return null
                   const raw = item as Record<string, unknown>
                   const url = typeof raw.url === "string" ? raw.url : ""
-                  const label = typeof raw.label === "string" ? raw.label : ""
-                  if (!url || !label) return null
+                  const labelRu =
+                    typeof raw.label_ru === "string"
+                      ? raw.label_ru
+                      : typeof raw.label === "string"
+                        ? raw.label
+                        : ""
+                  const labelEn = typeof raw.label_en === "string" ? raw.label_en : ""
+                  if (!url || (!labelRu && !labelEn && typeof (raw as { label?: string }).label !== "string")) return null
                   const id =
                     typeof raw.id === "string" && raw.id.length > 0
                       ? raw.id
                       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                  const description = typeof raw.description === "string" ? raw.description : undefined
+                  const descriptionRu =
+                    typeof raw.description_ru === "string"
+                      ? raw.description_ru
+                      : typeof raw.description === "string"
+                        ? raw.description
+                        : ""
+                  const descriptionEn = typeof raw.description_en === "string" ? raw.description_en : ""
                   const typeValue = typeof raw.type === "string" ? raw.type : "other"
                   const type: DirectContactLink["type"] =
                     typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max"
                       ? typeValue
                       : "other"
                   const icon = typeof raw.icon === "string" ? raw.icon : null
-                  return { id, label, url, description, type, icon }
+                  return {
+                    id,
+                    url,
+                    type,
+                    icon,
+                    label_ru: labelRu,
+                    label_en: labelEn,
+                    description_ru: descriptionRu || undefined,
+                    description_en: descriptionEn || undefined,
+                  }
                 })
                 .filter((v): v is DirectContactLink => v !== null)
             }
@@ -89,13 +113,17 @@ export function ContactForm({
 
         if (links.length === 0) {
           const fallback: DirectContactLink[] = []
+          const tRu = fallbackTranslations.ru.contact
+          const tEn = fallbackTranslations.en.contact
           if (row.telegram_url) {
             fallback.push({
               id: "telegram-fallback",
               type: "telegram",
-              label: t.contact.telegram,
+              label_ru: tRu.telegram,
+              label_en: tEn.telegram,
               url: row.telegram_url,
-              description: row.telegram_username ?? undefined,
+              description_ru: row.telegram_username ?? undefined,
+              description_en: row.telegram_username ?? undefined,
             })
           }
           if (row.email) {
@@ -104,9 +132,11 @@ export function ContactForm({
               fallback.push({
                 id: "email-fallback",
                 type: "email",
-                label: t.contact.emailUs,
+                label_ru: tRu.emailUs,
+                label_en: tEn.emailUs,
                 url: `mailto:${firstEmail}`,
-                description: row.email,
+                description_ru: row.email,
+                description_en: row.email,
               })
             }
           }
@@ -120,7 +150,7 @@ export function ContactForm({
     }
 
     void loadDirectContacts()
-  }, [t.contact.telegram, t.contact.emailUs])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -328,6 +358,15 @@ export function ContactForm({
                       const isEmail = link.type === "email"
                       const isInstagram = link.type === "instagram"
 
+                      const label =
+                        locale === "ru"
+                          ? (link.label_ru || link.label_en || "")
+                          : (link.label_en || link.label_ru || "")
+                      const description =
+                        locale === "ru"
+                          ? (link.description_ru || link.description_en || "")
+                          : (link.description_en || link.description_ru || "")
+
                       const Icon = isEmail ? Mail : isInstagram ? Instagram : isTelegram ? MessageCircle : Globe
                       const iconClasses = isTelegram
                         ? "bg-[#229ED9]/10 text-[#229ED9]"
@@ -354,7 +393,7 @@ export function ContactForm({
                               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground overflow-hidden">
                                 <img
                                   src={link.icon.startsWith("data:") ? link.icon : `/${link.icon}`}
-                                  alt={link.label}
+                                  alt={label}
                                   className="h-10 w-10 object-contain"
                                 />
                               </div>
@@ -364,9 +403,9 @@ export function ContactForm({
                               </div>
                             )}
                             <div>
-                              <span className="block text-sm font-semibold text-foreground">{link.label}</span>
-                              {link.description && (
-                                <span className="text-xs text-muted-foreground">{link.description}</span>
+                              <span className="block text-sm font-semibold text-foreground">{label}</span>
+                              {description && (
+                                <span className="text-xs text-muted-foreground">{description}</span>
                               )}
                             </div>
                           </a>
