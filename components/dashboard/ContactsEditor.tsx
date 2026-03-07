@@ -239,13 +239,8 @@ export function ContactsEditor() {
                     <Input
                       value={link.label_ru}
                       onChange={(e) => {
-                        const v = e.target.value
                         const next = [...directContacts]
-                        next[index] = {
-                          ...next[index],
-                          label_ru: v,
-                          label_en: !(next[index].label_en?.trim()) ? v : next[index].label_en,
-                        }
+                        next[index] = { ...next[index], label_ru: e.target.value }
                         setDirectContacts(next)
                       }}
                       placeholder="Написать в Telegram"
@@ -403,13 +398,8 @@ export function ContactsEditor() {
                     <Input
                       value={link.description_ru ?? ""}
                       onChange={(e) => {
-                        const v = e.target.value
                         const next = [...directContacts]
-                        next[index] = {
-                          ...next[index],
-                          description_ru: v,
-                          description_en: !(next[index].description_en?.trim()) ? v : next[index].description_en,
-                        }
+                        next[index] = { ...next[index], description_ru: e.target.value }
                         setDirectContacts(next)
                       }}
                       placeholder="@RythmGroup"
