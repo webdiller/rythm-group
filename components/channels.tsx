@@ -70,7 +70,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     <section id="channels" className="relative px-6 py-12 md:py-16">
       <div className="mx-auto max-w-7xl">
         <ScrollReveal disabled={!animationsEnabled}>
-          <div className="mb-12 text-center md:mb-16">
+          <div className={`text-center ${categories.length === 0 ? "mb-6 md:mb-8" : "mb-12 md:mb-16"}`}>
             <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
               {t.channels.title}
             </h2>
@@ -80,33 +80,104 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
           </div>
         </ScrollReveal>
 
-        {/* Category tabs */}
-        <ScrollReveal disabled={!animationsEnabled}>
-          <div className="mb-10 flex flex-wrap justify-center gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`rounded-lg px-5 py-2.5 text-sm font-medium transition-all ${
-                  activeCategoryId === cat.id
-                    ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(230,27,0,0.2)]"
-                    : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
-              >
-                {locale === "ru" ? cat.name_ru : cat.name_en}
-              </button>
-            ))}
+        {/* 1. Список без категории — сразу под subtitle */}
+        {uncategorizedChannels.length > 0 && (
+          <div className="mt-4 mb-10">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleUncategorized.map((channel, index) => (
+                <ScrollStagger
+                  key={channel.id}
+                  index={index}
+                  delayStep={80}
+                  disabled={!animationsEnabled}
+                >
+                  <a
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
+                  >
+                    <div className="flex items-center gap-4">
+                      <ChannelAvatar
+                        channelId={channel.id}
+                        name={channel.name}
+                        hasAvatar={channel.hasAvatar}
+                      />
+                      <div>
+                        <h3 className="text-sm font-semibold text-card-foreground">
+                          {channel.name}
+                        </h3>
+                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1.5">
+                            <Users className="h-3 w-3" />
+                            <span>
+                              {channel.subscribers} {t.channels.subscribers}
+                            </span>
+                          </div>
+                          {channel.reach && (
+                            <div className="flex items-center gap-1.5">
+                              <BarChart3 className="h-3 w-3" />
+                              <span>
+                                {channel.reach} {t.channels.reach}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
+                  </a>
+                </ScrollStagger>
+              ))}
+            </div>
+            {uncategorizedChannels.length > MAX_VISIBLE_UNCATEGORIZED && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowAllUncategorized((prev) => !prev)}
+                  className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                >
+                  {showAllUncategorized
+                    ? locale === "ru"
+                      ? `Свернуть список (${uncategorizedHiddenCount})`
+                      : `Show less (${uncategorizedHiddenCount})`
+                    : locale === "ru"
+                      ? `Показать ещё ${uncategorizedHiddenCount}`
+                      : `Show ${uncategorizedHiddenCount} more`}
+                </button>
+              </div>
+            )}
           </div>
-        </ScrollReveal>
+        )}
 
-        {/* Channels grid */}
-        {activeChannels.length === 0 && uncategorizedChannels.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            {locale === "ru" ? "Каналы не найдены." : "No channels found."}
-          </div>
-        ) : (
+        {/* 2. Категории и списки по категориям — только если есть категории */}
+        {categories.length > 0 && (
           <>
-            {activeChannels.length > 0 && (
+            <ScrollReveal disabled={!animationsEnabled}>
+              <div className="mb-10">
+                <div className="flex flex-wrap justify-center gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`rounded-lg px-5 py-2.5 text-sm font-medium transition-all ${
+                        activeCategoryId === cat.id
+                          ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(230,27,0,0.2)]"
+                          : "border border-border bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      }`}
+                    >
+                      {locale === "ru" ? cat.name_ru : cat.name_en}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {activeChannels.length === 0 && uncategorizedChannels.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {locale === "ru" ? "Каналы не найдены." : "No channels found."}
+              </div>
+            ) : activeChannels.length > 0 ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {visibleChannels.map((channel, index) => (
@@ -173,80 +244,15 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                   </div>
                 )}
               </>
-            )}
-
-            {uncategorizedChannels.length > 0 && (
-              <div className="mt-12">
-                <h3 className="mb-6 text-lg font-semibold text-foreground">
-                  {locale === "ru" ? "Каналы без категории" : "Channels without category"}
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleUncategorized.map((channel, index) => (
-                    <ScrollStagger
-                      key={channel.id}
-                      index={index}
-                      delayStep={80}
-                      disabled={!animationsEnabled}
-                    >
-                      <a
-                        href={channel.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
-                      >
-                        <div className="flex items-center gap-4">
-                          <ChannelAvatar
-                            channelId={channel.id}
-                            name={channel.name}
-                            hasAvatar={channel.hasAvatar}
-                          />
-                          <div>
-                            <h3 className="text-sm font-semibold text-card-foreground">
-                              {channel.name}
-                            </h3>
-                            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1.5">
-                                <Users className="h-3 w-3" />
-                                <span>
-                                  {channel.subscribers} {t.channels.subscribers}
-                                </span>
-                              </div>
-                              {channel.reach && (
-                                <div className="flex items-center gap-1.5">
-                                  <BarChart3 className="h-3 w-3" />
-                                  <span>
-                                    {channel.reach} {t.channels.reach}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                      </a>
-                    </ScrollStagger>
-                  ))}
-                </div>
-                {uncategorizedChannels.length > MAX_VISIBLE_UNCATEGORIZED && (
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllUncategorized((prev) => !prev)}
-                      className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                    >
-                      {showAllUncategorized
-                        ? locale === "ru"
-                          ? `Свернуть список (${uncategorizedHiddenCount})`
-                          : `Show less (${uncategorizedHiddenCount})`
-                        : locale === "ru"
-                          ? `Показать ещё ${uncategorizedHiddenCount}`
-                          : `Show ${uncategorizedHiddenCount} more`}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            ) : null}
           </>
+        )}
+
+        {/* Пусто: нет ни категорий, ни каналов без категории */}
+        {categories.length === 0 && uncategorizedChannels.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            {locale === "ru" ? "Каналы не найдены." : "No channels found."}
+          </div>
         )}
       </div>
     </section>
