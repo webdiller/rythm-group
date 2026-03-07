@@ -45,7 +45,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
             style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
           />
         </div>
-        <div className="absolute inset-0 w-full h-full pt-16 lg:pt-18">
+        <div className="absolute inset-x-0 top-0 h-full w-full pt-16 lg:pt-18">
           {animationEnabled && (
             <LightRays
               raysOrigin="top-center"
