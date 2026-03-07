@@ -45,6 +45,7 @@ export function ContactsEditor() {
   const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   useEffect(() => {
     loadContact()
@@ -129,11 +130,14 @@ export function ContactsEditor() {
   }
 
   const handleSave = async () => {
+    setValidationError(null)
     const invalid = directContacts.some(
       (l) => !(l.label_ru?.trim()) || !(l.label_en?.trim())
     )
     if (invalid) {
-      toast.error("У каждой ссылки должны быть заполнены подпись (RU) и подпись (EN).")
+      const msg = "У каждой ссылки должны быть заполнены подпись (RU) и подпись (EN)."
+      setValidationError(msg)
+      toast.error(msg)
       return
     }
     setSaving(true)
@@ -453,17 +457,24 @@ export function ContactsEditor() {
               </Button>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => initialContact && setContact(initialContact)}
-              disabled={!initialContact}>
-              Отменить
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Сохранение…" : "Сохранить"}
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            {validationError && (
+              <p className="w-full text-sm text-destructive" role="alert">
+                {validationError}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => initialContact && setContact(initialContact)}
+                disabled={!initialContact}>
+                Отменить
+              </Button>
+              <Button type="button" onClick={handleSave} disabled={saving}>
+                {saving ? "Сохранение…" : "Сохранить"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
