@@ -512,7 +512,7 @@ export function ChannelsEditor() {
               ))}
               {categories.length === 0 && (
                 <p className="text-muted-foreground text-center py-4">
-                  Нет категорий. Добавьте категорию, затем каналы.
+                  Нет категорий. Вы можете добавить канал без категории.
                 </p>
               )}
             </div>
@@ -526,7 +526,7 @@ export function ChannelsEditor() {
           <h2 className="text-2xl font-bold">Каналы</h2>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => setEditingChannel(null)} disabled={categories.length === 0}>
+              <Button onClick={() => setEditingChannel(null)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Добавить канал
               </Button>

@@ -430,7 +430,7 @@ export function PartnersEditor() {
               ))}
               {categories.length === 0 && (
                 <p className="text-muted-foreground text-center py-4">
-                  Нет категорий. Добавьте категорию, затем кейсы.
+                  Нет категорий. Вы можете добавить кейс без категории.
                 </p>
               )}
             </div>
@@ -444,10 +444,7 @@ export function PartnersEditor() {
           <h2 className="text-2xl font-bold">Кейсы (партнёры)</h2>
           <Dialog open={isPartnerDialogOpen} onOpenChange={setIsPartnerDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                onClick={() => setEditingPartner(null)}
-                disabled={categories.length === 0}
-              >
+              <Button onClick={() => setEditingPartner(null)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Добавить кейс
               </Button>
