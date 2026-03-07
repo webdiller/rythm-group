@@ -61,7 +61,7 @@ export function Footer({ siteSettings }: FooterProps) {
           </nav>
 
           <div className="max-w-sm space-y-3 md:text-left md:order-1">
-            <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}1</p>
+            <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}</p>
             <a
               href="#contact"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
@@ -73,7 +73,7 @@ export function Footer({ siteSettings }: FooterProps) {
 
         <div className="flex flex-col gap-3 border-t border-border/60 pt-4 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>
-            &copy; {new Date().getFullYear()} Rythm Group. {t.footer.rights}.
+            {t.footer.rights}.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             {privacyUrl && (

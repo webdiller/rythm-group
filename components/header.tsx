@@ -17,7 +17,7 @@ export function Header() {
   ]
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
         <a href="#" className="flex items-center gap-2" aria-label="Rythm Group Home">
           <span className="text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
