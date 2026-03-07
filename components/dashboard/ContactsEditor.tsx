@@ -25,6 +25,13 @@ type DirectContactLink = {
   icon?: string | null
 }
 
+const MAX_ICON_SIZE_BYTES = 500 * 1024
+const ACCEPTED_ICON_TYPES = ["image/png", "image/svg+xml"]
+
+function isCustomIcon(icon: string | null | undefined): boolean {
+  return typeof icon === "string" && (icon.startsWith("data:") || icon === "custom")
+}
+
 export function ContactsEditor() {
   const [contact, setContact] = useState<Contact>({
     id: 0,
@@ -105,7 +112,14 @@ export function ContactsEditor() {
       const isCreate = !contact.id
       const payload: Contact = {
         ...contact,
-        direct_contacts: directContacts.length ? JSON.stringify(directContacts) : null,
+        direct_contacts: directContacts.length
+          ? JSON.stringify(
+              directContacts.map(({ icon, ...rest }) => ({
+                ...rest,
+                icon: icon === "custom" ? null : icon ?? null,
+              }))
+            )
+          : null,
       }
       const response = await fetch("/api/content/contacts", {
         method: isCreate ? "POST" : "PUT",
@@ -217,16 +231,22 @@ export function ContactsEditor() {
                   <div className="space-y-1 md:col-span-1">
                     <Label className="text-xs">Иконка</Label>
                     {/*
-                      Используем специальное значение "none" вместо пустой строки,
-                      потому что Select.Item не поддерживает пустой value.
+                      "none" = без иконки; "custom" = своя (файл или data URL в link.icon).
+                      Select.Item не поддерживает пустой value.
                     */}
                     <Select
-                      value={link.icon ?? "none"}
+                      value={
+                        link.icon == null
+                          ? "none"
+                          : link.icon === "custom" || link.icon.startsWith("data:")
+                            ? "custom"
+                            : link.icon
+                      }
                       onValueChange={(value) => {
                         const next = [...directContacts]
                         next[index] = {
                           ...next[index],
-                          icon: value === "none" ? null : value,
+                          icon: value === "none" ? null : value === "custom" ? "custom" : value,
                         }
                         setDirectContacts(next)
                       }}
@@ -267,8 +287,69 @@ export function ContactsEditor() {
                             <span>WhatsApp</span>
                           </div>
                         </SelectItem>
+                        <SelectItem value="custom">
+                          <div className="flex items-center gap-2">
+                            {link.icon?.startsWith("data:") ? (
+                              <img src={link.icon} alt="" className="h-6 w-6 object-contain" />
+                            ) : (
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted text-[10px]">
+                                +
+                              </span>
+                            )}
+                            <span>Своя иконка</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
+                    {isCustomIcon(link.icon) && (
+                      <div className="mt-1.5 flex flex-col gap-1.5">
+                        <Input
+                          type="file"
+                          accept="image/png,image/svg+xml"
+                          className="h-8 text-xs"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            if (file.size > MAX_ICON_SIZE_BYTES) {
+                              toast.error(`Файл не должен превышать ${MAX_ICON_SIZE_BYTES / 1024} КБ`)
+                              e.target.value = ""
+                              return
+                            }
+                            if (!ACCEPTED_ICON_TYPES.includes(file.type)) {
+                              toast.error("Допустимы только PNG и SVG")
+                              e.target.value = ""
+                              return
+                            }
+                            const dataUrl = await new Promise<string>((resolve, reject) => {
+                              const reader = new FileReader()
+                              reader.onload = () => resolve(reader.result as string)
+                              reader.onerror = reject
+                              reader.readAsDataURL(file)
+                            })
+                            const next = [...directContacts]
+                            next[index] = { ...next[index], icon: dataUrl }
+                            setDirectContacts(next)
+                            e.target.value = ""
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            const next = [...directContacts]
+                            next[index] = { ...next[index], icon: null }
+                            setDirectContacts(next)
+                          }}
+                        >
+                          Удалить иконку
+                        </Button>
+                        <p className="text-[10px] text-muted-foreground">
+                          PNG или SVG, до 500 КБ
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-1 md:col-span-2">
                     <Label className="text-xs">Description (optional)</Label>

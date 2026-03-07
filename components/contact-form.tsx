@@ -353,7 +353,7 @@ export function ContactForm({
                             {link.icon ? (
                               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground overflow-hidden">
                                 <img
-                                  src={`/${link.icon}`}
+                                  src={link.icon.startsWith("data:") ? link.icon : `/${link.icon}`}
                                   alt={link.label}
                                   className="h-10 w-10 object-contain"
                                 />
