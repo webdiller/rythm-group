@@ -39,6 +39,7 @@ export function ChannelsEditor() {
   const [avatarsVersion, setAvatarsVersion] = useState(0)
   const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null)
   const [draggingChannelId, setDraggingChannelId] = useState<number | null>(null)
+  const [draggingChannelCategoryId, setDraggingChannelCategoryId] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -328,7 +329,10 @@ export function ChannelsEditor() {
     void persistCategoryOrder(next)
   }
 
-  const persistChannelOrder = async (categoryId: string, ordered: Channel[]) => {
+  const getChannelList = (categoryId: string | null): Channel[] =>
+    categoryId === null ? uncategorizedChannels : (channelsByCategory[categoryId] ?? [])
+
+  const persistChannelOrder = async (categoryId: string | null, ordered: Channel[]) => {
     try {
       const token = getToken()
       await Promise.all(
@@ -339,7 +343,11 @@ export function ChannelsEditor() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ id: ch.id, order_index: index + 1 }),
+            body: JSON.stringify({
+              id: ch.id,
+              category_id: categoryId,
+              order_index: index + 1,
+            }),
           }),
         ),
       )
@@ -348,8 +356,8 @@ export function ChannelsEditor() {
     }
   }
 
-  const moveChannel = (categoryId: string, channelId: number, direction: "up" | "down") => {
-    const list = channelsByCategory[categoryId] ?? []
+  const moveChannel = (categoryId: string | null, channelId: number, direction: "up" | "down") => {
+    const list = getChannelList(categoryId)
     const index = list.findIndex((ch) => ch.id === channelId)
     if (index === -1) return
     const swapWith = direction === "up" ? index - 1 : index + 1
@@ -357,37 +365,63 @@ export function ChannelsEditor() {
     const reordered = list.slice()
     const [removed] = reordered.splice(index, 1)
     reordered.splice(swapWith, 0, removed)
-    // обновляем глобальный список каналов
     const nextChannels = channels.slice()
     reordered.forEach((ch, idx) => {
       const globalIndex = nextChannels.findIndex((c) => c.id === ch.id)
       if (globalIndex !== -1) {
-        nextChannels[globalIndex] = { ...nextChannels[globalIndex], order_index: idx + 1 }
+        nextChannels[globalIndex] = {
+          ...nextChannels[globalIndex],
+          category_id: categoryId,
+          order_index: idx + 1,
+        }
       }
     })
     setChannels(nextChannels)
     void persistChannelOrder(categoryId, reordered)
   }
 
-  const onChannelDrop = (categoryId: string, targetId: number) => {
-    if (draggingChannelId == null || draggingChannelId === targetId) return
-    const list = channelsByCategory[categoryId] ?? []
-    const fromIndex = list.findIndex((ch) => ch.id === draggingChannelId)
-    const toIndex = list.findIndex((ch) => ch.id === targetId)
-    if (fromIndex === -1 || toIndex === -1) return
-    const reordered = list.slice()
-    const [moved] = reordered.splice(fromIndex, 1)
-    reordered.splice(toIndex, 0, moved)
-    const nextChannels = channels.slice()
-    reordered.forEach((ch, idx) => {
-      const globalIndex = nextChannels.findIndex((c) => c.id === ch.id)
-      if (globalIndex !== -1) {
-        nextChannels[globalIndex] = { ...nextChannels[globalIndex], order_index: idx + 1 }
-      }
-    })
+  const onChannelDropAt = (targetCategoryId: string | null, targetIndex: number) => {
+    if (draggingChannelId == null) return
+    const sourceCategoryId = draggingChannelCategoryId
+    const sourceList = getChannelList(sourceCategoryId)
+    const fromIndex = sourceList.findIndex((ch) => ch.id === draggingChannelId)
+    if (fromIndex === -1) return
+    const targetList = getChannelList(targetCategoryId)
     setDraggingChannelId(null)
+    setDraggingChannelCategoryId(null)
+
+    const moved = sourceList[fromIndex]
+    if (sourceCategoryId === targetCategoryId) {
+      const insertIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex
+      const reordered = sourceList.slice()
+      reordered.splice(fromIndex, 1)
+      reordered.splice(insertIndex, 0, moved)
+      const nextChannels = channels.slice()
+      reordered.forEach((ch, idx) => {
+        const i = nextChannels.findIndex((c) => c.id === ch.id)
+        if (i !== -1) {
+          nextChannels[i] = { ...nextChannels[i], category_id: targetCategoryId, order_index: idx + 1 }
+        }
+      })
+      setChannels(nextChannels)
+      void persistChannelOrder(targetCategoryId, reordered)
+      return
+    }
+    const newSourceList = sourceList.filter((ch) => ch.id !== moved.id)
+    const newTargetList = targetList.slice()
+    newTargetList.splice(targetIndex, 0, { ...moved, category_id: targetCategoryId })
+    const nextChannels = channels.slice()
+    newSourceList.forEach((ch, idx) => {
+      const i = nextChannels.findIndex((c) => c.id === ch.id)
+      if (i !== -1) nextChannels[i] = { ...nextChannels[i], category_id: sourceCategoryId, order_index: idx + 1 }
+    })
+    newTargetList.forEach((ch, idx) => {
+      const i = nextChannels.findIndex((c) => c.id === ch.id)
+      if (i !== -1) nextChannels[i] = { ...nextChannels[i], category_id: targetCategoryId, order_index: idx + 1 }
+    })
     setChannels(nextChannels)
-    void persistChannelOrder(categoryId, reordered)
+    void persistChannelOrder(sourceCategoryId, newSourceList)
+    void persistChannelOrder(targetCategoryId, newTargetList)
   }
 
   const handleDeleteCategory = async (id: string) => {
@@ -550,136 +584,191 @@ export function ChannelsEditor() {
           </Dialog>
         </div>
 
-        {/* Каналы без категории — отдельным списком сверху */}
-        {uncategorizedChannels.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Каналы без категории</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {uncategorizedChannels.map((channel) => (
-                  <div
-                    key={channel.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <AdminChannelAvatar
-                        channelId={channel.id}
-                        name={channel.name}
-                        version={avatarsVersion}
-                      />
-                      <div>
-                        <div className="font-semibold">{channel.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {channel.subscribers} подписчиков
-                          {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
+        {categories.map((category) => {
+          const list = channelsByCategory[category.id] ?? []
+          return (
+            <Card key={category.id} className="mb-6">
+              <CardHeader>
+                <CardTitle>
+                  {category.name_ru} / {category.name_en}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {list.map((channel, index) => (
+                    <div
+                      key={channel.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                      draggable
+                      onDragStart={() => {
+                        setDraggingChannelId(channel.id)
+                        setDraggingChannelCategoryId(category.id)
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onChannelDropAt(category.id, index)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <AdminChannelAvatar
+                          channelId={channel.id}
+                          name={channel.name}
+                          version={avatarsVersion}
+                        />
+                        <div>
+                          <div className="font-semibold">{channel.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {channel.subscribers} подписчиков
+                            {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex gap-2 items-center">
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === 0}
+                            onClick={() => moveChannel(category.id, channel.id, "up")}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === list.length - 1}
+                            onClick={() => moveChannel(category.id, channel.id, "down")}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingChannel(channel)
+                            setIsDialogOpen(true)
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDelete(channel.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 items-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingChannel(channel)
-                          setIsDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(channel.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  ))}
+                  {list.length > 0 && (
+                    <div
+                      className="min-h-[8px] rounded border border-dashed border-muted-foreground/30 opacity-60"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onChannelDropAt(category.id, list.length)}
+                    />
+                  )}
+                  {list.length === 0 && (
+                    <div
+                      className="py-4 text-center text-muted-foreground rounded border border-dashed border-muted-foreground/30"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onChannelDropAt(category.id, 0)}
+                    >
+                      Перетащите канал сюда
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
 
-        {categories.map((category) => (
-          <Card key={category.id} className="mb-6">
-            <CardHeader>
-              <CardTitle>
-                {category.name_ru} / {category.name_en}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {channelsByCategory[category.id]?.map((channel, index) => (
-                  <div
-                    key={channel.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                    draggable
-                    onDragStart={() => setDraggingChannelId(channel.id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => onChannelDrop(category.id, channel.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <AdminChannelAvatar
-                        channelId={channel.id}
-                        name={channel.name}
-                        version={avatarsVersion}
-                      />
-                      <div>
-                        <div className="font-semibold">{channel.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {channel.subscribers} подписчиков
-                          {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
-                        </div>
+        {/* Каналы без категории — в конце, как у кейсов */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-muted-foreground">Без категории</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {uncategorizedChannels.map((channel, index) => (
+                <div
+                  key={channel.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                  draggable
+                  onDragStart={() => {
+                    setDraggingChannelId(channel.id)
+                    setDraggingChannelCategoryId(null)
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onChannelDropAt(null, index)}
+                >
+                  <div className="flex items-center gap-3">
+                    <AdminChannelAvatar
+                      channelId={channel.id}
+                      name={channel.name}
+                      version={avatarsVersion}
+                    />
+                    <div>
+                      <div className="font-semibold">{channel.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {channel.subscribers} подписчиков
+                        {channel.reach ? ` • охват: ${channel.reach}` : ""} • {channel.url}
                       </div>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === 0}
-                          onClick={() => moveChannel(category.id, channel.id, "up")}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={
-                            !channelsByCategory[category.id] ||
-                            index === channelsByCategory[category.id].length - 1
-                          }
-                          onClick={() => moveChannel(category.id, channel.id, "down")}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingChannel(channel)
-                          setIsDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDelete(channel.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
-                ))}
-                {(!channelsByCategory[category.id] || channelsByCategory[category.id].length === 0) && (
-                  <p className="text-muted-foreground text-center py-4">
-                    В этой категории пока нет каналов
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === 0}
+                        onClick={() => moveChannel(null, channel.id, "up")}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === uncategorizedChannels.length - 1}
+                        onClick={() => moveChannel(null, channel.id, "down")}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingChannel(channel)
+                        setIsDialogOpen(true)
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(channel.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {uncategorizedChannels.length > 0 && (
+                <div
+                  className="min-h-[8px] rounded border border-dashed border-muted-foreground/30 opacity-60"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onChannelDropAt(null, uncategorizedChannels.length)}
+                />
+              )}
+              {uncategorizedChannels.length === 0 && (
+                <div
+                  className="py-4 text-center text-muted-foreground rounded border border-dashed border-muted-foreground/30"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onChannelDropAt(null, 0)}
+                >
+                  Перетащите канал сюда или добавьте канал без категории
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

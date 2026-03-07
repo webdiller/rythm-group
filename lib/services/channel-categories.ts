@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/db"
-import { tableChannelCategories } from "@/lib/db/schema"
+import { tableChannelCategories, tableChannels } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import type {
   GetAllResponse,
@@ -52,6 +52,11 @@ export class ServiceChannelCategories {
 
   static deleteOne(params: DeleteOneParams): DeleteOneResponse {
     const db = getDb()
+    // Unassign channels from this category (set category_id to null)
+    db.update(tableChannels)
+      .set({ category_id: null })
+      .where(eq(tableChannels.category_id, params.id))
+      .run()
     db.delete(tableChannelCategories).where(eq(tableChannelCategories.id, params.id)).run()
     return { data: true, meta: null }
   }

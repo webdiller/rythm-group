@@ -35,6 +35,7 @@ export function PartnersEditor() {
   const [loading, setLoading] = useState(false)
   const [draggingCategoryId, setDraggingCategoryId] = useState<number | null>(null)
   const [draggingPartnerId, setDraggingPartnerId] = useState<number | null>(null)
+  const [draggingPartnerCategoryId, setDraggingPartnerCategoryId] = useState<number | null>(null)
 
   useEffect(() => {
     loadData()
@@ -239,7 +240,12 @@ export function PartnersEditor() {
     void persistCategoryOrder(next)
   }
 
-  const persistPartnerOrder = async (ordered: Partner[]) => {
+  const getPartnerList = (categoryId: number | null): Partner[] =>
+    categoryId === null
+      ? partners.filter((p) => p.category_id == null).sort((a, b) => a.order_index - b.order_index)
+      : partners.filter((p) => p.category_id === categoryId).sort((a, b) => a.order_index - b.order_index)
+
+  const persistPartnerOrder = async (categoryId: number | null, ordered: Partner[]) => {
     try {
       const token = getToken()
       await Promise.all(
@@ -250,7 +256,11 @@ export function PartnersEditor() {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ id: p.id, order_index: index + 1 }),
+            body: JSON.stringify({
+              id: p.id,
+              category_id: categoryId,
+              order_index: index + 1,
+            }),
           }),
         ),
       )
@@ -259,11 +269,12 @@ export function PartnersEditor() {
     }
   }
 
-  const movePartner = (list: Partner[], partnerId: number, direction: "up" | "down") => {
+  const movePartner = (categoryId: number | null, partnerId: number, direction: "up" | "down") => {
+    const list = getPartnerList(categoryId)
     const index = list.findIndex((p) => p.id === partnerId)
-    if (index === -1) return list
+    if (index === -1) return
     const swapWith = direction === "up" ? index - 1 : index + 1
-    if (swapWith < 0 || swapWith >= list.length) return list
+    if (swapWith < 0 || swapWith >= list.length) return
     const nextList = list.slice()
     const [removed] = nextList.splice(index, 1)
     nextList.splice(swapWith, 0, removed)
@@ -271,33 +282,59 @@ export function PartnersEditor() {
     nextList.forEach((p, idx) => {
       const globalIndex = nextPartners.findIndex((g) => g.id === p.id)
       if (globalIndex !== -1) {
-        nextPartners[globalIndex] = { ...nextPartners[globalIndex], order_index: idx + 1 }
+        nextPartners[globalIndex] = {
+          ...nextPartners[globalIndex],
+          category_id: categoryId,
+          order_index: idx + 1,
+        }
       }
     })
     setPartners(nextPartners)
-    void persistPartnerOrder(nextList)
-    return nextList
+    void persistPartnerOrder(categoryId, nextList)
   }
 
-  const onPartnerDrop = (list: Partner[], targetId: number) => {
-    if (draggingPartnerId == null || draggingPartnerId === targetId) return list
-    const fromIndex = list.findIndex((p) => p.id === draggingPartnerId)
-    const toIndex = list.findIndex((p) => p.id === targetId)
-    if (fromIndex === -1 || toIndex === -1) return list
-    const nextList = list.slice()
-    const [moved] = nextList.splice(fromIndex, 1)
-    nextList.splice(toIndex, 0, moved)
-    const nextPartners = partners.slice()
-    nextList.forEach((p, idx) => {
-      const globalIndex = nextPartners.findIndex((g) => g.id === p.id)
-      if (globalIndex !== -1) {
-        nextPartners[globalIndex] = { ...nextPartners[globalIndex], order_index: idx + 1 }
-      }
-    })
+  const onPartnerDropAt = (targetCategoryId: number | null, targetIndex: number) => {
+    if (draggingPartnerId == null) return
+    const sourceCategoryId = draggingPartnerCategoryId
+    const sourceList = getPartnerList(sourceCategoryId)
+    const fromIndex = sourceList.findIndex((p) => p.id === draggingPartnerId)
+    if (fromIndex === -1) return
+    const targetList = getPartnerList(targetCategoryId)
     setDraggingPartnerId(null)
+    setDraggingPartnerCategoryId(null)
+
+    const moved = sourceList[fromIndex]
+    if (sourceCategoryId === targetCategoryId) {
+      const insertIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex
+      const reordered = sourceList.slice()
+      reordered.splice(fromIndex, 1)
+      reordered.splice(insertIndex, 0, moved)
+      const nextPartners = partners.slice()
+      reordered.forEach((p, idx) => {
+        const i = nextPartners.findIndex((g) => g.id === p.id)
+        if (i !== -1) {
+          nextPartners[i] = { ...nextPartners[i], category_id: targetCategoryId, order_index: idx + 1 }
+        }
+      })
+      setPartners(nextPartners)
+      void persistPartnerOrder(targetCategoryId, reordered)
+      return
+    }
+    const newSourceList = sourceList.filter((p) => p.id !== moved.id)
+    const newTargetList = targetList.slice()
+    newTargetList.splice(targetIndex, 0, { ...moved, category_id: targetCategoryId })
+    const nextPartners = partners.slice()
+    newSourceList.forEach((p, idx) => {
+      const i = nextPartners.findIndex((g) => g.id === p.id)
+      if (i !== -1) nextPartners[i] = { ...nextPartners[i], category_id: sourceCategoryId, order_index: idx + 1 }
+    })
+    newTargetList.forEach((p, idx) => {
+      const i = nextPartners.findIndex((g) => g.id === p.id)
+      if (i !== -1) nextPartners[i] = { ...nextPartners[i], category_id: targetCategoryId, order_index: idx + 1 }
+    })
     setPartners(nextPartners)
-    void persistPartnerOrder(nextList)
-    return nextList
+    void persistPartnerOrder(sourceCategoryId, newSourceList)
+    void persistPartnerOrder(targetCategoryId, newTargetList)
   }
 
   const handleDeleteCategory = async (id: number) => {
@@ -468,157 +505,191 @@ export function PartnersEditor() {
           </Dialog>
         </div>
 
-        {categories.map((category) => (
-          <Card key={category.id} className="mb-6">
-            <CardHeader>
-              <CardTitle>{category.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="space-y-3">
-                {(partnersByCategory[category.id] ?? []).map((partner, index, list) => (
-                  <div
-                    key={partner.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                    draggable
-                    onDragStart={() => setDraggingPartnerId(partner.id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => onPartnerDrop(list, partner.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {partner.logo_url ? (
-                        <img
-                          src={`/api/content/partners/${partner.id}/logo`}
-                          alt={partner.name}
-                          className="h-8 w-8 object-contain"
-                        />
-                      ) : null}
-                      <span className="font-medium">{partner.name}</span>
-                      <span className="text-sm text-muted-foreground">
-                        (порядок: {partner.order_index})
-                      </span>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex flex-col gap-1">
+        {categories.map((category) => {
+          const list = partnersByCategory[category.id] ?? []
+          return (
+            <Card key={category.id} className="mb-6">
+              <CardHeader>
+                <CardTitle>{category.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {list.map((partner, index) => (
+                    <div
+                      key={partner.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                      draggable
+                      onDragStart={() => {
+                        setDraggingPartnerId(partner.id)
+                        setDraggingPartnerCategoryId(category.id)
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onPartnerDropAt(category.id, index)}
+                    >
+                      <div className="flex items-center gap-3">
+                        {partner.logo_url ? (
+                          <img
+                            src={`/api/content/partners/${partner.id}/logo`}
+                            alt={partner.name}
+                            className="h-8 w-8 object-contain"
+                          />
+                        ) : null}
+                        <span className="font-medium">{partner.name}</span>
+                        <span className="text-sm text-muted-foreground">
+                          (порядок: {partner.order_index})
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === 0}
+                            onClick={() => movePartner(category.id, partner.id, "up")}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={index === list.length - 1}
+                            onClick={() => movePartner(category.id, partner.id, "down")}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === 0}
-                          onClick={() => movePartner(list, partner.id, "up")}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingPartner(partner)
+                            setIsPartnerDialogOpen(true)
+                          }}
                         >
-                          <ArrowUp className="h-4 w-4" />
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === list.length - 1}
-                          onClick={() => movePartner(list, partner.id, "down")}
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeletePartner(partner.id)}
                         >
-                          <ArrowDown className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingPartner(partner)
-                          setIsPartnerDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeletePartner(partner.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-                ))}
-                {(partnersByCategory[category.id] ?? []).length === 0 && (
-                  <p className="text-muted-foreground text-center py-2 text-sm">
-                    В этой категории пока нет кейсов
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                  ))}
+                  {list.length > 0 && (
+                    <div
+                      className="min-h-[8px] rounded border border-dashed border-muted-foreground/30 opacity-60"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onPartnerDropAt(category.id, list.length)}
+                    />
+                  )}
+                  {list.length === 0 && (
+                    <div
+                      className="py-2 text-center text-muted-foreground text-sm rounded border border-dashed border-muted-foreground/30"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => onPartnerDropAt(category.id, 0)}
+                    >
+                      Перетащите кейс сюда
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
 
-        {uncategorizedPartners.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-muted-foreground">Без категории</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {uncategorizedPartners.map((partner, index, list) => (
-                  <div
-                    key={partner.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                    draggable
-                    onDragStart={() => setDraggingPartnerId(partner.id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => onPartnerDrop(list, partner.id)}
-                  >
-                    <div className="flex items-center gap-3">
-                      {partner.logo_url ? (
-                        <img
-                          src={`/api/content/partners/${partner.id}/logo`}
-                          alt={partner.name}
-                          className="h-8 w-8 object-contain"
-                        />
-                      ) : null}
-                      <span className="font-medium">{partner.name}</span>
-                    </div>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex flex-col gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === 0}
-                          onClick={() => movePartner(list, partner.id, "up")}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={index === list.length - 1}
-                          onClick={() => movePartner(list, partner.id, "down")}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setEditingPartner(partner)
-                          setIsPartnerDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeletePartner(partner.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-muted-foreground">Без категории</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {uncategorizedPartners.map((partner, index) => (
+                <div
+                  key={partner.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                  draggable
+                  onDragStart={() => {
+                    setDraggingPartnerId(partner.id)
+                    setDraggingPartnerCategoryId(null)
+                  }}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onPartnerDropAt(null, index)}
+                >
+                  <div className="flex items-center gap-3">
+                    {partner.logo_url ? (
+                      <img
+                        src={`/api/content/partners/${partner.id}/logo`}
+                        alt={partner.name}
+                        className="h-8 w-8 object-contain"
+                      />
+                    ) : null}
+                    <span className="font-medium">{partner.name}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  <div className="flex gap-2 items-center">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === 0}
+                        onClick={() => movePartner(null, partner.id, "up")}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={index === uncategorizedPartners.length - 1}
+                        onClick={() => movePartner(null, partner.id, "down")}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingPartner(partner)
+                        setIsPartnerDialogOpen(true)
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeletePartner(partner.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {uncategorizedPartners.length > 0 && (
+                <div
+                  className="min-h-[8px] rounded border border-dashed border-muted-foreground/30 opacity-60"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onPartnerDropAt(null, uncategorizedPartners.length)}
+                />
+              )}
+              {uncategorizedPartners.length === 0 && (
+                <div
+                  className="py-2 text-center text-muted-foreground text-sm rounded border border-dashed border-muted-foreground/30"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => onPartnerDropAt(null, 0)}
+                >
+                  Перетащите кейс сюда или добавьте кейс без категории
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {partners.length === 0 && (
           <Card>

@@ -34,7 +34,7 @@ export const UpdateOneParams = SharedGetOneParams
 
 export const UpdateOneBody = z.object({
   id: z.number(),
-  category_id: z.string().optional(),
+  category_id: z.string().nullable().optional(),
   name: z.string().optional(),
   subscribers: z.string().optional(),
   reach: z.string().optional().nullable(),
