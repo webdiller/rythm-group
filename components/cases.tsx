@@ -78,7 +78,7 @@ export function Cases({
               const visiblePartners = isExpanded
                 ? categoryPartners
                 : categoryPartners.slice(0, MAX_VISIBLE)
-              const hiddenCount = Math.max(0, categoryPartners.length - visiblePartners.length)
+              const hiddenCount = Math.max(0, categoryPartners.length - MAX_VISIBLE)
 
               return (
                 <ScrollReveal key={category.id} disabled={!animationsEnabled}>
@@ -90,7 +90,7 @@ export function Cases({
                       <PartnerCard key={partner.id} partner={partner} displayMode={displayMode} />
                     ))}
                   </div>
-                  {hiddenCount > 0 && (
+                  {categoryPartners.length > MAX_VISIBLE && (
                     <div className="mt-6 flex justify-center">
                       <button
                         type="button"
@@ -104,8 +104,8 @@ export function Cases({
                       >
                         {isExpanded
                           ? locale === "ru"
-                            ? "Свернуть список"
-                            : "Show less"
+                            ? `Свернуть список (${hiddenCount})`
+                            : `Show less (${hiddenCount})`
                           : locale === "ru"
                             ? `Показать ещё ${hiddenCount}`
                             : `Show ${hiddenCount} more`}
@@ -139,8 +139,8 @@ export function Cases({
                   >
                     {showAllUncategorized
                       ? locale === "ru"
-                        ? "Свернуть список"
-                        : "Show less"
+                        ? `Свернуть список (${uncategorizedPartners.length - MAX_VISIBLE})`
+                        : `Show less (${uncategorizedPartners.length - MAX_VISIBLE})`
                       : locale === "ru"
                         ? `Показать ещё ${uncategorizedPartners.length - MAX_VISIBLE}`
                         : `Show ${uncategorizedPartners.length - MAX_VISIBLE} more`}

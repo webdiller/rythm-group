@@ -37,6 +37,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     categories[0]?.id ?? null,
   )
   const [showAll, setShowAll] = useState(false)
+  const [showAllUncategorized, setShowAllUncategorized] = useState(false)
 
   const activeCategoryId = activeCategory ?? categories[0]?.id ?? null
   const activeChannels = activeCategoryId
@@ -54,9 +55,16 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     setShowAll(false)
   }, [activeCategoryId])
 
-  const MAX_VISIBLE = 6
-  const visibleChannels = showAll ? activeChannels : activeChannels.slice(0, MAX_VISIBLE)
-  const hiddenCount = Math.max(0, activeChannels.length - MAX_VISIBLE)
+  const MAX_VISIBLE_CATEGORY = 10
+  const MAX_VISIBLE_UNCATEGORIZED = 10
+
+  const visibleChannels = showAll ? activeChannels : activeChannels.slice(0, MAX_VISIBLE_CATEGORY)
+  const hiddenCount = Math.max(0, activeChannels.length - MAX_VISIBLE_CATEGORY)
+
+  const visibleUncategorized = showAllUncategorized
+    ? uncategorizedChannels
+    : uncategorizedChannels.slice(0, MAX_VISIBLE_UNCATEGORIZED)
+  const uncategorizedHiddenCount = Math.max(0, uncategorizedChannels.length - MAX_VISIBLE_UNCATEGORIZED)
 
   return (
     <section id="channels" className="relative px-6 py-12 md:py-16">
@@ -147,7 +155,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                     </ScrollStagger>
                   ))}
                 </div>
-                {hiddenCount > 0 && (
+                {activeChannels.length > MAX_VISIBLE_CATEGORY && (
                   <div className="mt-8 flex justify-center">
                     <button
                       type="button"
@@ -156,8 +164,8 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                     >
                       {showAll
                         ? locale === "ru"
-                          ? "Свернуть список"
-                          : "Show less"
+                          ? `Свернуть список (${hiddenCount})`
+                          : `Show less (${hiddenCount})`
                         : locale === "ru"
                           ? `Показать ещё ${hiddenCount}`
                           : `Show ${hiddenCount} more`}
@@ -173,7 +181,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                   {locale === "ru" ? "Каналы без категории" : "Channels without category"}
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {uncategorizedChannels.map((channel, index) => (
+                  {visibleUncategorized.map((channel, index) => (
                     <ScrollStagger
                       key={channel.id}
                       index={index}
@@ -219,6 +227,23 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                     </ScrollStagger>
                   ))}
                 </div>
+                {uncategorizedChannels.length > MAX_VISIBLE_UNCATEGORIZED && (
+                  <div className="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllUncategorized((prev) => !prev)}
+                      className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    >
+                      {showAllUncategorized
+                        ? locale === "ru"
+                          ? `Свернуть список (${uncategorizedHiddenCount})`
+                          : `Show less (${uncategorizedHiddenCount})`
+                        : locale === "ru"
+                          ? `Показать ещё ${uncategorizedHiddenCount}`
+                          : `Show ${uncategorizedHiddenCount} more`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>
