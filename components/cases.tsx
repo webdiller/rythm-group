@@ -119,9 +119,6 @@ export function Cases({
 
           {uncategorizedPartners.length > 0 && (
             <ScrollReveal disabled={!animationsEnabled}>
-              <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
-                {t.cases.uncategorizedTitle}
-              </h3>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {(showAllUncategorized
                   ? uncategorizedPartners

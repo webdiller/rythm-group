@@ -55,8 +55,8 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     setShowAll(false)
   }, [activeCategoryId])
 
-  const MAX_VISIBLE_CATEGORY = 10
-  const MAX_VISIBLE_UNCATEGORIZED = 10
+  const MAX_VISIBLE_CATEGORY = 6
+  const MAX_VISIBLE_UNCATEGORIZED = 6
 
   const visibleChannels = showAll ? activeChannels : activeChannels.slice(0, MAX_VISIBLE_CATEGORY)
   const hiddenCount = Math.max(0, activeChannels.length - MAX_VISIBLE_CATEGORY)
