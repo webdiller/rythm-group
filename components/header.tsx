@@ -18,13 +18,13 @@ export function Header() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-2 py-4 sm:px-4">
         <a href="#" className="flex items-center gap-2" aria-label="Rythm Group Home">
-          <span className="text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
+          <span className="text-lg font-bold tracking-tight flex items-center gap-1 sm:gap-2 text-foreground">
             <div className="rounded-full overflow-hidden bg-primary">
               <img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" />
             </div>
-            <span className="text-sm sm:text-base">Rythm<span className="text-primary">Group</span></span>
+            <span className="text-xs sm:text-sm md:text-base">Rythm<span className="text-primary">Group</span></span>
           </span>
         </a>
 
@@ -40,7 +40,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <ThemeToggle />
           <button
             onClick={() => setLocale(locale === "ru" ? "en" : "ru")}
