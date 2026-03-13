@@ -13,6 +13,8 @@ import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
 interface PartnerCategory {
   id: number
   name: string
+  name_ru: string
+  name_en: string
   order_index: number
 }
 
@@ -419,7 +421,9 @@ export function PartnersEditor() {
                   onDrop={() => onCategoryDrop(cat.id)}
                 >
                   <div>
-                    <span className="font-medium">{cat.name}</span>
+                    <span className="font-medium">
+                      {cat.name_ru} / {cat.name_en}
+                    </span>
                     <span className="text-sm text-muted-foreground ml-2">
                       (порядок: {cat.order_index})
                     </span>
@@ -510,7 +514,9 @@ export function PartnersEditor() {
           return (
             <Card key={category.id} className="mb-6">
               <CardHeader>
-                <CardTitle>{category.name}</CardTitle>
+                <CardTitle>
+                  {category.name_ru} / {category.name_en}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -715,7 +721,8 @@ function CategoryForm({
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState({
-    name: category?.name ?? "",
+    name_ru: category?.name_ru ?? "",
+    name_en: category?.name_en ?? "",
     order_index: category?.order_index ?? 0,
   })
 
@@ -728,10 +735,18 @@ function CategoryForm({
       className="space-y-4"
     >
       <div className="space-y-2">
-        <Label>Название категории</Label>
+        <Label>Название категории (RU)</Label>
         <Input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={formData.name_ru}
+          onChange={(e) => setFormData({ ...formData, name_ru: e.target.value })}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Название категории (EN)</Label>
+        <Input
+          value={formData.name_en}
+          onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
           required
         />
       </div>

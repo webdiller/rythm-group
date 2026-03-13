@@ -39,7 +39,12 @@ export class ServicePartnerCategories {
 
   static createOne(body: CreateOneBody): CreateOneResponse {
     const db = getDb()
-    const [created] = db.insert(tablePartnerCategories).values(body).returning().all()
+    // Keep legacy "name" column in sync with Russian title for backward compatibility
+    const payload = {
+      ...body,
+      name: body.name_ru,
+    }
+    const [created] = db.insert(tablePartnerCategories).values(payload).returning().all()
     if (!created) throw new Error("Failed to create partner category")
     return { data: created, meta: null }
   }
@@ -49,7 +54,14 @@ export class ServicePartnerCategories {
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
     const set: Record<string, unknown> = {}
-    if (body.name !== undefined) set.name = body.name
+    if (body.name_ru !== undefined) {
+      set.name_ru = body.name_ru
+      // Also update legacy "name" column to keep it in sync
+      set.name = body.name_ru
+    }
+    if (body.name_en !== undefined) {
+      set.name_en = body.name_en
+    }
     if (body.order_index !== undefined) set.order_index = body.order_index
     const [updated] = db
       .update(tablePartnerCategories)

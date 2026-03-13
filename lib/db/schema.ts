@@ -75,7 +75,11 @@ export const relationsChannels = relations(tableChannels, ({ one }) => ({
 // ---------------------------------------------------------------------------
 export const tablePartnerCategories = sqliteTable("partner_categories", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  // Legacy single-name column (kept for backward compatibility)
   name: text("name").notNull(),
+  // Localized names for landing and admin UI
+  name_ru: text("name_ru").notNull(),
+  name_en: text("name_en").notNull(),
   order_index: integer("order_index").default(0),
 })
 

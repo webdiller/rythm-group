@@ -10,6 +10,8 @@ type PartnerDisplayMode = "name" | "logo" | "logoAndName"
 export interface PartnerCategory {
   id: number
   name: string
+  name_ru: string
+  name_en: string
   order_index: number
 }
 
@@ -83,7 +85,7 @@ export function Cases({
               return (
                 <ScrollReveal key={category.id} disabled={!animationsEnabled}>
                   <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
-                    {category.name}
+                    {locale === "ru" ? category.name_ru : category.name_en}
                   </h3>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {visiblePartners.map((partner) => (

@@ -84,7 +84,7 @@ export function runSeed(
   if (existingPartnerCategories.length === 0) {
     const [inserted] = db
       .insert(tablePartnerCategories)
-      .values({ name: "Партнёры", order_index: 0 })
+      .values({ name: "Партнёры", name_ru: "Партнёры", name_en: "Partners", order_index: 0 })
       .returning()
       .all()
     if (inserted) defaultPartnerCategoryId = inserted.id

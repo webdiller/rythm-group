@@ -12,7 +12,8 @@ export const GetOneResponse = SharedDefaultResponse.extend({
 })
 
 export const CreateOneBody = allZodSchemas.tablePartnerCategories.insert.pick({
-  name: true,
+  name_ru: true,
+  name_en: true,
   order_index: true,
 })
 
@@ -24,7 +25,8 @@ export const UpdateOneParams = SharedGetOneParams
 
 export const UpdateOneBody = allZodSchemas.tablePartnerCategories.update.pick({
   id: true,
-  name: true,
+  name_ru: true,
+  name_en: true,
   order_index: true,
 })
 
