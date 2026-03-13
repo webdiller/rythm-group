@@ -30,35 +30,39 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-6">
-          <h1 className="text-xl font-bold">CMS Dashboard</h1>
-          <Button variant="outline" onClick={handleLogout}>
+        <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+          <h1 className="text-lg font-bold sm:text-xl">CMS Dashboard</h1>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className="h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
+          >
             <LogOut className="mr-2 h-4 w-4" />
-            Выход
+            <span className="hidden sm:inline">Выход</span>
           </Button>
         </div>
       </header>
-      <div className="container mx-auto flex gap-6 p-6">
-        <aside className="w-64 space-y-2">
+      <div className="container mx-auto flex flex-col gap-4 p-4 sm:gap-6 sm:p-6 lg:flex-row">
+        <aside className="w-full space-y-2 overflow-x-auto lg:w-64 lg:overflow-visible">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
+                className={`flex w-full min-w-[180px] items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors sm:px-4 sm:py-3 ${
                   activeTab === tab.id
                     ? "bg-primary text-primary-foreground"
-                    : "hover:bg-accent"
+                    : "bg-muted hover:bg-accent"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                {tab.label}
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="truncate">{tab.label}</span>
               </button>
             )
           })}
         </aside>
-        <main className="flex-1">{children}</main>
+        <main className="w-full flex-1">{children}</main>
       </div>
     </div>
   )
