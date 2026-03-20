@@ -21,7 +21,7 @@
 sudo apt update && sudo apt upgrade -y
 
 # Базовые пакеты
-sudo apt install -y git build-essential nginx
+sudo apt install -y git build-essential nginx nano unzip
 ```
 
 #### Установка Node.js (через nvm)
@@ -154,7 +154,7 @@ sudo nano /etc/nginx/sites-available/rythm-group
 ```nginx
 server {
     listen 80;
-    server_name example.com www.example.com; # замените на свой домен или IP
+    server_name file-lab.ru www.file-lab.ru; # замените на свой домен или IP
 
     location / {
         proxy_pass         http://127.0.0.1:3000;
@@ -188,7 +188,7 @@ sudo apt install -y certbot python3-certbot-nginx
 Запустите получение сертификата:
 
 ```bash
-sudo certbot --nginx -d example.com -d www.example.com
+sudo certbot --nginx -d file-lab.ru -d www.file-lab.ru
 ```
 
 Certbot автоматически пропишет HTTPS-конфиг и настроит автообновление сертификата.
