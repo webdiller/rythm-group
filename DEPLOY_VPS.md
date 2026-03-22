@@ -58,11 +58,48 @@ sudo chown $USER:$USER /var/www/rythm-group
 cd /var/www/rythm-group
 ```
 
-Клонируйте репозиторий:
+#### Настройка SSH для GitHub
 
-```bash
-git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ> .
-```
+Чтобы клонировать и обновлять репозиторий по SSH (`git@github.com:...`), на VPS нужен ключ и привязка к аккаунту GitHub.
+
+1. **Создайте ключ** (если на сервере ещё нет подходящего):
+
+   ```bash
+   ssh-keygen -t ed25519 -C "ваш_email@example.com" -f ~/.ssh/id_ed25519
+   ```
+
+   На вопросы можно нажать Enter (пустая passphrase допустима на выделенном сервере; с passphrase безопаснее, но `git pull` будет запрашивать её, если не использовать ssh-agent).
+
+2. **Запустите агент и добавьте ключ** (для текущей сессии; после перезагрузки при необходимости повторите `eval` и `ssh-add`):
+
+   ```bash
+   eval "$(ssh-agent -s)"
+   ssh-add ~/.ssh/id_ed25519
+   ```
+
+3. **Добавьте публичный ключ в GitHub**: скопируйте содержимое `~/.ssh/id_ed25519.pub` и в GitHub откройте **Settings → SSH and GPG keys → New SSH key**, вставьте ключ и сохраните.
+
+   ```bash
+   cat ~/.ssh/id_ed25519.pub
+   ```
+
+4. **Проверьте соединение**:
+
+   ```bash
+   ssh -T git@github.com
+   ```
+
+   Ожидается сообщение вроде `Hi <username>! You've successfully authenticated...`.
+
+5. **Клонируйте репозиторий** в текущую директорию (URL берите на GitHub: **Code → SSH** или **HTTPS**):
+
+   ```bash
+   # SSH (после настройки ключей выше)
+   git clone git@github.com:OWNER/REPO.git .
+
+   # или HTTPS (без SSH-ключа; для приватного репо — [Personal Access Token](https://github.com/settings/tokens) вместо пароля)
+   # git clone https://github.com/OWNER/REPO.git .
+   ```
 
 Установите зависимости:
 
