@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/locale-context"
 import { BarChart3, ExternalLink, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
+import Link from "next/link"
 
 export interface ChannelCategory {
   id: string
@@ -91,7 +92,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                   delayStep={80}
                   disabled={!animationsEnabled}
                 >
-                  <a
+                  <Link
                     href={channel.url}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -126,7 +127,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                  </a>
+                  </Link>
                 </ScrollStagger>
               ))}
             </div>
@@ -187,7 +188,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                       delayStep={80}
                       disabled={!animationsEnabled}
                     >
-                      <a
+                      <Link
                         href={channel.url}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -222,7 +223,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
                           </div>
                         </div>
                         <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                      </a>
+                      </Link>
                     </ScrollStagger>
                   ))}
                 </div>

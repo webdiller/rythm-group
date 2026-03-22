@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
+import { resolveNavHref } from "@/lib/nav-hrefs"
 
 export type SiteSettings = {
   privacyPolicyUrl?: string | null
@@ -13,9 +15,10 @@ export type SiteSettings = {
 
 type FooterProps = {
   siteSettings?: SiteSettings | null
+  sectionHrefPrefix?: "" | "/"
 }
 
-export function Footer({ siteSettings }: FooterProps) {
+export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
   const { t } = useLocale()
 
   const navItems = [
@@ -23,7 +26,11 @@ export function Footer({ siteSettings }: FooterProps) {
     { label: t.nav.channels, href: "#channels" },
     { label: t.nav.cases, href: "#cases" },
     { label: t.nav.contacts, href: "#contact" },
+    { label: t.blog.navLabel, href: "/blog" },
   ]
+
+  const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
+  const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
 
   const privacyUrl = siteSettings?.privacyPolicyUrl ?? null
   const dataPolicyUrl = siteSettings?.dataProcessingPolicyUrl ?? null
@@ -34,8 +41,8 @@ export function Footer({ siteSettings }: FooterProps) {
         <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-3 md:order-3">
             <div>
-              <a
-                href="#"
+              <Link
+                href={homeHref === "#" ? "/" : homeHref}
                 className="flex items-center justify-center gap-2 md:justify-end"
                 aria-label="Rythm Group Home"
               >
@@ -47,27 +54,31 @@ export function Footer({ siteSettings }: FooterProps) {
                     Rythm<span className="text-primary">Group</span>
                   </span>
                 </div>
-              </a>
+              </Link>
               <span className="mt-2 block text-xs text-muted-foreground">{t.footer.description}</span>
             </div>
           </div>
 
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground md:justify-center md:order-2">
             {navItems.map((item) => (
-              <a key={item.href} href={item.href} className="transition-colors hover:text-foreground">
+              <Link
+                key={item.label + item.href}
+                href={resolveNavHref(item.href, sectionHrefPrefix)}
+                className="transition-colors hover:text-foreground"
+              >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </nav>
 
           <div className="max-w-sm space-y-3 md:text-left md:order-1">
             <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}</p>
-            <a
-              href="#contact"
+            <Link
+              href={contactHref}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
             >
               {t.nav.order}
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -77,24 +88,24 @@ export function Footer({ siteSettings }: FooterProps) {
           </p>
           <div className="flex flex-wrap items-center gap-4">
             {privacyUrl && (
-              <a
+              <Link
                 href={privacyUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="transition-colors hover:text-foreground"
               >
                 {t.footer.privacy}
-              </a>
+              </Link>
             )}
             {dataPolicyUrl && (
-              <a
+              <Link
                 href={dataPolicyUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="transition-colors hover:text-foreground"
               >
                 {t.footer.dataPolicy}
-              </a>
+              </Link>
             )}
           </div>
         </div>

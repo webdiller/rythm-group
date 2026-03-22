@@ -1,4 +1,3 @@
-import { LocaleProvider } from "@/lib/locale-context"
 import { Header } from "@/components/header"
 import { Hero } from "@/components/hero"
 import { Channels, type Channel, type ChannelCategory } from "@/components/channels"
@@ -8,16 +7,7 @@ import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
 import { Footer, type SiteSettings } from "@/components/footer"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
-import { SiteShell } from "@/components/SiteShell"
-
-function getBaseUrl() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL
-  if (siteUrl) {
-    if (siteUrl.startsWith("http")) return siteUrl
-    return `https://${siteUrl}`
-  }
-  return "http://localhost:3000"
-}
+import { getSiteBaseUrl } from "@/lib/site-url"
 
 async function getHomeData(): Promise<{
   channelCategories: ChannelCategory[]
@@ -26,9 +16,8 @@ async function getHomeData(): Promise<{
   partners: Partner[]
   siteSettings: SiteSettings | null
   hasCustomGlobalBackgroundForBothThemes: boolean
-  hasAnyCustomBackgrounds: boolean
 }> {
-  const baseUrl = getBaseUrl()
+  const baseUrl = getSiteBaseUrl()
 
   const [
     catRes,
@@ -92,7 +81,6 @@ async function getHomeData(): Promise<{
   }
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
-  const hasAnyCustomBackgrounds = globalLightBgRes.ok || globalDarkBgRes.ok
 
   return {
     channelCategories,
@@ -101,7 +89,6 @@ async function getHomeData(): Promise<{
     partners,
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
-    hasAnyCustomBackgrounds,
   }
 }
 
@@ -113,7 +100,6 @@ export default async function Home() {
     partners,
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
-    hasAnyCustomBackgrounds,
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
@@ -125,9 +111,7 @@ export default async function Home() {
     "logoAndName"
 
   return (
-    <LocaleProvider>
-      <SiteShell hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>
-        <div className="min-h-screen w-full relative">
+    <div className="min-h-screen w-full relative">
           <div className="absolute inset-0 z-0" aria-hidden="true">
             <div
               className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
@@ -177,7 +161,5 @@ export default async function Home() {
             <Footer siteSettings={siteSettings} />
           </div>
         </div>
-      </SiteShell>
-    </LocaleProvider>
   )
 }

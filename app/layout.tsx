@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
+import { RootShellProviders } from '@/components/RootShellProviders'
+import { getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
 import './globals.css'
 
 const inter = Inter({
@@ -31,11 +33,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const { hasAnyCustomBackgrounds } = await getRootShellBackgroundFlags()
+
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
@@ -43,7 +47,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          {children}
+          <RootShellProviders hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>
+            {children}
+          </RootShellProviders>
         </ThemeProvider>
         <Analytics />
       </body>

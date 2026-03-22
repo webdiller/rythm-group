@@ -6,6 +6,7 @@ import { fallbackTranslations } from "@/lib/i18n"
 import { Send, MessageCircle, Mail, Instagram, Globe } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
+import Link from "next/link"
 
 type DirectContactLink = {
   id: string
@@ -383,7 +384,7 @@ export function ContactForm({
                           delayStep={80}
                           disabled={!animationsEnabled}
                         >
-                          <a
+                          <Link
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -408,7 +409,7 @@ export function ContactForm({
                                 <span className="text-xs text-muted-foreground">{description}</span>
                               )}
                             </div>
-                          </a>
+                          </Link>
                         </ScrollStagger>
                       )
                     })}

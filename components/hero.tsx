@@ -6,6 +6,7 @@ import { useLocale } from "@/lib/locale-context"
 import { ArrowDown } from "lucide-react"
 import { StaggerItem } from "@/components/ui/stagger-item"
 import LightRays from "@/components/LightRays"
+import Link from "next/link"
 
 const LIGHT_RAYS_DARK = {
   raysColor: "#ffffff",
@@ -138,20 +139,20 @@ export function Hero({ animationEnabled = true }: HeroProps) {
                 hiddenClassName="translate-y-4 opacity-0 scale-95"
                 durationClassName="duration-700"
               >
-                <a
+                <Link
                   href="#contact"
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
                 >
                   {t.hero.cta}
-                </a>
+                </Link>
               </StaggerItem>
             ) : (
-              <a
+              <Link
                 href="#contact"
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
               >
                 {t.hero.cta}
-              </a>
+              </Link>
             )}
 
             {animationEnabled ? (
@@ -163,22 +164,22 @@ export function Hero({ animationEnabled = true }: HeroProps) {
                 hiddenClassName="translate-y-4 opacity-0 scale-95"
                 durationClassName="duration-700"
               >
-                <a
+                <Link
                   href="#channels"
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
                 >
                   {t.hero.scroll}
                   <ArrowDown className="h-4 w-4" />
-                </a>
+                </Link>
               </StaggerItem>
             ) : (
-              <a
+              <Link
                 href="#channels"
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
               >
                 {t.hero.scroll}
                 <ArrowDown className="h-4 w-4" />
-              </a>
+              </Link>
             )}
           </div>
         </div>
