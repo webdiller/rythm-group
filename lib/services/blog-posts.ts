@@ -3,6 +3,8 @@ import { tableBlogCategories, tableBlogPosts } from "@/lib/db/schema"
 import { and, desc, eq, isNull, ne } from "drizzle-orm"
 import { sanitizeBlogHtml } from "@/lib/blog/html-sanitize"
 import type { CreatePostBody, PatchPostBody } from "@/lib/schemas/blog-posts"
+import { deleteBlogUploadFileByPublicUrl } from "@/lib/blog-local-upload"
+import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
 
 function unixNow(): number {
   return Math.floor(Date.now() / 1000)
@@ -141,7 +143,7 @@ export class ServiceBlogPosts {
     return { data: withSlug ?? created, meta: null }
   }
 
-  static patch(id: number, body: PatchPostBody) {
+  static async patch(id: number, body: PatchPostBody) {
     const db = getDb()
     const existing = db
       .select()
@@ -155,6 +157,14 @@ export class ServiceBlogPosts {
 
     if (body.slug !== undefined && (body.slug !== existing.slug || nextCategoryId !== existing.category_id)) {
       this.assertSlugFreeInCategory(nextCategoryId, body.slug, id)
+    }
+
+    if (body.cover_image_url !== undefined) {
+      const oldUrl = existing.cover_image_url
+      const newUrl = body.cover_image_url
+      if (oldUrl && oldUrl !== newUrl && isLocalBlogUploadUrl(oldUrl)) {
+        await deleteBlogUploadFileByPublicUrl(oldUrl)
+      }
     }
 
     let published_at = existing.published_at
@@ -191,7 +201,7 @@ export class ServiceBlogPosts {
     return { data: withSlug ?? updated, meta: null }
   }
 
-  static softDelete(id: number) {
+  static async softDelete(id: number) {
     const db = getDb()
     const existing = db
       .select()
@@ -199,6 +209,10 @@ export class ServiceBlogPosts {
       .where(and(eq(tableBlogPosts.id, id), isNull(tableBlogPosts.deleted_at)))
       .get()
     if (!existing) throw new Error("NOT_FOUND")
+    const cover = existing.cover_image_url
+    if (cover && isLocalBlogUploadUrl(cover)) {
+      await deleteBlogUploadFileByPublicUrl(cover)
+    }
     const ts = unixNow()
     db.update(tableBlogPosts)
       .set({ deleted_at: ts, updated_at: isoNow() })

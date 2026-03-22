@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { toast } from "sonner"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Trash2, Upload } from "lucide-react"
+import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
 
 type Category = {
   id: number
@@ -55,6 +56,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   const [body_html_ru, setBodyHtmlRu] = useState(emptyBody)
   const [body_html_en, setBodyHtmlEn] = useState(emptyBody)
   const [cover_image_url, setCoverImageUrl] = useState("")
+  const [coverUploading, setCoverUploading] = useState(false)
+  const coverFileInputRef = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<"draft" | "published">("draft")
 
   const getToken = () =>
@@ -139,8 +142,33 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     })()
   }, [authReady, isEdit, postId, router])
 
+  const resetCoverFileInput = () => {
+    const el = coverFileInputRef.current
+    if (el) el.value = ""
+  }
+
+  const deleteLocalBlogUploadFile = async (url: string): Promise<boolean> => {
+    const token = getToken()
+    const res = await fetch("/api/content/blog/upload/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ url }),
+    })
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string }
+      toast.error(err.error ?? "Не удалось удалить файл с диска")
+      return false
+    }
+    return true
+  }
+
   const uploadCover = async (file: File | null) => {
     if (!file) return
+    const previousUrl = cover_image_url.trim()
+    setCoverUploading(true)
     const token = getToken()
     const fd = new FormData()
     fd.append("file", file)
@@ -158,13 +186,41 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       const json = (await res.json()) as { data?: { url?: string } }
       const url = json.data?.url
       if (url) {
+        if (
+          !isEdit &&
+          previousUrl &&
+          previousUrl !== url &&
+          isLocalBlogUploadUrl(previousUrl)
+        ) {
+          await deleteLocalBlogUploadFile(previousUrl)
+        }
         setCoverImageUrl(url)
         toast.success("Файл загружен")
       }
     } catch {
       toast.error("Ошибка загрузки")
+    } finally {
+      setCoverUploading(false)
+      resetCoverFileInput()
     }
   }
+
+  const clearCover = async () => {
+    const u = cover_image_url.trim()
+    if (!isEdit && u && isLocalBlogUploadUrl(u)) {
+      const ok = await deleteLocalBlogUploadFile(u)
+      if (!ok) return
+    }
+    setCoverImageUrl("")
+    resetCoverFileInput()
+  }
+
+  const openCoverFilePicker = () => {
+    coverFileInputRef.current?.click()
+  }
+
+  const trimmedCoverUrl = cover_image_url.trim()
+  const hasCoverPreview = trimmedCoverUrl.length > 0
 
   const save = async () => {
     if (!category_id) {
@@ -319,13 +375,70 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
             <Input
               value={cover_image_url}
               onChange={(e) => setCoverImageUrl(e.target.value)}
-              placeholder="https://..."
+              placeholder="https://... или /uploads/blog/..."
             />
-            <Input
+            <input
+              ref={coverFileInputRef}
               type="file"
+              className="sr-only"
               accept="image/jpeg,image/png,image/webp,image/gif"
+              aria-hidden
+              tabIndex={-1}
               onChange={(e) => void uploadCover(e.target.files?.[0] ?? null)}
             />
+            {hasCoverPreview ? (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <div className="relative inline-flex max-w-full overflow-hidden rounded-lg border border-border bg-muted/30">
+                  <img
+                    key={trimmedCoverUrl}
+                    src={trimmedCoverUrl}
+                    alt="Превью обложки"
+                    className={`max-h-40 w-auto max-w-full object-contain object-top-left ${coverUploading ? "opacity-40" : ""}`}
+                  />
+                  {coverUploading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 text-sm font-medium text-foreground">
+                      Загрузка…
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={coverUploading}
+                    onClick={openCoverFilePicker}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Заменить
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    disabled={coverUploading}
+                    onClick={clearCover}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Удалить
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit gap-1.5"
+                disabled={coverUploading}
+                onClick={openCoverFilePicker}
+              >
+                <Upload className="h-4 w-4" />
+                {coverUploading ? "Загрузка…" : "Загрузить файл"}
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

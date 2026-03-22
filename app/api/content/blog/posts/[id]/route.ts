@@ -42,7 +42,7 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Validation failed", errors: parsed.error.flatten() }, { status: 400 })
     }
-    const result = ServiceBlogPosts.patch(id, parsed.data)
+    const result = await ServiceBlogPosts.patch(id, parsed.data)
     return NextResponse.json(result)
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -70,7 +70,7 @@ export async function DELETE(request: NextRequest, ctx: Ctx) {
     if (Number.isNaN(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 })
     }
-    const result = ServiceBlogPosts.softDelete(id)
+    const result = await ServiceBlogPosts.softDelete(id)
     return NextResponse.json(result)
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
