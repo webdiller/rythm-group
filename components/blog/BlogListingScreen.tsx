@@ -10,9 +10,15 @@ type BlogListingScreenProps = {
   posts: BlogPost[]
   categories: BlogCategory[]
   activeCategorySlug: string | null
+  showDates?: boolean
 }
 
-export function BlogListingScreen({ posts, categories, activeCategorySlug }: BlogListingScreenProps) {
+export function BlogListingScreen({
+  posts,
+  categories,
+  activeCategorySlug,
+  showDates = true,
+}: BlogListingScreenProps) {
   const { t } = useLocale()
   const categoryBySlug = useMemo(() => {
     const m = new Map<string, BlogCategory>()
@@ -31,7 +37,11 @@ export function BlogListingScreen({ posts, categories, activeCategorySlug }: Blo
         <ul className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {posts.map((post) => (
             <li key={post.id} className="min-h-[1px]">
-              <BlogPostCard post={post} category={categoryBySlug.get(post.category_slug)} />
+              <BlogPostCard
+                post={post}
+                category={categoryBySlug.get(post.category_slug)}
+                showDates={showDates}
+              />
             </li>
           ))}
         </ul>

@@ -8,6 +8,7 @@ import {
   tablePartnerCategories,
   tablePartners,
   tableContacts,
+  tableBlogCategories,
 } from "./schema"
 import { fallbackTranslations } from "@/lib/i18n"
 import { channelCategories, partnerLogos } from "@/lib/data"
@@ -131,5 +132,28 @@ export function runSeed(
     db.run(sql`ALTER TABLE site_settings ADD COLUMN hero_animation_enabled integer DEFAULT 1`)
   } catch {
     // ignore if column already exists
+  }
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN blog_show_dates integer DEFAULT 1`)
+  } catch {
+    // ignore
+  }
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_blog_block integer DEFAULT 1`)
+  } catch {
+    // ignore
+  }
+
+  const existingBlogCats = db.select().from(tableBlogCategories).limit(1).all()
+  if (existingBlogCats.length === 0) {
+    const seedCats = [
+      { slug: "news", name_ru: "Новости", name_en: "News", order_index: 0 },
+      { slug: "cases", name_ru: "Кейсы", name_en: "Cases", order_index: 1 },
+      { slug: "statistics", name_ru: "Статистика", name_en: "Statistics", order_index: 2 },
+      { slug: "memes", name_ru: "Мемы", name_en: "Memes", order_index: 3 },
+    ]
+    for (const c of seedCats) {
+      db.insert(tableBlogCategories).values({ ...c, deleted_at: null }).run()
+    }
   }
 }

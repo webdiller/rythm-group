@@ -8,6 +8,8 @@ import {
   tablePartnerCategories,
   tablePartners,
   tableContacts,
+  tableBlogCategories,
+  tableBlogPosts,
 } from "./db/schema"
 
 export const allZodSchemas = {
@@ -45,6 +47,16 @@ export const allZodSchemas = {
     select: createSelectSchema(tableContacts),
     insert: createInsertSchema(tableContacts),
     update: createUpdateSchema(tableContacts),
+  },
+  tableBlogCategories: {
+    select: createSelectSchema(tableBlogCategories),
+    insert: createInsertSchema(tableBlogCategories),
+    update: createUpdateSchema(tableBlogCategories),
+  },
+  tableBlogPosts: {
+    select: createSelectSchema(tableBlogPosts),
+    insert: createInsertSchema(tableBlogPosts),
+    update: createUpdateSchema(tableBlogPosts),
   },
 }
 

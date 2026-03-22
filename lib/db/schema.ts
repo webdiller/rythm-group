@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core"
 import { relations } from "drizzle-orm"
-import { created_at } from "./common-fields"
+import { created_at, updated_at } from "./common-fields"
 
 // ---------------------------------------------------------------------------
 // users
@@ -135,6 +135,59 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   contactLayout: text("contact_layout"),
   // If true, hide email form and show only direct contacts
   contactFormHidden: integer("contact_form_hidden", { mode: "boolean" }).default(false),
+  /** Публичный блог: показывать даты у карточек и в записи */
+  blog_show_dates: integer("blog_show_dates", { mode: "boolean" }).default(true),
+  /** Страница /affiliate: блок мини-блога (до 6 записей) */
+  affiliate_show_blog_block: integer("affiliate_show_blog_block", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))
+
+// ---------------------------------------------------------------------------
+// blog_categories
+// ---------------------------------------------------------------------------
+export const tableBlogCategories = sqliteTable("blog_categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  slug: text("slug").notNull(),
+  name_ru: text("name_ru").notNull(),
+  name_en: text("name_en").notNull(),
+  order_index: integer("order_index").notNull().default(0),
+  /** Unix seconds; NULL = активна */
+  deleted_at: integer("deleted_at"),
+  created_at: created_at("created_at"),
+})
+
+// ---------------------------------------------------------------------------
+// blog_posts
+// ---------------------------------------------------------------------------
+export const tableBlogPosts = sqliteTable("blog_posts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  category_id: integer("category_id")
+    .notNull()
+    .references(() => tableBlogCategories.id, { onDelete: "restrict", onUpdate: "cascade" }),
+  slug: text("slug").notNull(),
+  title_ru: text("title_ru").notNull(),
+  title_en: text("title_en").notNull(),
+  excerpt_ru: text("excerpt_ru").notNull(),
+  excerpt_en: text("excerpt_en").notNull(),
+  body_html_ru: text("body_html_ru").notNull(),
+  body_html_en: text("body_html_en").notNull(),
+  cover_image_url: text("cover_image_url"),
+  status: text("status").notNull().$type<"draft" | "published">(),
+  /** Unix seconds; для черновика — время создания или последней смены статуса */
+  published_at: integer("published_at").notNull(),
+  deleted_at: integer("deleted_at"),
+  created_at: created_at("created_at"),
+  updated_at: updated_at("updated_at"),
+})
+
+export const relationsBlogCategories = relations(tableBlogCategories, ({ many }) => ({
+  posts: many(tableBlogPosts),
+}))
+
+export const relationsBlogPosts = relations(tableBlogPosts, ({ one }) => ({
+  category: one(tableBlogCategories, {
+    fields: [tableBlogPosts.category_id],
+    references: [tableBlogCategories.id],
+  }),
+}))

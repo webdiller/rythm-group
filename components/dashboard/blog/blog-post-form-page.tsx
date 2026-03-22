@@ -1,0 +1,348 @@
+"use client"
+
+import { useCallback, useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
+import { toast } from "sonner"
+import { ArrowLeft } from "lucide-react"
+
+type Category = {
+  id: number
+  slug: string
+  name_ru: string
+  name_en: string
+  order_index: number
+  deleted_at: number | null
+}
+
+type AdminPost = {
+  id: number
+  category_id: number
+  slug: string
+  title_ru: string
+  title_en: string
+  excerpt_ru: string
+  excerpt_en: string
+  body_html_ru: string
+  body_html_en: string
+  cover_image_url: string | null
+  status: "draft" | "published"
+}
+
+const emptyBody = "<p></p>"
+
+export function BlogPostFormPage({ postId }: { postId?: number }) {
+  const router = useRouter()
+  const isEdit = postId != null && !Number.isNaN(postId)
+  const [authReady, setAuthReady] = useState(false)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(isEdit)
+  const [saving, setSaving] = useState(false)
+
+  const [category_id, setCategoryId] = useState(0)
+  const [slug, setSlug] = useState("")
+  const [title_ru, setTitleRu] = useState("")
+  const [title_en, setTitleEn] = useState("")
+  const [excerpt_ru, setExcerptRu] = useState("")
+  const [excerpt_en, setExcerptEn] = useState("")
+  const [body_html_ru, setBodyHtmlRu] = useState(emptyBody)
+  const [body_html_en, setBodyHtmlEn] = useState(emptyBody)
+  const [cover_image_url, setCoverImageUrl] = useState("")
+  const [status, setStatus] = useState<"draft" | "published">("draft")
+
+  const getToken = () =>
+    document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
+
+  const verifyAuth = useCallback(async () => {
+    const token = getToken()
+    if (!token) {
+      router.replace("/dashboard/login")
+      return false
+    }
+    const res = await fetch("/api/auth/verify", { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok || !(await res.json()).valid) {
+      router.replace("/dashboard/login")
+      return false
+    }
+    return true
+  }, [router])
+
+  useEffect(() => {
+    void (async () => {
+      if (!(await verifyAuth())) return
+      setAuthReady(true)
+    })()
+  }, [verifyAuth])
+
+  const loadCategories = useCallback(async () => {
+    const token = getToken()
+    const res = await fetch("/api/content/blog/categories", {
+      headers: { Authorization: `Bearer ${token ?? ""}` },
+    })
+    if (!res.ok) return
+    const json = (await res.json()) as { data?: Category[] }
+    const list = (json.data ?? []).filter((c) => !c.deleted_at)
+    setCategories(list)
+    if (!isEdit && list.length > 0) {
+      setCategoryId((prev) => (prev === 0 ? list[0].id : prev))
+    }
+  }, [isEdit])
+
+  useEffect(() => {
+    if (!authReady) return
+    void loadCategories()
+  }, [authReady, loadCategories])
+
+  useEffect(() => {
+    if (!authReady || !isEdit || postId == null) return
+    const token = getToken()
+    setLoading(true)
+    void (async () => {
+      try {
+        const res = await fetch(`/api/content/blog/posts/${postId}`, {
+          headers: { Authorization: `Bearer ${token ?? ""}` },
+        })
+        if (!res.ok) {
+          toast.error("Запись не найдена")
+          router.replace("/dashboard?tab=blog")
+          return
+        }
+        const json = (await res.json()) as { data?: AdminPost }
+        const row = json.data
+        if (!row) {
+          router.replace("/dashboard?tab=blog")
+          return
+        }
+        setCategoryId(row.category_id)
+        setSlug(row.slug)
+        setTitleRu(row.title_ru)
+        setTitleEn(row.title_en)
+        setExcerptRu(row.excerpt_ru)
+        setExcerptEn(row.excerpt_en)
+        setBodyHtmlRu(row.body_html_ru?.trim() ? row.body_html_ru : emptyBody)
+        setBodyHtmlEn(row.body_html_en?.trim() ? row.body_html_en : emptyBody)
+        setCoverImageUrl(row.cover_image_url ?? "")
+        setStatus(row.status)
+      } catch {
+        toast.error("Ошибка загрузки")
+        router.replace("/dashboard?tab=blog")
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [authReady, isEdit, postId, router])
+
+  const uploadCover = async (file: File | null) => {
+    if (!file) return
+    const token = getToken()
+    const fd = new FormData()
+    fd.append("file", file)
+    try {
+      const res = await fetch("/api/content/blog/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(err.error ?? "Загрузка не удалась")
+        return
+      }
+      const json = (await res.json()) as { data?: { url?: string } }
+      const url = json.data?.url
+      if (url) {
+        setCoverImageUrl(url)
+        toast.success("Файл загружен")
+      }
+    } catch {
+      toast.error("Ошибка загрузки")
+    }
+  }
+
+  const save = async () => {
+    if (!category_id) {
+      toast.error("Выберите категорию")
+      return
+    }
+    const token = getToken()
+    const payload = {
+      category_id,
+      slug,
+      title_ru,
+      title_en,
+      excerpt_ru,
+      excerpt_en,
+      body_html_ru,
+      body_html_en,
+      cover_image_url: cover_image_url === "" ? null : cover_image_url,
+      status,
+    }
+    setSaving(true)
+    try {
+      if (isEdit && postId != null) {
+        const res = await fetch(`/api/content/blog/posts/${postId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token ?? ""}`,
+          },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { error?: string }
+          toast.error(err.error ?? "Не удалось сохранить")
+          return
+        }
+        toast.success("Запись обновлена")
+      } else {
+        const res = await fetch("/api/content/blog/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token ?? ""}`,
+          },
+          body: JSON.stringify(payload),
+        })
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { error?: string }
+          toast.error(err.error ?? "Не удалось создать")
+          return
+        }
+        toast.success("Запись создана")
+      }
+      router.push("/dashboard?tab=blog")
+    } catch {
+      toast.error("Ошибка сети")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-sm text-muted-foreground">Проверка доступа…</div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-sm text-muted-foreground">Загрузка записи…</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b">
+        <div className="container mx-auto flex h-14 items-center gap-3 px-4">
+          <Button variant="ghost" size="sm" asChild className="gap-1">
+            <Link href="/dashboard?tab=blog">
+              <ArrowLeft className="h-4 w-4" />
+              К списку
+            </Link>
+          </Button>
+          <span className="text-sm font-medium text-muted-foreground">Блог</span>
+        </div>
+      </header>
+      <main className="container mx-auto max-w-4xl px-4 py-8">
+        <h1 className="mb-8 text-2xl font-bold tracking-tight">{isEdit ? "Редактировать запись" : "Новая запись"}</h1>
+
+        <div className="space-y-8">
+          <div className="grid gap-2">
+            <Label>Категория</Label>
+            <Select value={category_id ? String(category_id) : ""} onValueChange={(v) => setCategoryId(Number(v))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите категорию" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.name_ru}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {categories.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Сначала создайте категории в разделе «Блог».</p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="bps-slug">Slug поста (латиница, kebab-case)</Label>
+            <Input id="bps-slug" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-post-slug" />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="bps-tru">Заголовок RU</Label>
+              <Input id="bps-tru" value={title_ru} onChange={(e) => setTitleRu(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="bps-ten">Заголовок EN</Label>
+              <Input id="bps-ten" value={title_en} onChange={(e) => setTitleEn(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="bps-eru">Анонс RU</Label>
+              <Textarea id="bps-eru" rows={3} value={excerpt_ru} onChange={(e) => setExcerptRu(e.target.value)} />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="bps-een">Анонс EN</Label>
+              <Textarea id="bps-een" rows={3} value={excerpt_en} onChange={(e) => setExcerptEn(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Тело статьи (RU)</Label>
+            <SimpleEditor value={body_html_ru} onChange={setBodyHtmlRu} placeholder="Текст на русском…" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Тело статьи (EN)</Label>
+            <SimpleEditor value={body_html_en} onChange={setBodyHtmlEn} placeholder="English content…" />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Обложка (URL или загрузка ≤10 МБ)</Label>
+            <Input
+              value={cover_image_url}
+              onChange={(e) => setCoverImageUrl(e.target.value)}
+              placeholder="https://..."
+            />
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(e) => void uploadCover(e.target.files?.[0] ?? null)}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Switch id="bps-pub" checked={status === "published"} onCheckedChange={(c) => setStatus(c ? "published" : "draft")} />
+            <Label htmlFor="bps-pub">Опубликовано</Label>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Button type="button" onClick={() => void save()} disabled={saving || categories.length === 0}>
+              {saving ? "Сохранение…" : "Сохранить"}
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <Link href="/dashboard?tab=blog">Отмена</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}

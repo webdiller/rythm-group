@@ -3,7 +3,7 @@
 import { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { LogOut, FileText, Tv, Users, Mail, Settings } from "lucide-react"
+import { LogOut, FileText, Tv, Users, Mail, Settings, Newspaper } from "lucide-react"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -23,6 +23,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
     { id: "translations", label: "Переводы", icon: FileText },
     { id: "channels", label: "Каналы", icon: Tv },
     { id: "partners", label: "Партнёры", icon: Users },
+    { id: "blog", label: "Блог", icon: Newspaper },
     { id: "contacts", label: "Контакты", icon: Mail },
     { id: "settings", label: "Настройки сайта", icon: Settings },
   ]

@@ -43,6 +43,8 @@ export function SiteSettingsEditor() {
   )
   const [contactLayout, setContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
   const [contactFormHidden, setContactFormHidden] = useState(false)
+  const [blogShowDates, setBlogShowDates] = useState(true)
+  const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -54,6 +56,8 @@ export function SiteSettingsEditor() {
     partnersDisplayMode: "name" | "logo" | "logoAndName"
     contactLayout: "formFirst" | "contactsFirst"
     contactFormHidden: boolean
+    blogShowDates: boolean
+    affiliateShowBlogBlock: boolean
   } | null>(null)
 
   useEffect(() => {
@@ -110,6 +114,8 @@ export function SiteSettingsEditor() {
             partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
             contactLayout?: "formFirst" | "contactsFirst" | null
             contactFormHidden?: boolean | null
+            blog_show_dates?: boolean | null
+            affiliate_show_blog_block?: boolean | null
           } | null
         }
 
@@ -120,6 +126,8 @@ export function SiteSettingsEditor() {
         const partnersMode = data?.partnersDisplayMode ?? "logoAndName"
         const layoutMode = data?.contactLayout ?? "formFirst"
         const formHidden = data?.contactFormHidden ?? false
+        const blogDates = data?.blog_show_dates ?? true
+        const affBlog = data?.affiliate_show_blog_block ?? true
 
         setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
@@ -131,10 +139,14 @@ export function SiteSettingsEditor() {
           partnersDisplayMode: partnersMode,
           contactLayout: layoutMode,
           contactFormHidden: formHidden,
+          blogShowDates: blogDates,
+          affiliateShowBlogBlock: affBlog,
         })
         setPartnersDisplayMode(partnersMode)
         setContactLayout(layoutMode)
         setContactFormHidden(formHidden)
+        setBlogShowDates(blogDates)
+        setAffiliateShowBlogBlock(affBlog)
       } catch {
         // ignore, settings are optional
       } finally {
@@ -166,6 +178,8 @@ export function SiteSettingsEditor() {
           partnersDisplayMode,
           contactLayout,
           contactFormHidden,
+          blog_show_dates: blogShowDates,
+          affiliate_show_blog_block: affiliateShowBlogBlock,
         }),
       })
 
@@ -182,6 +196,8 @@ export function SiteSettingsEditor() {
         partnersDisplayMode,
         contactLayout,
         contactFormHidden,
+        blogShowDates,
+        affiliateShowBlogBlock,
       })
     } catch {
       toast.error("Не удалось сохранить настройки сайта")
@@ -872,6 +888,35 @@ export function SiteSettingsEditor() {
               id="contact_form_hidden"
               checked={contactFormHidden}
               onCheckedChange={setContactFormHidden}
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Блог и Affiliate</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="blog_show_dates">Показывать даты в блоге</Label>
+              <p className="text-xs text-muted-foreground">
+                Даты на карточках и на странице записи на публичном сайте.
+              </p>
+            </div>
+            <Switch id="blog_show_dates" checked={blogShowDates} onCheckedChange={setBlogShowDates} />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="affiliate_blog_block">Мини-блог на странице /affiliate</Label>
+              <p className="text-xs text-muted-foreground">
+                До 6 последних опубликованных записей (когда страница будет подключена).
+              </p>
+            </div>
+            <Switch
+              id="affiliate_blog_block"
+              checked={affiliateShowBlogBlock}
+              onCheckedChange={setAffiliateShowBlogBlock}
             />
           </div>
         </CardContent>

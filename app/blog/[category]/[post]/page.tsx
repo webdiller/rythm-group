@@ -1,18 +1,12 @@
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { BlogPostView } from "@/components/blog/BlogPostView"
-import { getCategoryBySlug, getPostBySlugs } from "@/lib/blog/queries"
-import { mockBlogPosts } from "@/lib/blog/mock-data"
+import { getBlogShowDatesEnabled, getCategoryBySlug, getPostBySlugs } from "@/lib/blog/queries"
+
+export const dynamic = "force-dynamic"
 
 type PageProps = {
   params: Promise<{ category: string; post: string }>
-}
-
-export function generateStaticParams() {
-  return mockBlogPosts.map((p) => ({
-    category: p.category_slug,
-    post: p.slug,
-  }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -47,5 +41,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const category = getCategoryBySlug(catSlug)
   if (!post || !category) notFound()
 
-  return <BlogPostView post={post} category={category} />
+  const showDates = getBlogShowDatesEnabled()
+
+  return <BlogPostView post={post} category={category} showDates={showDates} />
 }

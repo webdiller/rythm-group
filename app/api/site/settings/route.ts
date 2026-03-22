@@ -16,6 +16,8 @@ type SiteSettingsPayload = {
   partnersDisplayMode?: PartnersDisplayMode | null
   contactLayout?: ContactLayout | null
   contactFormHidden?: boolean | null
+  blog_show_dates?: boolean | null
+  affiliate_show_blog_block?: boolean | null
 }
 
 export async function GET() {
@@ -42,6 +44,8 @@ export async function PUT(request: NextRequest) {
     const currentContactLayout =
       (existing?.contactLayout as ContactLayout | null | undefined) ?? "formFirst"
     const currentContactFormHidden = existing?.contactFormHidden ?? false
+    const currentBlogShowDates = existing?.blog_show_dates ?? true
+    const currentAffiliateBlog = existing?.affiliate_show_blog_block ?? true
 
     const updateValues: SiteSettingsPayload = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
@@ -54,6 +58,12 @@ export async function PUT(request: NextRequest) {
         typeof body.contactFormHidden === "boolean"
           ? body.contactFormHidden
           : currentContactFormHidden,
+      blog_show_dates:
+        typeof body.blog_show_dates === "boolean" ? body.blog_show_dates : currentBlogShowDates,
+      affiliate_show_blog_block:
+        typeof body.affiliate_show_blog_block === "boolean"
+          ? body.affiliate_show_blog_block
+          : currentAffiliateBlog,
     }
 
     if (existing) {
@@ -77,6 +87,8 @@ export async function PUT(request: NextRequest) {
         partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
         contactLayout: updateValues.contactLayout ?? "formFirst",
         contactFormHidden: updateValues.contactFormHidden ?? false,
+        blog_show_dates: updateValues.blog_show_dates ?? true,
+        affiliate_show_blog_block: updateValues.affiliate_show_blog_block ?? true,
       })
       .returning()
       .all()

@@ -5,17 +5,17 @@ import { format } from "date-fns"
 import { enUS, ru } from "date-fns/locale"
 import { useLocale } from "@/lib/locale-context"
 import type { BlogCategory, BlogPost } from "@/lib/blog/types"
-import { getPostCanonicalPath } from "@/lib/blog/queries"
-import { BLOG_UI_SHOW_DATES } from "@/lib/blog/ui-flags"
+import { getPostCanonicalPath } from "@/lib/blog/paths"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 type BlogPostCardProps = {
   post: BlogPost
   category: BlogCategory | undefined
+  showDates?: boolean
 }
 
-export function BlogPostCard({ post, category }: BlogPostCardProps) {
+export function BlogPostCard({ post, category, showDates = true }: BlogPostCardProps) {
   const { locale, t } = useLocale()
   const title = locale === "en" ? post.title_en : post.title_ru
   const excerpt = locale === "en" ? post.excerpt_en : post.excerpt_ru
@@ -23,7 +23,7 @@ export function BlogPostCard({ post, category }: BlogPostCardProps) {
     category != null ? (locale === "en" ? category.name_en : category.name_ru) : post.category_slug
   const href = getPostCanonicalPath(post)
   const dateLocale = locale === "en" ? enUS : ru
-  const formattedDate = BLOG_UI_SHOW_DATES
+  const formattedDate = showDates
     ? format(new Date(post.published_at), "d MMMM yyyy", { locale: dateLocale })
     : null
 

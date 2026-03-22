@@ -4,22 +4,22 @@ import { format } from "date-fns"
 import { enUS, ru } from "date-fns/locale"
 import { useLocale } from "@/lib/locale-context"
 import type { BlogCategory, BlogPost } from "@/lib/blog/types"
-import { BLOG_UI_SHOW_DATES } from "@/lib/blog/ui-flags"
 import { BlogPageBreadcrumbs } from "@/components/blog/BlogPageBreadcrumbs"
 import { BlogArticleBody } from "@/components/blog/BlogArticleBody"
 
 type BlogPostViewProps = {
   post: BlogPost
   category: BlogCategory
+  showDates?: boolean
 }
 
-export function BlogPostView({ post, category }: BlogPostViewProps) {
+export function BlogPostView({ post, category, showDates = true }: BlogPostViewProps) {
   const { locale, t } = useLocale()
   const title = locale === "en" ? post.title_en : post.title_ru
   const body = locale === "en" ? post.body_html_en : post.body_html_ru
   const categoryLabel = locale === "en" ? category.name_en : category.name_ru
   const dateLocale = locale === "en" ? enUS : ru
-  const formattedDate = BLOG_UI_SHOW_DATES
+  const formattedDate = showDates
     ? format(new Date(post.published_at), "d MMMM yyyy", { locale: dateLocale })
     : null
 

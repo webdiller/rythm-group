@@ -2,15 +2,17 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { BlogListingHeader } from "@/components/blog/BlogListingHeader"
 import { BlogListingScreen } from "@/components/blog/BlogListingScreen"
-import { getBlogCategoriesSorted, getCategoryBySlug, getPostsByCategorySlug } from "@/lib/blog/queries"
-import { mockBlogCategories } from "@/lib/blog/mock-data"
+import {
+  getBlogCategoriesSorted,
+  getBlogShowDatesEnabled,
+  getCategoryBySlug,
+  getPostsByCategorySlug,
+} from "@/lib/blog/queries"
+
+export const dynamic = "force-dynamic"
 
 type PageProps = {
   params: Promise<{ category: string }>
-}
-
-export function generateStaticParams() {
-  return mockBlogCategories.map((c) => ({ category: c.slug }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -30,11 +32,17 @@ export default async function BlogCategoryPage({ params }: PageProps) {
 
   const categories = getBlogCategoriesSorted()
   const posts = getPostsByCategorySlug(slug)
+  const showDates = getBlogShowDatesEnabled()
 
   return (
     <>
       <BlogListingHeader category={category} />
-      <BlogListingScreen posts={posts} categories={categories} activeCategorySlug={slug} />
+      <BlogListingScreen
+        posts={posts}
+        categories={categories}
+        activeCategorySlug={slug}
+        showDates={showDates}
+      />
     </>
   )
 }
