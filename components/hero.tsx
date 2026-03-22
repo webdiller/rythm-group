@@ -119,12 +119,12 @@ export function Hero({ animationEnabled = true }: HeroProps) {
               hiddenClassName="translate-y-4 opacity-0"
               durationClassName="duration-700"
             >
-              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl text-pretty">
+              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">
                 {t.hero.subtitle}
               </p>
             </StaggerItem>
           ) : (
-            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl text-pretty">
+            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">
               {t.hero.subtitle}
             </p>
           )}

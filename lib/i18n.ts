@@ -22,6 +22,7 @@ export const fallbackTranslations = {
       cases: "Кейсы",
       contacts: "Контакты",
       order: "Заказать рекламу",
+      affiliate: "Affiliate",
     },
     hero: {
       title: "Rythm Group",
@@ -108,6 +109,50 @@ export const fallbackTranslations = {
       emptyCategory: "В этой категории пока нет записей.",
       dateLabel: "Дата",
     },
+    affiliate: {
+      hero: {
+        badge: "Партнёрство GameDev / Маркетинг",
+        title: "Продвижение игр и медийные партнёрства",
+        subtitle:
+          "Кейсы с вишлистами и релизами, прозрачная статистика и команда, которая говорит на языке разработчиков и издателей.",
+        ctaPrimary: "Подать заявку",
+        ctaSecondary: "Подробнее",
+      },
+      formats: {
+        title: "Форматы сотрудничества",
+        subtitle: "Выберите модель под задачу — неактуальные опции можно скрыть в админке.",
+      },
+      miniBlog: {
+        title: "Лента: новости и кейсы",
+        subtitle: "Короткие заметки в духе Telegram-постов (мок-данные для вёрстки).",
+        goToBlog: "Весь блог",
+      },
+      cases: {
+        title: "Кейсы",
+        subtitle: "Игры, с которыми мы работали: вишлисты, охваты и динамика.",
+        wishlistsLabel: "Вишлисты",
+        publishedLabel: "Публикация",
+        openCase: "Подробнее",
+      },
+      steam: {
+        title: "Издатели в Steam",
+        subtitle: "Переход на страницу разработчика или издателя в Steam.",
+        openSteam: "Открыть в Steam",
+      },
+      faq: {
+        title: "Частые вопросы",
+        subtitle: "Оплата, сроки публикаций и условия — кратко по делу.",
+      },
+      casePage: {
+        back: "К Affiliate",
+        aboutGame: "О игре",
+        socialProof: "Публикации и реакции",
+        timeline: "Динамика",
+        steamStats: "Статистика Steam",
+        reactions: "Реакции",
+        views: "Просмотры",
+      },
+    },
   },
   en: {
     nav: {
@@ -116,6 +161,7 @@ export const fallbackTranslations = {
       cases: "Cases",
       contacts: "Contacts",
       order: "Order Advertising",
+      affiliate: "Affiliate",
     },
     hero: {
       title: "Rythm Group",
@@ -201,6 +247,50 @@ export const fallbackTranslations = {
       emptyAll: "No posts yet.",
       emptyCategory: "No posts in this category yet.",
       dateLabel: "Date",
+    },
+    affiliate: {
+      hero: {
+        badge: "GameDev / Marketing partnerships",
+        title: "Game promotion & media partnerships",
+        subtitle:
+          "Case studies with wishlists and launches, clear stats, and a team that speaks developer and publisher.",
+        ctaPrimary: "Apply",
+        ctaSecondary: "Learn more",
+      },
+      formats: {
+        title: "Cooperation formats",
+        subtitle: "Pick a model for your goals — outdated options can be hidden in the admin panel.",
+      },
+      miniBlog: {
+        title: "Feed: news & cases",
+        subtitle: "Short notes in a Telegram-style feed (mock content for layout).",
+        goToBlog: "Full blog",
+      },
+      cases: {
+        title: "Case studies",
+        subtitle: "Games we worked on: wishlists, reach, and momentum.",
+        wishlistsLabel: "Wishlists",
+        publishedLabel: "Published",
+        openCase: "Details",
+      },
+      steam: {
+        title: "Publishers on Steam",
+        subtitle: "Open the developer or publisher page on Steam.",
+        openSteam: "Open in Steam",
+      },
+      faq: {
+        title: "FAQ",
+        subtitle: "Payment, publishing timelines, and terms — short and practical.",
+      },
+      casePage: {
+        back: "Back to Affiliate",
+        aboutGame: "About the game",
+        socialProof: "Posts & reactions",
+        timeline: "Momentum",
+        steamStats: "Steam stats",
+        reactions: "Reactions",
+        views: "Views",
+      },
     },
   },
 } as const

@@ -25,8 +25,9 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
     { label: t.nav.about, href: "#about" },
     { label: t.nav.channels, href: "#channels" },
     { label: t.nav.cases, href: "#cases" },
-    { label: t.nav.contacts, href: "#contact" },
+    { label: t.nav.affiliate, href: "/affiliate" },
     { label: t.blog.navLabel, href: "/blog" },
+    { label: t.nav.contacts, href: "#contact" },
   ]
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
