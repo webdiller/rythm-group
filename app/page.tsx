@@ -6,7 +6,10 @@ import { Stats } from "@/components/stats"
 import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
 import { Footer, type SiteSettings } from "@/components/footer"
+import { LandingBlogSection } from "@/components/landing-blog-section"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
+import { getBlogCategoriesSorted, getBlogShowDatesEnabled, getPublishedPosts } from "@/lib/blog/queries"
+import type { BlogCategory, BlogPost } from "@/lib/blog/types"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
 async function getHomeData(): Promise<{
@@ -16,6 +19,9 @@ async function getHomeData(): Promise<{
   partners: Partner[]
   siteSettings: SiteSettings | null
   hasCustomGlobalBackgroundForBothThemes: boolean
+  blogPosts: BlogPost[]
+  blogCategories: BlogCategory[]
+  blogShowDates: boolean
 }> {
   const baseUrl = getSiteBaseUrl()
 
@@ -82,6 +88,10 @@ async function getHomeData(): Promise<{
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
 
+  const blogPosts = getPublishedPosts().slice(0, 6)
+  const blogCategories = getBlogCategoriesSorted()
+  const blogShowDates = getBlogShowDatesEnabled()
+
   return {
     channelCategories,
     channels,
@@ -89,6 +99,9 @@ async function getHomeData(): Promise<{
     partners,
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
+    blogPosts,
+    blogCategories,
+    blogShowDates,
   }
 }
 
@@ -100,6 +113,9 @@ export default async function Home() {
     partners,
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
+    blogPosts,
+    blogCategories,
+    blogShowDates,
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
@@ -151,6 +167,12 @@ export default async function Home() {
                 partners={partners}
                 animationsEnabled={animationsEnabled}
                 displayMode={partnersDisplayMode}
+              />
+              <LandingBlogSection
+                posts={blogPosts}
+                categories={blogCategories}
+                showDates={blogShowDates}
+                animationsEnabled={animationsEnabled}
               />
               <ContactForm
                 animationsEnabled={animationsEnabled}
