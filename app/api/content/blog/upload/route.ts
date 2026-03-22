@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
-import { assertUploadSizeAndMime, putBlogImageToS3 } from "@/lib/s3-blog-upload"
+import { putBlogImageToPublic } from "@/lib/blog-local-upload"
+import { assertUploadSizeAndMime } from "@/lib/s3-blog-upload"
 
 export const runtime = "nodejs"
 
@@ -25,20 +26,11 @@ export async function POST(request: NextRequest) {
       }
       throw e
     }
-    const url = await putBlogImageToS3(buf, mime, file.name)
+    const url = await putBlogImageToPublic(buf, mime)
     return NextResponse.json({ data: { url }, meta: null })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-    if (error instanceof Error && error.message === "S3_NOT_CONFIGURED") {
-      return NextResponse.json(
-        {
-          error:
-            "Upload is not configured. Set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_URL_PREFIX.",
-        },
-        { status: 503 }
-      )
     }
     console.error("Blog upload:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

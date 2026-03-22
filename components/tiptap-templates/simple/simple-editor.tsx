@@ -128,11 +128,11 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run()
   }
 
-  const addImage = () => {
-    const url = typeof window !== "undefined" ? window.prompt("URL изображения", "https://") : null
-    if (!url) return
-    editor.chain().focus().setImage({ src: url }).run()
-  }
+  // const addImage = () => {
+  //   const url = typeof window !== "undefined" ? window.prompt("URL изображения", "https://") : null
+  //   if (!url) return
+  //   editor.chain().focus().setImage({ src: url }).run()
+  // }
 
   return (
     <div className={cn("rounded-lg border border-border bg-card overflow-hidden", className)}>
@@ -289,9 +289,9 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setLink} title="Ссылка">
           <Link2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={addImage} title="Изображение по URL">
+        {/* <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={addImage} title="Изображение по URL">
           <ImageIcon className="h-4 w-4" />
-        </Button>
+        </Button> */}
       </div>
       <EditorContent editor={editor} className="tiptap-simple-editor max-h-[min(480px,55vh)] overflow-y-auto" />
     </div>

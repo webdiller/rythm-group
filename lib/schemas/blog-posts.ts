@@ -4,6 +4,14 @@ import { KEBAB_SLUG_REGEX } from "@/lib/blog/slug"
 
 const kebabSlug = z.string().regex(KEBAB_SLUG_REGEX, "slug: латиница, kebab-case")
 
+/** Абсолютный URL (http/https) или путь с сайта (например `/uploads/blog/...` после локальной загрузки). */
+const coverImageUrl = z.union([
+  z.string().url(),
+  z.string().regex(/^\/[^?\s]+$/, "Invalid url"),
+  z.literal(""),
+  z.null(),
+])
+
 export const PostStatus = z.enum(["draft", "published"])
 
 export const CreatePostBody = z.object({
@@ -15,8 +23,7 @@ export const CreatePostBody = z.object({
   excerpt_en: z.string().min(1),
   body_html_ru: z.string(),
   body_html_en: z.string(),
-  cover_image_url: z
-    .union([z.string().url(), z.literal(""), z.null()])
+  cover_image_url: coverImageUrl
     .optional()
     .transform((v) => (v === "" || v === undefined ? null : v)),
   status: PostStatus,
@@ -32,8 +39,7 @@ export const PatchPostBody = z
     excerpt_en: z.string().min(1).optional(),
     body_html_ru: z.string().optional(),
     body_html_en: z.string().optional(),
-    cover_image_url: z
-      .union([z.string().url(), z.literal(""), z.null()])
+    cover_image_url: coverImageUrl
       .optional()
       .transform((v) => (v === "" || v === undefined ? null : v)),
     status: PostStatus.optional(),
