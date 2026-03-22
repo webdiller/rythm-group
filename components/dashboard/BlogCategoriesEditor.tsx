@@ -46,10 +46,9 @@ type Category = {
   deleted_at: number | null
 }
 
-/** Обёртка из‑за несовпадения типов JSX (React 19) и `SortableContext` в @dnd-kit/sortable. */
 function SortableTableBody({ items, children }: { items: string[]; children: ReactNode }) {
   return (
-    // @ts-expect-error — @dnd-kit/sortable: тип возврата Element не совпадает с ожидаемым React 19 JSX
+    // @ts-ignore — @dnd-kit/sortable vs React 19 JSX: в части окружений TS2786, в части — нет; @ts-expect-error ломает сборку как «unused»
     <SortableContext items={items} strategy={verticalListSortingStrategy}>
       {children}
     </SortableContext>
