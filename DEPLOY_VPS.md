@@ -193,6 +193,10 @@ server {
     listen 80;
     server_name file-lab.ru www.file-lab.ru; # замените на свой домен или IP
 
+    # По умолчанию nginx режет тела запросов (~1 MB) → 413 при загрузке изображений в админке.
+    # API блога принимает до 10 MB; запас по размеру не помешает.
+    client_max_body_size 20M;
+
     location / {
         proxy_pass         http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -268,4 +272,6 @@ sudo journalctl -u nginx -n 100 --no-pager
 - корректность `.env` (особенно `JWT_SECRET`, `DB_PATH`, SMTP и `NEXT_PUBLIC_SITE_URL`)
 - права на директорию проекта и `data/`
 - что порт 3000 не занят другим процессом
+- **413 Request Entity Too Large** при загрузке файлов: в `server { }` для сайта нужен `client_max_body_size` (см. раздел 6); при необходимости увеличьте значение и выполните `sudo nginx -t && sudo systemctl reload nginx`
+- **404 у превью `/uploads/blog/...` после загрузки**: в проекте обложки отдаются через маршрут `app/uploads/blog/[name]` (чтение с диска); после обновления кода выполните `npm run build` и `pm2 restart`. При желании можно отдавать каталог напрямую из nginx: `location /uploads/ { alias /var/www/rythm-group/public/uploads/; }`
 
