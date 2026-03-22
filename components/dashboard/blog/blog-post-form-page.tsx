@@ -13,6 +13,7 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { toast } from "sonner"
 import { ArrowLeft, Trash2, Upload } from "lucide-react"
 import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
+import { slugifyRuTitle } from "@/lib/blog/slug"
 
 type Category = {
   id: number
@@ -49,6 +50,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
 
   const [category_id, setCategoryId] = useState(0)
   const [slug, setSlug] = useState("")
+  /** Пока false — slug пересчитывается из заголовка RU; true — пользователь правил slug вручную. */
+  const [slugTouched, setSlugTouched] = useState(false)
   const [title_ru, setTitleRu] = useState("")
   const [title_en, setTitleEn] = useState("")
   const [excerpt_ru, setExcerptRu] = useState("")
@@ -333,20 +336,60 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
             ) : null}
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="bps-slug">Slug поста (латиница, kebab-case)</Label>
-            <Input id="bps-slug" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-post-slug" />
-          </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="bps-tru">Заголовок RU</Label>
-              <Input id="bps-tru" value={title_ru} onChange={(e) => setTitleRu(e.target.value)} />
+              <Input
+                id="bps-tru"
+                value={title_ru}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setTitleRu(v)
+                  if (!isEdit && !slugTouched) {
+                    setSlug(slugifyRuTitle(v))
+                  }
+                }}
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="bps-ten">Заголовок EN</Label>
               <Input id="bps-ten" value={title_en} onChange={(e) => setTitleEn(e.target.value)} />
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="bps-slug">Slug поста (латиница, kebab-case)</Label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                id="bps-slug"
+                className="sm:flex-1"
+                value={slug}
+                onChange={(e) => {
+                  setSlugTouched(true)
+                  setSlug(e.target.value)
+                }}
+                placeholder="my-post-slug"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  setSlug(slugifyRuTitle(title_ru))
+                  if (!isEdit) setSlugTouched(false)
+                }}
+              >
+                Сгенерировать slug
+              </Button>
+            </div>
+            {!isEdit ? (
+              <p className="text-xs text-muted-foreground">
+                Для новой статьи slug подставляется из заголовка RU. После ручного правления slug кнопка выше снова строит его из заголовка и включает автоподстановку.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Кнопка «Сгенерировать slug» подставляет slug из текущего заголовка RU.</p>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
