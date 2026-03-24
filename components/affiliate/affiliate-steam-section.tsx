@@ -15,7 +15,10 @@ function buildSteamSearchUrl(name: string): string {
 
 export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) {
   const { locale, t } = useLocale()
-  const items = [...partners].sort((a, b) => a.order_index - b.order_index).slice(0, 8)
+  const items = [...partners]
+    .filter((p) => p.show_in_affiliate_steam ?? true)
+    .sort((a, b) => a.order_index - b.order_index)
+    .slice(0, 8)
 
   return (
     <section className="border-t border-border/60 py-16 md:py-20">
@@ -29,7 +32,7 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
 
         <div className="grid gap-6 sm:grid-cols-2">
           {items.map((p) => {
-            const steamUrl = buildSteamSearchUrl(p.name)
+            const steamUrl = p.developer_url || buildSteamSearchUrl(p.name)
             return (
               <a
                 key={p.id}

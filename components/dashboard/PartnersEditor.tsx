@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,6 +26,17 @@ interface Partner {
   name: string
   // base64 logo stored in DB; rendered through /api/content/partners/[id]/logo
   logo_url: string | null
+  title_ru?: string | null
+  title_en?: string | null
+  short_description_ru?: string | null
+  short_description_en?: string | null
+  published_at?: string | null
+  wishlists?: number | null
+  views?: number | null
+  target_url?: string | null
+  developer_url?: string | null
+  show_in_affiliate_cases?: boolean | null
+  show_in_affiliate_steam?: boolean | null
   order_index: number
 }
 
@@ -707,6 +720,7 @@ export function PartnersEditor() {
           </Card>
         )}
       </div>
+
     </div>
   )
 }
@@ -774,10 +788,32 @@ function PartnerForm({
   const [formData, setFormData] = useState<{
     category_id: number | null
     name: string
+    title_ru: string
+    title_en: string
+    short_description_ru: string
+    short_description_en: string
+    published_at: string
+    wishlists: number
+    views: number
+    target_url: string
+    developer_url: string
+    show_in_affiliate_cases: boolean
+    show_in_affiliate_steam: boolean
     order_index: number
   }>({
     category_id: partner?.category_id ?? (categories[0]?.id ?? null),
     name: partner?.name ?? "",
+    title_ru: partner?.title_ru ?? "",
+    title_en: partner?.title_en ?? "",
+    short_description_ru: partner?.short_description_ru ?? "",
+    short_description_en: partner?.short_description_en ?? "",
+    published_at: partner?.published_at ?? "",
+    wishlists: partner?.wishlists ?? 0,
+    views: partner?.views ?? 0,
+    target_url: partner?.target_url ?? "",
+    developer_url: partner?.developer_url ?? "",
+    show_in_affiliate_cases: partner?.show_in_affiliate_cases ?? true,
+    show_in_affiliate_steam: partner?.show_in_affiliate_steam ?? true,
     order_index: partner?.order_index ?? 0,
   })
 
@@ -851,6 +887,92 @@ function PartnerForm({
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           required
         />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Заголовок кейса (RU)</Label>
+          <Input value={formData.title_ru} onChange={(e) => setFormData({ ...formData, title_ru: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Заголовок кейса (EN)</Label>
+          <Input value={formData.title_en} onChange={(e) => setFormData({ ...formData, title_en: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>Краткое описание (RU)</Label>
+          <Textarea
+            value={formData.short_description_ru}
+            onChange={(e) => setFormData({ ...formData, short_description_ru: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Краткое описание (EN)</Label>
+          <Textarea
+            value={formData.short_description_en}
+            onChange={(e) => setFormData({ ...formData, short_description_en: e.target.value })}
+          />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <Label>Дата публикации</Label>
+          <Input
+            type="date"
+            value={formData.published_at}
+            onChange={(e) => setFormData({ ...formData, published_at: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Вишлисты</Label>
+          <Input
+            type="number"
+            value={formData.wishlists}
+            onChange={(e) => setFormData({ ...formData, wishlists: Number(e.target.value) })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Просмотры (ручное значение)</Label>
+          <Input
+            type="number"
+            value={formData.views}
+            onChange={(e) => setFormData({ ...formData, views: Number(e.target.value) })}
+          />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label>URL перехода из блока кейсов</Label>
+          <Input
+            value={formData.target_url}
+            onChange={(e) => setFormData({ ...formData, target_url: e.target.value })}
+            placeholder="/cases/123 или /blog/news/post-id"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>URL разработчика/издателя (Steam)</Label>
+          <Input
+            value={formData.developer_url}
+            onChange={(e) => setFormData({ ...formData, developer_url: e.target.value })}
+            placeholder="https://store.steampowered.com/developer/..."
+          />
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label>Показывать в блоке кейсов Affiliate</Label>
+          <Switch
+            checked={formData.show_in_affiliate_cases}
+            onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_cases: checked })}
+          />
+        </div>
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label>Показывать в Steam-блоке Affiliate</Label>
+          <Switch
+            checked={formData.show_in_affiliate_steam}
+            onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_steam: checked })}
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <Label>Логотип партнёра</Label>

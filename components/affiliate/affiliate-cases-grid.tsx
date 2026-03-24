@@ -30,9 +30,11 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
   const partnersSorted = [...partners].sort((a, b) => a.order_index - b.order_index)
   const partnersByCategory = categoriesOrdered.map((cat) => ({
     category: cat,
-    partners: partnersSorted.filter((p) => p.category_id === cat.id),
+    partners: partnersSorted.filter((p) => p.category_id === cat.id && (p.show_in_affiliate_cases ?? true)),
   }))
-  const uncategorizedPartners = partnersSorted.filter((p) => p.category_id == null)
+  const uncategorizedPartners = partnersSorted.filter(
+    (p) => p.category_id == null && (p.show_in_affiliate_cases ?? true),
+  )
   const hasAnyPartners =
     partnersByCategory.some((group) => group.partners.length > 0) || uncategorizedPartners.length > 0
 
@@ -41,8 +43,10 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
   const renderCaseCard = (partner: Partner) => {
     const ui = mapPartnerToAffiliateCaseCard(partner)
     const dateStr = format(new Date(ui.publishedAt), "d MMM yyyy", { locale: dateLocale })
-    const href = `/affiliate/cases/${ui.slug}`
+    const href = partner.target_url || `/affiliate/cases/${ui.slug}`
     const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
+    const title =
+      locale === "en" ? partner.title_en || partner.name : partner.title_ru || partner.name
 
     return (
       <Link key={ui.slug} href={href} className="group block h-full">
@@ -73,7 +77,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
               </span>
             </div>
             <h3 className="text-lg font-semibold leading-snug text-foreground group-hover:text-primary">
-              {ui.title}
+              {title}
             </h3>
             <div className="flex items-center justify-between gap-2 pt-1">
               <span className="text-sm font-medium text-primary">

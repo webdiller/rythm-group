@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import type { AffiliateCaseDetailUi } from "@/lib/affiliate/cases-ui"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,10 +17,32 @@ type AffiliateCaseDetailProps = {
 export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
   const { locale, t } = useLocale()
   const cp = t.affiliate.casePage
+  const [views, setViews] = useState(c.views)
+  const title = locale === "en" ? c.title_en : c.title_ru
   const desc = locale === "en" ? c.shortDescription_en : c.shortDescription_ru
   const category = locale === "en" ? c.category_en : c.category_ru
   const dateLocale = locale === "en" ? enUS : ru
   const formattedDate = format(new Date(c.publishedAt), "d MMM yyyy", { locale: dateLocale })
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const res = await fetch(`/api/content/partners/${c.id}/views`, { method: "POST" })
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: { views?: number } }
+        if (!cancelled && typeof json.data?.views === "number") {
+          setViews(json.data.views)
+        }
+      } catch {
+        // ignore analytics errors on UI side
+      }
+    }
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [c.id])
 
   return (
     <article className="space-y-12 pb-16">
@@ -27,7 +50,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         items={[
           { label: locale === "en" ? "Home" : "Главная", href: "/" },
           { label: "Affiliate", href: "/affiliate" },
-          { label: c.title },
+          { label: title },
         ]}
       />
 
@@ -49,7 +72,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
           />
         </div>
         <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-          {c.title}
+          {title}
         </h1>
       </header>
 
@@ -96,7 +119,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
               <div>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.views)}
+                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(views)}
                 </p>
               </div>
               <Eye className="h-6 w-6 text-primary" />

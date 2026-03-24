@@ -20,6 +20,17 @@ export interface Partner {
   category_id: number | null
   name: string
   logo_url: string | null
+  title_ru?: string | null
+  title_en?: string | null
+  short_description_ru?: string | null
+  short_description_en?: string | null
+  published_at?: string | null
+  wishlists?: number | null
+  views?: number | null
+  target_url?: string | null
+  developer_url?: string | null
+  show_in_affiliate_cases?: boolean | null
+  show_in_affiliate_steam?: boolean | null
   order_index: number
 }
 

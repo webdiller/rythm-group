@@ -11,6 +11,9 @@ import {
   tableBlogCategories,
   tableBlogPosts,
   tableSiteSettings,
+  tableAffiliateHero,
+  tableAffiliateFormats,
+  tableAffiliateFaq,
 } from "./schema"
 import { fallbackTranslations } from "@/lib/i18n"
 import { channelCategories, partnerLogos } from "@/lib/data"
@@ -155,6 +158,82 @@ export function runSeed(
   } catch {
     // ignore
   }
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_hero integer DEFAULT 1`)
+  } catch {}
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_formats integer DEFAULT 1`)
+  } catch {}
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_cases integer DEFAULT 1`)
+  } catch {}
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_steam integer DEFAULT 1`)
+  } catch {}
+  try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_faq integer DEFAULT 1`)
+  } catch {}
+
+  // Partners: affiliate specific columns
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN title_ru text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN title_en text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN short_description_ru text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN short_description_en text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN published_at text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN wishlists integer DEFAULT 0`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN views integer DEFAULT 0`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN target_url text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN developer_url text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_cases integer DEFAULT 1`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_steam integer DEFAULT 1`) } catch {}
+
+  // Additional affiliate tables
+  db.run(sql`
+    CREATE TABLE IF NOT EXISTS affiliate_hero (
+      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      badge_ru text NOT NULL,
+      badge_en text NOT NULL,
+      title_ru text NOT NULL,
+      title_en text NOT NULL,
+      subtitle_ru text NOT NULL,
+      subtitle_en text NOT NULL,
+      cta_primary_ru text NOT NULL,
+      cta_primary_en text NOT NULL,
+      cta_secondary_ru text NOT NULL,
+      cta_secondary_en text NOT NULL
+    )
+  `)
+  db.run(sql`
+    CREATE TABLE IF NOT EXISTS affiliate_formats (
+      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      title_ru text NOT NULL,
+      title_en text NOT NULL,
+      body_ru text NOT NULL,
+      body_en text NOT NULL,
+      hidden integer DEFAULT 0,
+      order_index integer DEFAULT 0
+    )
+  `)
+  db.run(sql`
+    CREATE TABLE IF NOT EXISTS affiliate_faq (
+      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      question_ru text NOT NULL,
+      question_en text NOT NULL,
+      answer_ru text NOT NULL,
+      answer_en text NOT NULL,
+      hidden integer DEFAULT 0,
+      order_index integer DEFAULT 0
+    )
+  `)
+  db.run(sql`
+    CREATE TABLE IF NOT EXISTS affiliate_partner_views (
+      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      partner_id integer NOT NULL REFERENCES partners(id) ON UPDATE cascade ON DELETE cascade,
+      ip_hash text NOT NULL,
+      created_at text DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT affiliate_partner_views_partner_ip_unique UNIQUE(partner_id, ip_hash)
+    )
+  `)
 
   const existingBlogCats = db.select().from(tableBlogCategories).limit(1).all()
   if (existingBlogCats.length === 0) {
@@ -182,8 +261,65 @@ export function runSeed(
         contactFormHidden: false,
         blog_show_dates: true,
         affiliate_show_blog_block: true,
+        affiliate_show_hero: true,
+        affiliate_show_formats: true,
+        affiliate_show_cases: true,
+        affiliate_show_steam: true,
+        affiliate_show_faq: true,
       })
       .run()
+  }
+
+  const existingAffiliateHero = db.select().from(tableAffiliateHero).limit(1).all()
+  if (existingAffiliateHero.length === 0) {
+    db.insert(tableAffiliateHero).values({
+      badge_ru: "Партнёрство GameDev / Маркетинг",
+      badge_en: "GameDev / Marketing partnerships",
+      title_ru: "Продвижение игр и медийные партнёрства",
+      title_en: "Game promotion & media partnerships",
+      subtitle_ru:
+        "Кейсы с вишлистами и релизами, прозрачная статистика и команда, которая говорит на языке разработчиков и издателей.",
+      subtitle_en:
+        "Case studies with wishlists and launches, clear stats, and a team that speaks developer and publisher.",
+      cta_primary_ru: "Подать заявку",
+      cta_primary_en: "Apply",
+      cta_secondary_ru: "Подробнее",
+      cta_secondary_en: "Learn more",
+    }).run()
+  }
+  const existingAffiliateFormats = db.select().from(tableAffiliateFormats).limit(1).all()
+  if (existingAffiliateFormats.length === 0) {
+    db.insert(tableAffiliateFormats).values([
+      {
+        title_ru: "Вишлисты Steam",
+        title_en: "Steam wishlists",
+        body_ru: "Продвижение игры с фокусом на добавления в вишлист.",
+        body_en: "Game promotion focused on wishlist adds.",
+        hidden: false,
+        order_index: 0,
+      },
+      {
+        title_ru: "Рекламный формат",
+        title_en: "Advertising",
+        body_ru: "Размещение рекламных интеграций в Telegram.",
+        body_en: "Ad integrations in Telegram channels.",
+        hidden: false,
+        order_index: 1,
+      },
+    ]).run()
+  }
+  const existingAffiliateFaq = db.select().from(tableAffiliateFaq).limit(1).all()
+  if (existingAffiliateFaq.length === 0) {
+    db.insert(tableAffiliateFaq).values([
+      {
+        question_ru: "Нужна ли предоплата?",
+        question_en: "Is a prepayment required?",
+        answer_ru: "Зависит от формата сотрудничества.",
+        answer_en: "Depends on the cooperation format.",
+        hidden: false,
+        order_index: 0,
+      },
+    ]).run()
   }
 
   const existingBlogPosts = db.select().from(tableBlogPosts).limit(1).all()

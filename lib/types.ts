@@ -10,6 +10,10 @@ import {
   tableContacts,
   tableBlogCategories,
   tableBlogPosts,
+  tableAffiliateHero,
+  tableAffiliateFormats,
+  tableAffiliateFaq,
+  tableAffiliatePartnerViews,
 } from "./db/schema"
 
 export const allZodSchemas = {
@@ -57,6 +61,26 @@ export const allZodSchemas = {
     select: createSelectSchema(tableBlogPosts),
     insert: createInsertSchema(tableBlogPosts),
     update: createUpdateSchema(tableBlogPosts),
+  },
+  tableAffiliateHero: {
+    select: createSelectSchema(tableAffiliateHero),
+    insert: createInsertSchema(tableAffiliateHero),
+    update: createUpdateSchema(tableAffiliateHero),
+  },
+  tableAffiliateFormats: {
+    select: createSelectSchema(tableAffiliateFormats),
+    insert: createInsertSchema(tableAffiliateFormats),
+    update: createUpdateSchema(tableAffiliateFormats),
+  },
+  tableAffiliateFaq: {
+    select: createSelectSchema(tableAffiliateFaq),
+    insert: createInsertSchema(tableAffiliateFaq),
+    update: createUpdateSchema(tableAffiliateFaq),
+  },
+  tableAffiliatePartnerViews: {
+    select: createSelectSchema(tableAffiliatePartnerViews),
+    insert: createInsertSchema(tableAffiliatePartnerViews),
+    update: createUpdateSchema(tableAffiliatePartnerViews),
   },
 }
 

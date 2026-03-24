@@ -95,6 +95,17 @@ export const tablePartners = sqliteTable("partners", {
   category_id: integer("category_id").references(() => tablePartnerCategories.id, { onDelete: "set null", onUpdate: "cascade" }),
   name: text("name").notNull(),
   logo_url: text("logo_url"),
+  title_ru: text("title_ru"),
+  title_en: text("title_en"),
+  short_description_ru: text("short_description_ru"),
+  short_description_en: text("short_description_en"),
+  published_at: text("published_at"),
+  wishlists: integer("wishlists").default(0),
+  views: integer("views").default(0),
+  target_url: text("target_url"),
+  developer_url: text("developer_url"),
+  show_in_affiliate_cases: integer("show_in_affiliate_cases", { mode: "boolean" }).default(true),
+  show_in_affiliate_steam: integer("show_in_affiliate_steam", { mode: "boolean" }).default(true),
   order_index: integer("order_index").default(0),
 })
 
@@ -139,9 +150,86 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   blog_show_dates: integer("blog_show_dates", { mode: "boolean" }).default(true),
   /** Страница /affiliate: блок мини-блога (до 6 записей) */
   affiliate_show_blog_block: integer("affiliate_show_blog_block", { mode: "boolean" }).default(true),
+  affiliate_show_hero: integer("affiliate_show_hero", { mode: "boolean" }).default(true),
+  affiliate_show_formats: integer("affiliate_show_formats", { mode: "boolean" }).default(true),
+  affiliate_show_cases: integer("affiliate_show_cases", { mode: "boolean" }).default(true),
+  affiliate_show_steam: integer("affiliate_show_steam", { mode: "boolean" }).default(true),
+  affiliate_show_faq: integer("affiliate_show_faq", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))
+
+// ---------------------------------------------------------------------------
+// affiliate_hero
+// ---------------------------------------------------------------------------
+export const tableAffiliateHero = sqliteTable("affiliate_hero", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  badge_ru: text("badge_ru").notNull(),
+  badge_en: text("badge_en").notNull(),
+  title_ru: text("title_ru").notNull(),
+  title_en: text("title_en").notNull(),
+  subtitle_ru: text("subtitle_ru").notNull(),
+  subtitle_en: text("subtitle_en").notNull(),
+  cta_primary_ru: text("cta_primary_ru").notNull(),
+  cta_primary_en: text("cta_primary_en").notNull(),
+  cta_secondary_ru: text("cta_secondary_ru").notNull(),
+  cta_secondary_en: text("cta_secondary_en").notNull(),
+})
+
+export const relationsAffiliateHero = relations(tableAffiliateHero, () => ({}))
+
+// ---------------------------------------------------------------------------
+// affiliate_formats
+// ---------------------------------------------------------------------------
+export const tableAffiliateFormats = sqliteTable("affiliate_formats", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title_ru: text("title_ru").notNull(),
+  title_en: text("title_en").notNull(),
+  body_ru: text("body_ru").notNull(),
+  body_en: text("body_en").notNull(),
+  hidden: integer("hidden", { mode: "boolean" }).default(false),
+  order_index: integer("order_index").default(0),
+})
+
+export const relationsAffiliateFormats = relations(tableAffiliateFormats, () => ({}))
+
+// ---------------------------------------------------------------------------
+// affiliate_faq
+// ---------------------------------------------------------------------------
+export const tableAffiliateFaq = sqliteTable("affiliate_faq", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  question_ru: text("question_ru").notNull(),
+  question_en: text("question_en").notNull(),
+  answer_ru: text("answer_ru").notNull(),
+  answer_en: text("answer_en").notNull(),
+  hidden: integer("hidden", { mode: "boolean" }).default(false),
+  order_index: integer("order_index").default(0),
+})
+
+export const relationsAffiliateFaq = relations(tableAffiliateFaq, () => ({}))
+
+// ---------------------------------------------------------------------------
+// affiliate_partner_views (unique views by IP)
+// ---------------------------------------------------------------------------
+export const tableAffiliatePartnerViews = sqliteTable(
+  "affiliate_partner_views",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    partner_id: integer("partner_id")
+      .notNull()
+      .references(() => tablePartners.id, { onDelete: "cascade", onUpdate: "cascade" }),
+    ip_hash: text("ip_hash").notNull(),
+    created_at: created_at("created_at"),
+  },
+  (t) => [unique("affiliate_partner_views_partner_ip_unique").on(t.partner_id, t.ip_hash)],
+)
+
+export const relationsAffiliatePartnerViews = relations(tableAffiliatePartnerViews, ({ one }) => ({
+  partner: one(tablePartners, {
+    fields: [tableAffiliatePartnerViews.partner_id],
+    references: [tablePartners.id],
+  }),
+}))
 
 // ---------------------------------------------------------------------------
 // blog_categories

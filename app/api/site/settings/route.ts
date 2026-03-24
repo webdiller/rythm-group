@@ -18,6 +18,11 @@ type SiteSettingsPayload = {
   contactFormHidden?: boolean | null
   blog_show_dates?: boolean | null
   affiliate_show_blog_block?: boolean | null
+  affiliate_show_hero?: boolean | null
+  affiliate_show_formats?: boolean | null
+  affiliate_show_cases?: boolean | null
+  affiliate_show_steam?: boolean | null
+  affiliate_show_faq?: boolean | null
 }
 
 export async function GET() {
@@ -46,6 +51,11 @@ export async function PUT(request: NextRequest) {
     const currentContactFormHidden = existing?.contactFormHidden ?? false
     const currentBlogShowDates = existing?.blog_show_dates ?? true
     const currentAffiliateBlog = existing?.affiliate_show_blog_block ?? true
+    const currentAffiliateHero = existing?.affiliate_show_hero ?? true
+    const currentAffiliateFormats = existing?.affiliate_show_formats ?? true
+    const currentAffiliateCases = existing?.affiliate_show_cases ?? true
+    const currentAffiliateSteam = existing?.affiliate_show_steam ?? true
+    const currentAffiliateFaq = existing?.affiliate_show_faq ?? true
 
     const updateValues: SiteSettingsPayload = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
@@ -64,6 +74,18 @@ export async function PUT(request: NextRequest) {
         typeof body.affiliate_show_blog_block === "boolean"
           ? body.affiliate_show_blog_block
           : currentAffiliateBlog,
+      affiliate_show_hero:
+        typeof body.affiliate_show_hero === "boolean" ? body.affiliate_show_hero : currentAffiliateHero,
+      affiliate_show_formats:
+        typeof body.affiliate_show_formats === "boolean"
+          ? body.affiliate_show_formats
+          : currentAffiliateFormats,
+      affiliate_show_cases:
+        typeof body.affiliate_show_cases === "boolean" ? body.affiliate_show_cases : currentAffiliateCases,
+      affiliate_show_steam:
+        typeof body.affiliate_show_steam === "boolean" ? body.affiliate_show_steam : currentAffiliateSteam,
+      affiliate_show_faq:
+        typeof body.affiliate_show_faq === "boolean" ? body.affiliate_show_faq : currentAffiliateFaq,
     }
 
     if (existing) {
@@ -89,6 +111,11 @@ export async function PUT(request: NextRequest) {
         contactFormHidden: updateValues.contactFormHidden ?? false,
         blog_show_dates: updateValues.blog_show_dates ?? true,
         affiliate_show_blog_block: updateValues.affiliate_show_blog_block ?? true,
+        affiliate_show_hero: updateValues.affiliate_show_hero ?? true,
+        affiliate_show_formats: updateValues.affiliate_show_formats ?? true,
+        affiliate_show_cases: updateValues.affiliate_show_cases ?? true,
+        affiliate_show_steam: updateValues.affiliate_show_steam ?? true,
+        affiliate_show_faq: updateValues.affiliate_show_faq ?? true,
       })
       .returning()
       .all()

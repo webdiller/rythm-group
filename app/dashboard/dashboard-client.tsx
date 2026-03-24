@@ -9,8 +9,23 @@ import { PartnersEditor } from "@/components/dashboard/PartnersEditor"
 import { ContactsEditor } from "@/components/dashboard/ContactsEditor"
 import { SiteSettingsEditor } from "@/components/dashboard/SiteSettingsEditor"
 import { BlogEditor } from "@/components/dashboard/BlogEditor"
+import { AffiliateHeroEditor } from "@/components/dashboard/AffiliateHeroEditor"
+import { AffiliateFormatsEditor } from "@/components/dashboard/AffiliateFormatsEditor"
+import { AffiliateFaqEditor } from "@/components/dashboard/AffiliateFaqEditor"
+import { AffiliateSectionsEditor } from "@/components/dashboard/AffiliateSectionsEditor"
 
-const VALID_TABS = new Set(["translations", "channels", "partners", "blog", "contacts", "settings"])
+const VALID_TABS = new Set([
+  "translations",
+  "channels",
+  "partners",
+  "blog",
+  "contacts",
+  "settings",
+  "affiliate-sections",
+  "affiliate-hero",
+  "affiliate-formats",
+  "affiliate-faq",
+])
 
 function DashboardInner() {
   const router = useRouter()
@@ -87,6 +102,14 @@ function DashboardInner() {
         return <ContactsEditor />
       case "settings":
         return <SiteSettingsEditor />
+      case "affiliate-sections":
+        return <AffiliateSectionsEditor />
+      case "affiliate-hero":
+        return <AffiliateHeroEditor />
+      case "affiliate-formats":
+        return <AffiliateFormatsEditor />
+      case "affiliate-faq":
+        return <AffiliateFaqEditor />
       default:
         return <TranslationsEditor />
     }

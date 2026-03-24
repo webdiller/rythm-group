@@ -1,5 +1,3 @@
-import { AFFILIATE_CASES_MOCK } from "@/lib/affiliate/mock-data"
-
 export type LandingPartnerCategory = {
   id: number
   name: string
@@ -13,6 +11,17 @@ export type LandingPartner = {
   category_id: number | null
   name: string
   logo_url: string | null
+  title_ru?: string | null
+  title_en?: string | null
+  short_description_ru?: string | null
+  short_description_en?: string | null
+  published_at?: string | null
+  wishlists?: number | null
+  views?: number | null
+  target_url?: string | null
+  developer_url?: string | null
+  show_in_affiliate_cases?: boolean | null
+  show_in_affiliate_steam?: boolean | null
   order_index: number
 }
 
@@ -29,6 +38,8 @@ export type AffiliateCaseDetailUi = {
   id: number
   slug: string
   title: string
+  title_ru: string
+  title_en: string
   coverImage: string
   category_ru: string
   category_en: string
@@ -56,10 +67,6 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
-function getMockById(id: number) {
-  return AFFILIATE_CASES_MOCK[id % AFFILIATE_CASES_MOCK.length]
-}
-
 function generatedPublishedAt(id: number): string {
   const month = (id % 12) + 1
   const day = (id % 25) + 1
@@ -75,14 +82,13 @@ function generatedViews(id: number): number {
 }
 
 export function mapPartnerToAffiliateCaseCard(partner: LandingPartner): AffiliateCaseCardUi {
-  const mock = getMockById(partner.id)
   return {
     id: partner.id,
     slug: buildAffiliateCaseSlug(partner),
-    title: partner.name,
-    coverImage: mock.coverImage,
-    publishedAt: generatedPublishedAt(partner.id),
-    wishlists: generatedWishlists(partner.id),
+    title: partner.title_ru ?? partner.name,
+    coverImage: `/api/content/partners/${partner.id}/logo`,
+    publishedAt: partner.published_at ?? generatedPublishedAt(partner.id),
+    wishlists: partner.wishlists ?? generatedWishlists(partner.id),
   }
 }
 
@@ -90,20 +96,21 @@ export function mapPartnerToAffiliateCaseDetail(
   partner: LandingPartner,
   categories: LandingPartnerCategory[],
 ): AffiliateCaseDetailUi {
-  const mock = getMockById(partner.id)
   const category = categories.find((item) => item.id === partner.category_id) ?? null
 
   return {
     id: partner.id,
     slug: buildAffiliateCaseSlug(partner),
-    title: partner.name,
-    coverImage: mock.coverImage,
+    title: partner.title_ru ?? partner.name,
+    title_ru: partner.title_ru ?? partner.name,
+    title_en: partner.title_en ?? partner.name,
+    coverImage: `/api/content/partners/${partner.id}/logo`,
     category_ru: category?.name_ru ?? "Без категории",
     category_en: category?.name_en ?? "Uncategorized",
-    shortDescription_ru: mock.shortDescription_ru,
-    shortDescription_en: mock.shortDescription_en,
-    wishlists: generatedWishlists(partner.id),
-    views: generatedViews(partner.id),
-    publishedAt: generatedPublishedAt(partner.id),
+    shortDescription_ru: partner.short_description_ru ?? "",
+    shortDescription_en: partner.short_description_en ?? "",
+    wishlists: partner.wishlists ?? generatedWishlists(partner.id),
+    views: partner.views ?? generatedViews(partner.id),
+    publishedAt: partner.published_at ?? generatedPublishedAt(partner.id),
   }
 }

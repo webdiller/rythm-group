@@ -1,18 +1,30 @@
 "use client"
 
 import { useLocale } from "@/lib/locale-context"
-import { COOPERATION_FORMATS_MOCK } from "@/lib/affiliate/mock-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export function AffiliateCooperationFormats() {
+type AffiliateFormatItem = {
+  id: number
+  title_ru: string
+  title_en: string
+  body_ru: string
+  body_en: string
+  hidden: boolean | null
+}
+
+type AffiliateCooperationFormatsProps = {
+  items?: AffiliateFormatItem[]
+}
+
+export function AffiliateCooperationFormats({ items = [] }: AffiliateCooperationFormatsProps) {
   const { locale, t } = useLocale()
-  const visible = COOPERATION_FORMATS_MOCK.filter((f) => !f.hidden)
+  const visible = items.filter((f) => !f.hidden)
 
   return (
     <section id="affiliate-formats" className="scroll-mt-28 py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 max-w-3xl space-y-3">
-          <h2 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h2 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {t.affiliate.formats.title}
           </h2>
           <p className="text-base text-muted-foreground sm:text-lg">{t.affiliate.formats.subtitle}</p>
