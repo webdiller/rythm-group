@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 type AffiliateHero = {
@@ -69,16 +70,46 @@ export function AffiliateHeroEditor() {
       <CardContent className="grid gap-3 md:grid-cols-2">
         {hero ? (
           <>
-            <Input value={hero.badge_ru} onChange={(e) => setHero({ ...hero, badge_ru: e.target.value })} placeholder="Badge RU" />
-            <Input value={hero.badge_en} onChange={(e) => setHero({ ...hero, badge_en: e.target.value })} placeholder="Badge EN" />
-            <Input value={hero.title_ru} onChange={(e) => setHero({ ...hero, title_ru: e.target.value })} placeholder="Title RU" />
-            <Input value={hero.title_en} onChange={(e) => setHero({ ...hero, title_en: e.target.value })} placeholder="Title EN" />
-            <Input value={hero.subtitle_ru} onChange={(e) => setHero({ ...hero, subtitle_ru: e.target.value })} placeholder="Subtitle RU" />
-            <Input value={hero.subtitle_en} onChange={(e) => setHero({ ...hero, subtitle_en: e.target.value })} placeholder="Subtitle EN" />
-            <Input value={hero.cta_primary_ru} onChange={(e) => setHero({ ...hero, cta_primary_ru: e.target.value })} placeholder="CTA primary RU" />
-            <Input value={hero.cta_primary_en} onChange={(e) => setHero({ ...hero, cta_primary_en: e.target.value })} placeholder="CTA primary EN" />
-            <Input value={hero.cta_secondary_ru} onChange={(e) => setHero({ ...hero, cta_secondary_ru: e.target.value })} placeholder="CTA secondary RU" />
-            <Input value={hero.cta_secondary_en} onChange={(e) => setHero({ ...hero, cta_secondary_en: e.target.value })} placeholder="CTA secondary EN" />
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-badge-ru">Badge RU</Label>
+              <Input id="aff-hero-badge-ru" value={hero.badge_ru} onChange={(e) => setHero({ ...hero, badge_ru: e.target.value })} placeholder="Badge RU" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-badge-en">Badge EN</Label>
+              <Input id="aff-hero-badge-en" value={hero.badge_en} onChange={(e) => setHero({ ...hero, badge_en: e.target.value })} placeholder="Badge EN" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-title-ru">Title RU</Label>
+              <Input id="aff-hero-title-ru" value={hero.title_ru} onChange={(e) => setHero({ ...hero, title_ru: e.target.value })} placeholder="Title RU" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-title-en">Title EN</Label>
+              <Input id="aff-hero-title-en" value={hero.title_en} onChange={(e) => setHero({ ...hero, title_en: e.target.value })} placeholder="Title EN" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-subtitle-ru">Subtitle RU</Label>
+              <Input id="aff-hero-subtitle-ru" value={hero.subtitle_ru} onChange={(e) => setHero({ ...hero, subtitle_ru: e.target.value })} placeholder="Subtitle RU" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-subtitle-en">Subtitle EN</Label>
+              <Input id="aff-hero-subtitle-en" value={hero.subtitle_en} onChange={(e) => setHero({ ...hero, subtitle_en: e.target.value })} placeholder="Subtitle EN" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-cta-primary-ru">CTA primary RU</Label>
+              <Input id="aff-hero-cta-primary-ru" value={hero.cta_primary_ru} onChange={(e) => setHero({ ...hero, cta_primary_ru: e.target.value })} placeholder="CTA primary RU" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-cta-primary-en">CTA primary EN</Label>
+              <Input id="aff-hero-cta-primary-en" value={hero.cta_primary_en} onChange={(e) => setHero({ ...hero, cta_primary_en: e.target.value })} placeholder="CTA primary EN" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-cta-secondary-ru">CTA secondary RU</Label>
+              <Input id="aff-hero-cta-secondary-ru" value={hero.cta_secondary_ru} onChange={(e) => setHero({ ...hero, cta_secondary_ru: e.target.value })} placeholder="CTA secondary RU" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="aff-hero-cta-secondary-en">CTA secondary EN</Label>
+              <Input id="aff-hero-cta-secondary-en" value={hero.cta_secondary_en} onChange={(e) => setHero({ ...hero, cta_secondary_en: e.target.value })} placeholder="CTA secondary EN" />
+            </div>
             <div className="md:col-span-2 flex justify-end">
               <Button onClick={save}>Сохранить</Button>
             </div>
