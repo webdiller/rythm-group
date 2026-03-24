@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
 import { format } from "date-fns"
 import { enUS, ru } from "date-fns/locale"
 import { useLocale } from "@/lib/locale-context"
@@ -21,16 +22,73 @@ function getCaseCoverUrl(id: number, hasLogo: boolean): string {
 export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridProps) {
   const { locale, t } = useLocale()
   const dateLocale = locale === "en" ? enUS : ru
-  const sorted = [...partners].sort((a, b) => a.order_index - b.order_index)
-  const cases = sorted.map((partner) => {
-    const category = categories.find((x) => x.id === partner.category_id) ?? null
+  const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({})
+  const [showAllUncategorized, setShowAllUncategorized] = useState(false)
+  const MAX_VISIBLE = 10
+
+  const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
+  const partnersSorted = [...partners].sort((a, b) => a.order_index - b.order_index)
+  const partnersByCategory = categoriesOrdered.map((cat) => ({
+    category: cat,
+    partners: partnersSorted.filter((p) => p.category_id === cat.id),
+  }))
+  const uncategorizedPartners = partnersSorted.filter((p) => p.category_id == null)
+  const hasAnyPartners =
+    partnersByCategory.some((group) => group.partners.length > 0) || uncategorizedPartners.length > 0
+
+  const nf = new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU")
+
+  const renderCaseCard = (partner: Partner) => {
     const ui = mapPartnerToAffiliateCaseCard(partner)
-    return {
-      ...ui,
-      hasLogo: Boolean(partner.logo_url),
-      categoryLabel: locale === "en" ? (category?.name_en ?? "Uncategorized") : (category?.name_ru ?? "Без категории"),
-    }
-  })
+    const dateStr = format(new Date(ui.publishedAt), "d MMM yyyy", { locale: dateLocale })
+    const href = `/affiliate/cases/${ui.slug}`
+    const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
+
+    return (
+      <Link key={ui.slug} href={href} className="group block h-full">
+        <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
+          <div className="relative aspect-3/2 w-full overflow-hidden bg-muted">
+            {cover ? (
+              <img
+                src={cover}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <img
+                src={ui.coverImage}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                loading="lazy"
+                decoding="async"
+              />
+            )}
+          </div>
+          <CardContent className="space-y-3 p-5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span>
+                {t.affiliate.cases.publishedLabel}: {dateStr}
+              </span>
+            </div>
+            <h3 className="text-lg font-semibold leading-snug text-foreground group-hover:text-primary">
+              {ui.title}
+            </h3>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-sm font-medium text-primary">
+                {t.affiliate.cases.wishlistsLabel}: {nf.format(ui.wishlists)}
+              </span>
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                {t.affiliate.cases.openCase}
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    )
+  }
 
   return (
     <section id="affiliate-cases" className="scroll-mt-28 py-16 md:py-20">
@@ -42,62 +100,84 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
           <p className="text-base text-muted-foreground sm:text-lg">{t.affiliate.cases.subtitle}</p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {cases.map((c) => {
-            const dateStr = format(new Date(c.publishedAt), "d MMM yyyy", { locale: dateLocale })
-            const href = `/affiliate/cases/${c.slug}`
-            const cover = getCaseCoverUrl(c.id, c.hasLogo)
+        <div className="space-y-12">
+          {partnersByCategory.map(({ category, partners: categoryPartners }) => {
+            if (categoryPartners.length === 0) return null
+            const isExpanded = expandedCategories[category.id] ?? false
+            const visiblePartners = isExpanded ? categoryPartners : categoryPartners.slice(0, MAX_VISIBLE)
+            const hiddenCount = Math.max(0, categoryPartners.length - MAX_VISIBLE)
 
             return (
-              <Link key={c.slug} href={href} className="group block h-full">
-                <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
-                  <div className="relative aspect-3/2 w-full overflow-hidden bg-muted">
-                    {cover ? (
-                      <img
-                        src={cover}
-                        alt=""
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <img
-                        src={c.coverImage}
-                        alt=""
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    )}
+              <div key={category.id}>
+                <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
+                  {locale === "en" ? category.name_en : category.name_ru}
+                </h3>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {visiblePartners.map((partner) => renderCaseCard(partner))}
+                </div>
+                {categoryPartners.length > MAX_VISIBLE && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedCategories((prev) => ({
+                          ...prev,
+                          [category.id]: !isExpanded,
+                        }))
+                      }
+                      className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                    >
+                      {isExpanded
+                        ? locale === "ru"
+                          ? `Свернуть список (${hiddenCount})`
+                          : `Show less (${hiddenCount})`
+                        : locale === "ru"
+                          ? `Показать ещё ${hiddenCount}`
+                          : `Show ${hiddenCount} more`}
+                    </button>
                   </div>
-                  <CardContent className="space-y-3 p-5">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>{c.categoryLabel}</span>
-                      <span>
-                        {t.affiliate.cases.publishedLabel}: {dateStr}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold leading-snug text-foreground group-hover:text-primary">
-                      {c.title}
-                    </h3>
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <span className="text-sm font-medium text-primary">
-                        {t.affiliate.cases.wishlistsLabel}: {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-                        {t.affiliate.cases.openCase}
-                        <ChevronRight className="h-4 w-4" />
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+                )}
+              </div>
             )
           })}
+
+          {uncategorizedPartners.length > 0 && (
+            <div>
+              <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
+                {t.cases.uncategorizedTitle}
+              </h3>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {(showAllUncategorized
+                  ? uncategorizedPartners
+                  : uncategorizedPartners.slice(0, MAX_VISIBLE)
+                ).map((partner) => renderCaseCard(partner))}
+              </div>
+              {uncategorizedPartners.length > MAX_VISIBLE && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllUncategorized((prev) => !prev)}
+                    className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                  >
+                    {showAllUncategorized
+                      ? locale === "ru"
+                        ? `Свернуть список (${uncategorizedPartners.length - MAX_VISIBLE})`
+                        : `Show less (${uncategorizedPartners.length - MAX_VISIBLE})`
+                      : locale === "ru"
+                        ? `Показать ещё ${uncategorizedPartners.length - MAX_VISIBLE}`
+                        : `Show ${uncategorizedPartners.length - MAX_VISIBLE} more`}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!hasAnyPartners && (
+            <p className="pt-2 text-sm text-muted-foreground">
+              {locale === "en" ? "Cases are not added yet." : "Кейсы пока не добавлены."}
+            </p>
+          )}
         </div>
-        {cases.length === 0 ? (
-          <p className="pt-6 text-sm text-muted-foreground">{locale === "en" ? "Cases are not added yet." : "Кейсы пока не добавлены."}</p>
-        ) : null}
       </div>
     </section>
   )
