@@ -42,7 +42,13 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
 
   const renderCaseCard = (partner: Partner) => {
     const ui = mapPartnerToAffiliateCaseCard(partner)
-    const dateStr = format(new Date(ui.publishedAt), "d MMM yyyy", { locale: dateLocale })
+    const parsedDate = ui.publishedAt ? new Date(ui.publishedAt) : null
+    const dateStr =
+      parsedDate && !Number.isNaN(parsedDate.getTime())
+        ? format(parsedDate, "d MMM yyyy", { locale: dateLocale })
+        : locale === "en"
+          ? "No date"
+          : "Без даты"
     const href = partner.target_url || `/affiliate/cases/${ui.slug}`
     const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
     const title =
