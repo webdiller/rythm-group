@@ -433,20 +433,22 @@ export function PartnersEditor() {
                 Добавить категорию
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-5xl! w-full!">
-              <DialogHeader>
+            <DialogContent className="flex max-h-[min(92vh,760px)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 p-0 sm:w-full">
+              <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
                 <DialogTitle>
                   {editingCategory ? "Редактировать категорию" : "Добавить категорию"}
                 </DialogTitle>
               </DialogHeader>
-              <CategoryForm
-                category={editingCategory}
-                onSave={handleSaveCategory}
-                onCancel={() => {
-                  setIsCategoryDialogOpen(false)
-                  setEditingCategory(null)
-                }}
-              />
+              <div className="overflow-y-auto px-4 pt-4 sm:px-6">
+                <CategoryForm
+                  category={editingCategory}
+                  onSave={handleSaveCategory}
+                  onCancel={() => {
+                    setIsCategoryDialogOpen(false)
+                    setEditingCategory(null)
+                  }}
+                />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -456,7 +458,7 @@ export function PartnersEditor() {
               {categories.map((cat, index) => (
                 <div
                   key={cat.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                   draggable
                   onDragStart={() => setDraggingCategoryId(cat.id)}
                   onDragOver={(e) => e.preventDefault()}
@@ -470,7 +472,7 @@ export function PartnersEditor() {
                       (порядок: {cat.order_index})
                     </span>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <div className="flex flex-col gap-1">
                       <Button
                         type="button"
@@ -532,21 +534,23 @@ export function PartnersEditor() {
                 Добавить кейс
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-5xl! w-full">
-              <DialogHeader>
+            <DialogContent className="flex max-h-[min(92vh,860px)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 p-0 sm:w-full">
+              <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
                 <DialogTitle>
                   {editingPartner ? "Редактировать кейс" : "Добавить кейс"}
                 </DialogTitle>
               </DialogHeader>
-              <PartnerForm
-                partner={editingPartner}
-                categories={categories}
-                onSave={handleSavePartner}
-                onCancel={() => {
-                  setIsPartnerDialogOpen(false)
-                  setEditingPartner(null)
-                }}
-              />
+              <div className="overflow-y-auto px-4 pt-4 sm:px-6">
+                <PartnerForm
+                  partner={editingPartner}
+                  categories={categories}
+                  onSave={handleSavePartner}
+                  onCancel={() => {
+                    setIsPartnerDialogOpen(false)
+                    setEditingPartner(null)
+                  }}
+                />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -565,7 +569,7 @@ export function PartnersEditor() {
                   {list.map((partner, index) => (
                     <div
                       key={partner.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                       draggable
                       onDragStart={() => {
                         setDraggingPartnerId(partner.id)
@@ -574,7 +578,7 @@ export function PartnersEditor() {
                       onDragOver={(e) => e.preventDefault()}
                       onDrop={() => onPartnerDropAt(category.id, index)}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         {partner.logo_url ? (
                           <img
                             src={`/api/content/partners/${partner.id}/logo`}
@@ -582,12 +586,12 @@ export function PartnersEditor() {
                             className="h-8 w-8 object-contain"
                           />
                         ) : null}
-                        <span className="font-medium">{partner.name}</span>
+                        <span className="truncate font-medium">{partner.name}</span>
                         <span className="text-sm text-muted-foreground">
                           (порядок: {partner.order_index})
                         </span>
                       </div>
-                      <div className="flex gap-2 items-center">
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                         <div className="flex flex-col gap-1">
                           <Button
                             type="button"
@@ -659,7 +663,7 @@ export function PartnersEditor() {
               {uncategorizedPartners.map((partner, index) => (
                 <div
                   key={partner.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                   draggable
                   onDragStart={() => {
                     setDraggingPartnerId(partner.id)
@@ -668,7 +672,7 @@ export function PartnersEditor() {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onPartnerDropAt(null, index)}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     {partner.logo_url ? (
                       <img
                         src={`/api/content/partners/${partner.id}/logo`}
@@ -676,9 +680,9 @@ export function PartnersEditor() {
                         className="h-8 w-8 object-contain"
                       />
                     ) : null}
-                    <span className="font-medium">{partner.name}</span>
+                    <span className="truncate font-medium">{partner.name}</span>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <div className="flex flex-col gap-1">
                       <Button
                         type="button"
@@ -793,7 +797,7 @@ function CategoryForm({
           required
         />
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="sticky bottom-0 z-10 -mx-4 flex justify-end gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:px-6">
         <Button type="button" variant="outline" onClick={onCancel}>
           Отменить
         </Button>
@@ -1015,7 +1019,7 @@ function PartnerForm({
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex flex-col gap-4">
         <div className="space-y-2">
           <Label>Куда ведет клик по кейсу</Label>
           <Select
@@ -1100,7 +1104,7 @@ function PartnerForm({
           Загрузите логотип партнёра. Рекомендуемое разрешение: 320×120 px, формат PNG/WebP, прозрачный фон. Файл будет
           автоматически сжат до WebP (не более 5 МБ).
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="h-16 w-32 flex items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
             {hasLogo && partner ? (
               <img
@@ -1199,7 +1203,7 @@ function PartnerForm({
           </div>
         )}
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
         <Button type="button" variant="outline" onClick={onCancel}>
           Отменить
         </Button>
