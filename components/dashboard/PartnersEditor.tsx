@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
+import { buildAffiliateCaseSlug } from "@/lib/affiliate/cases-ui"
 
 interface PartnerCategory {
   id: number
@@ -39,6 +40,17 @@ interface Partner {
   show_in_affiliate_steam?: boolean | null
   order_index: number
 }
+
+type BlogPostOption = {
+  id: number
+  slug: string
+  title_ru: string
+  category_slug: string
+  status: "draft" | "published"
+  deleted_at: number | null
+}
+
+const AUTO_CASE_DETAIL_URL = "__AUTO_CASE_DETAIL__"
 
 export function PartnersEditor() {
   const [partners, setPartners] = useState<Partner[]>([])
@@ -116,6 +128,23 @@ export function PartnersEditor() {
           createdOrUpdatedId = json.data?.id ?? editingPartner?.id
         } catch {
           createdOrUpdatedId = editingPartner?.id
+        }
+
+        // Для новых кейсов URL детальной страницы формируем после создания, когда появился id.
+        if (!editingPartner && partner.target_url === AUTO_CASE_DETAIL_URL && createdOrUpdatedId != null) {
+          const token = getToken()
+          const detailUrl = `/affiliate/cases/${buildAffiliateCaseSlug({
+            id: createdOrUpdatedId,
+            name: partner.name ?? "",
+          })}`
+          await fetch("/api/content/partners", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ id: createdOrUpdatedId, target_url: detailUrl }),
+          })
         }
 
         // Если создаём нового партнёра и выбран логотип — загружаем его сразу после создания
@@ -404,7 +433,7 @@ export function PartnersEditor() {
                 Добавить категорию
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-5xl! w-full!">
               <DialogHeader>
                 <DialogTitle>
                   {editingCategory ? "Редактировать категорию" : "Добавить категорию"}
@@ -503,7 +532,7 @@ export function PartnersEditor() {
                 Добавить кейс
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-5xl! w-full">
               <DialogHeader>
                 <DialogTitle>
                   {editingPartner ? "Редактировать кейс" : "Добавить кейс"}
@@ -821,6 +850,13 @@ function PartnerForm({
   const [logoVersion, setLogoVersion] = useState(0)
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
   const [newLogoPreviewUrl, setNewLogoPreviewUrl] = useState<string | null>(null)
+  const [blogPosts, setBlogPosts] = useState<BlogPostOption[]>([])
+  const [targetType, setTargetType] = useState<"case_detail" | "blog_post">(
+    partner?.target_url?.startsWith("/blog/") ? "blog_post" : "case_detail",
+  )
+  const [selectedBlogUrl, setSelectedBlogUrl] = useState<string>(
+    partner?.target_url?.startsWith("/blog/") ? partner.target_url : "",
+  )
 
   useEffect(() => {
     if (!newLogoFile) {
@@ -834,15 +870,52 @@ function PartnerForm({
     }
   }, [newLogoFile])
 
+  useEffect(() => {
+    const getToken = () =>
+      document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
+    const loadBlogPosts = async () => {
+      try {
+        const token = getToken()
+        const res = await fetch("/api/content/blog/posts", {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: BlogPostOption[] }
+        const onlyPublished = (json.data ?? []).filter((post) => post.status === "published" && post.deleted_at == null)
+        setBlogPosts(onlyPublished)
+      } catch {
+        // ignore blog list fetch errors in partner form
+      }
+    }
+
+    void loadBlogPosts()
+  }, [])
+
   const NO_CATEGORY_VALUE = "none"
+  const NO_BLOG_POST_VALUE = "__none__"
+  const isEditingExistingPartner = partner?.id != null
+  const caseDetailUrl = isEditingExistingPartner
+    ? `/affiliate/cases/${buildAffiliateCaseSlug({ id: partner.id, name: formData.name || partner.name })}`
+    : ""
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
+        if (targetType === "blog_post" && !selectedBlogUrl) {
+          toast.error("Выберите статью блога для перехода из кейса")
+          return
+        }
+        const resolvedTargetUrl =
+          targetType === "blog_post"
+            ? selectedBlogUrl
+            : isEditingExistingPartner
+              ? caseDetailUrl
+              : AUTO_CASE_DETAIL_URL
         onSave(
           {
             ...formData,
+            target_url: resolvedTargetUrl,
             category_id: formData.category_id,
           },
           newLogoFile ?? undefined,
@@ -914,7 +987,7 @@ function PartnerForm({
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Дата публикации</Label>
           <Input
@@ -931,6 +1004,8 @@ function PartnerForm({
             onChange={(e) => setFormData({ ...formData, wishlists: Number(e.target.value) })}
           />
         </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>Просмотры (ручное значение)</Label>
           <Input
@@ -942,13 +1017,58 @@ function PartnerForm({
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>URL перехода из блока кейсов</Label>
-          <Input
-            value={formData.target_url}
-            onChange={(e) => setFormData({ ...formData, target_url: e.target.value })}
-            placeholder="/cases/123 или /blog/news/post-id"
-          />
+          <Label>Куда ведет клик по кейсу</Label>
+          <Select
+            value={targetType}
+            onValueChange={(value: "case_detail" | "blog_post") => setTargetType(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите действие при клике" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="case_detail">Перейти на детальную страницу кейса</SelectItem>
+              <SelectItem value="blog_post">Выбрать статью из блога</SelectItem>
+            </SelectContent>
+          </Select>
+          {targetType === "case_detail" && (
+            <p className="text-xs text-muted-foreground">
+              {isEditingExistingPartner
+                ? `Будет использован URL: ${caseDetailUrl}`
+                : "Для нового кейса URL детальной страницы будет сформирован автоматически после создания."}
+            </p>
+          )}
         </div>
+        <div className="space-y-2">
+          <Label>Статья блога</Label>
+          <Select
+            value={selectedBlogUrl || NO_BLOG_POST_VALUE}
+            onValueChange={(value) => setSelectedBlogUrl(value === NO_BLOG_POST_VALUE ? "" : value)}
+            disabled={targetType !== "blog_post"}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Выберите статью" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_BLOG_POST_VALUE}>Не выбрано</SelectItem>
+              {selectedBlogUrl && !blogPosts.some((post) => `/blog/${post.category_slug}/${post.slug}` === selectedBlogUrl) && (
+                <SelectItem value={selectedBlogUrl}>{selectedBlogUrl}</SelectItem>
+              )}
+              {blogPosts.map((post) => {
+                const postUrl = `/blog/${post.category_slug}/${post.slug}`
+                return (
+                  <SelectItem key={post.id} value={postUrl}>
+                    {post.title_ru}
+                  </SelectItem>
+                )
+              })}
+            </SelectContent>
+          </Select>
+          {targetType === "blog_post" && !selectedBlogUrl && (
+            <p className="text-xs text-destructive">Выберите статью, чтобы сохранить этот вариант перехода.</p>
+          )}
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label>URL разработчика/издателя (Steam)</Label>
           <Input
