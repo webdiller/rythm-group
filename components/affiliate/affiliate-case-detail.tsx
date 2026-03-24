@@ -22,7 +22,13 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
   const desc = locale === "en" ? c.shortDescription_en : c.shortDescription_ru
   const category = locale === "en" ? c.category_en : c.category_ru
   const dateLocale = locale === "en" ? enUS : ru
-  const formattedDate = format(new Date(c.publishedAt), "d MMM yyyy", { locale: dateLocale })
+  const parsedDate = c.publishedAt ? new Date(c.publishedAt) : null
+  const formattedDate =
+    parsedDate && !Number.isNaN(parsedDate.getTime())
+      ? format(parsedDate, "d MMM yyyy", { locale: dateLocale })
+      : locale === "en"
+        ? "No date"
+        : "Без даты"
 
   useEffect(() => {
     let cancelled = false
