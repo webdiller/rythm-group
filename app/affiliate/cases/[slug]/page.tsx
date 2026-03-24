@@ -1,27 +1,55 @@
 import { notFound } from "next/navigation"
 import { AffiliateCaseDetail } from "@/components/affiliate/affiliate-case-detail"
-import { getAffiliateCaseBySlug, AFFILIATE_CASES_MOCK } from "@/lib/affiliate/mock-data"
+import type { Partner, PartnerCategory } from "@/components/cases"
+import {
+  mapPartnerToAffiliateCaseDetail,
+  parseAffiliateCaseIdFromSlug,
+} from "@/lib/affiliate/cases-ui"
 import type { Metadata } from "next"
+import { getSiteBaseUrl } from "@/lib/site-url"
 
 type PageProps = { params: Promise<{ slug: string }> }
 
 export function generateStaticParams() {
-  return AFFILIATE_CASES_MOCK.filter((c) => !c.hidden).map((c) => ({ slug: c.slug }))
+  return []
+}
+
+async function getAffiliateCaseData() {
+  const baseUrl = getSiteBaseUrl()
+  const [partnerCatRes, partnerRes] = await Promise.all([
+    fetch(`${baseUrl}/api/content/partner-categories`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/content/partners`, { cache: "no-store" }),
+  ])
+
+  const partnerCategoriesJson = (await partnerCatRes.json()) as { data?: PartnerCategory[] }
+  const partnersJson = (await partnerRes.json()) as { data?: Partner[] }
+
+  return {
+    categories: partnerCategoriesJson.data ?? [],
+    partners: partnersJson.data ?? [],
+  }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const c = getAffiliateCaseBySlug(slug)
-  if (!c) return { title: "Кейс | Rythm Group" }
+  const { categories, partners } = await getAffiliateCaseData()
+  const caseId = parseAffiliateCaseIdFromSlug(slug)
+  const partner = partners.find((x) => x.id === caseId)
+  if (!partner) return { title: "Кейс | Rythm Group" }
+  const c = mapPartnerToAffiliateCaseDetail(partner, categories)
+
   return {
-    title: `${c.gameTitle_ru} | Affiliate — Rythm Group`,
+    title: `${c.title} | Affiliate — Rythm Group`,
     description: c.shortDescription_ru,
   }
 }
 
 export default async function AffiliateCasePage({ params }: PageProps) {
   const { slug } = await params
-  const caseItem = getAffiliateCaseBySlug(slug)
+  const { categories, partners } = await getAffiliateCaseData()
+  const caseId = parseAffiliateCaseIdFromSlug(slug)
+  const partner = partners.find((x) => x.id === caseId)
+  const caseItem = partner ? mapPartnerToAffiliateCaseDetail(partner, categories) : null
   if (!caseItem) notFound()
 
   return (

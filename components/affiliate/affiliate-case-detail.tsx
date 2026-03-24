@@ -2,23 +2,35 @@
 
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
-import type { AffiliateCaseMock } from "@/lib/affiliate/mock-data"
-import { Card, CardContent } from "@/components/ui/card"
-import { Heart, Eye } from "lucide-react"
+import type { AffiliateCaseDetailUi } from "@/lib/affiliate/cases-ui"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AppBreadcrumbs } from "@/components/AppBreadcrumbs"
+import { Eye, Heart, CalendarDays, Tag } from "lucide-react"
+import { format } from "date-fns"
+import { enUS, ru } from "date-fns/locale"
 
 type AffiliateCaseDetailProps = {
-  caseItem: AffiliateCaseMock
+  caseItem: AffiliateCaseDetailUi
 }
 
 export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
   const { locale, t } = useLocale()
   const cp = t.affiliate.casePage
-  const title = locale === "en" ? c.gameTitle_en : c.gameTitle_ru
   const desc = locale === "en" ? c.shortDescription_en : c.shortDescription_ru
-  const timeline = locale === "en" ? c.timeline_en : c.timeline_ru
+  const category = locale === "en" ? c.category_en : c.category_ru
+  const dateLocale = locale === "en" ? enUS : ru
+  const formattedDate = format(new Date(c.publishedAt), "d MMM yyyy", { locale: dateLocale })
 
   return (
     <article className="space-y-12 pb-16">
+      <AppBreadcrumbs
+        items={[
+          { label: locale === "en" ? "Home" : "Главная", href: "/" },
+          { label: "Affiliate", href: "/affiliate" },
+          { label: c.title },
+        ]}
+      />
+
       <Link
         href="/affiliate"
         className="inline-flex text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -31,65 +43,65 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
           <img
             src={c.coverImage}
             alt=""
-            className="aspect-[21/9] w-full object-cover md:aspect-[2.4/1]"
+            className="aspect-21/9 w-full object-cover md:aspect-[2.6/1]"
             loading="eager"
             decoding="async"
           />
         </div>
-        <h1 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-          {title}
+        <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+          {c.title}
         </h1>
-        <p className="text-lg text-muted-foreground">
-          {t.affiliate.cases.wishlistsLabel}: <span className="font-semibold text-foreground">{c.wishlists}</span>
-        </p>
       </header>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">{cp.aboutGame}</h2>
-        <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">{desc}</p>
-      </section>
-
-      <section className="space-y-6">
-        <h2 className="text-xl font-semibold text-foreground">{cp.socialProof}</h2>
-        <div className="grid gap-6 md:grid-cols-2">
-          {c.socialScreens.map((shot, i) => (
-            <Card
-              key={`${c.slug}-shot-${i}`}
-              className="overflow-hidden border-border/80 bg-card/80 py-0 shadow-none"
-            >
-              <div className="aspect-video w-full bg-muted">
-                <img src={shot.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+      <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <Card className="border-border/80 bg-card/85 py-0 shadow-none backdrop-blur-sm">
+          <CardHeader className="px-6 pt-6 pb-3 md:px-8 md:pt-8 md:pb-4">
+            <CardTitle className="text-xl">{cp.aboutGame}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 px-6 pb-6 pt-0 text-sm text-muted-foreground md:px-8 md:pb-8">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+                <p className="mb-1 inline-flex items-center gap-2 text-xs uppercase tracking-wide">
+                  <Tag className="h-3.5 w-3.5" />
+                  {locale === "en" ? "Category" : "Категория"}
+                </p>
+                <p className="text-foreground">{category}</p>
               </div>
-              <CardContent className="flex items-center justify-between gap-4 p-4 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <Heart className="h-4 w-4 text-primary" aria-hidden />
-                  {cp.reactions}: {shot.reactions}
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Eye className="h-4 w-4" aria-hidden />
-                  {cp.views}: {shot.views}
-                </span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+                <p className="mb-1 inline-flex items-center gap-2 text-xs uppercase tracking-wide">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {t.affiliate.cases.publishedLabel}
+                </p>
+                <p className="text-foreground">{formattedDate}</p>
+              </div>
+            </div>
+            <p className="max-w-3xl text-base leading-relaxed">{desc}</p>
+          </CardContent>
+        </Card>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">{cp.timeline}</h2>
-        <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">{timeline}</p>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">{cp.steamStats}</h2>
-        <div className="overflow-hidden rounded-xl border border-border/80 bg-muted/40">
-          <img
-            src={c.statsScreenshot}
-            alt=""
-            className="w-full object-contain"
-            loading="lazy"
-            decoding="async"
-          />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+            <CardContent className="flex items-center justify-between p-5">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}
+                </p>
+              </div>
+              <Heart className="h-6 w-6 text-primary" />
+            </CardContent>
+          </Card>
+          <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+            <CardContent className="flex items-center justify-between p-5">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.views)}
+                </p>
+              </div>
+              <Eye className="h-6 w-6 text-primary" />
+            </CardContent>
+          </Card>
         </div>
       </section>
     </article>
