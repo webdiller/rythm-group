@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
-const sections = ["hero", "about", "stats", "channels", "cases", "contact", "nav", "footer"]
+const sections = ["hero", "about", "stats", "channels", "cases", "contact", "nav", "footer", "affiliate"]
 const locales = ["ru", "en"]
 
 type TranslationRow = { id?: number; value: string }
@@ -185,6 +185,34 @@ export function TranslationsEditor() {
         "miniStats.supportLabel",
       ],
       footer: ["rights", "description", "ctaTitle", "privacy", "dataPolicy"],
+      affiliate: [
+        "pageTitle",
+        "pageDescription",
+        "formats.title",
+        "formats.subtitle",
+        "cases.title",
+        "cases.subtitle",
+        "cases.wishlistsLabel",
+        "cases.publishedLabel",
+        "cases.openCase",
+        "cases.empty",
+        "cases.uncategorizedTitle",
+        "steam.title",
+        "steam.subtitle",
+        "steam.openSteam",
+        "faq.title",
+        "faq.subtitle",
+        "miniBlog.title",
+        "miniBlog.subtitle",
+        "miniBlog.goToBlog",
+        "casePage.back",
+        "casePage.aboutGame",
+        "casePage.socialProof",
+        "casePage.timeline",
+        "casePage.steamStats",
+        "casePage.reactions",
+        "casePage.views",
+      ],
     }
     return keysMap[section] || []
   }
@@ -212,7 +240,7 @@ export function TranslationsEditor() {
           <SelectContent>
             {sections.map((section) => (
               <SelectItem key={section} value={section}>
-                {section.charAt(0).toUpperCase() + section.slice(1)}
+                {section === "affiliate" ? "Affiliate" : section.charAt(0).toUpperCase() + section.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -369,7 +397,9 @@ export function TranslationsEditor() {
                   id={key}
                   value={translations[key]?.value ?? ""}
                   onChange={(e) => handleChange(key, e.target.value)}
-                  rows={key.includes("text") ? 3 : 1}
+                  rows={
+                    key.includes("text") || key.includes("subtitle") || key === "pageDescription" ? 3 : 1
+                  }
                 />
               </div>
             )

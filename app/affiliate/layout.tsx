@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
+import { getAffiliateSeoFromDb } from "@/lib/affiliate/page-meta"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
-export const metadata: Metadata = {
-  title: "Affiliate | Rythm Group",
-  description:
-    "Партнёрство для GameDev и маркетинга: кейсы, вишлисты, форматы сотрудничества. Partnerships for game developers: cases, wishlists, cooperation models.",
+export const dynamic = "force-dynamic"
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { title, description } = getAffiliateSeoFromDb()
+  return { title, description }
 }
 
 async function getAffiliateShellMeta(): Promise<{
