@@ -119,12 +119,12 @@ export function AffiliateHero({ data }: AffiliateHeroProps) {
               hiddenClassName="translate-y-4 opacity-0 scale-95"
               durationClassName="duration-700"
             >
-              <Link
+              <a
                 href={moreHref}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
               >
                 {ctaSecondary}
-              </Link>
+              </a>
             </StaggerItem>
           </div>
         </div>
