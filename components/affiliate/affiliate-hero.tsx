@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
 import { resolveNavHref } from "@/lib/nav-hrefs"
+import { StaggerItem } from "@/components/ui/stagger-item"
 
 type AffiliateHeroData = {
   badge_ru: string
@@ -54,31 +55,77 @@ export function AffiliateHero({ data }: AffiliateHeroProps) {
           />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            <span className="text-xs font-medium uppercase tracking-wider">{badge}</span>
-          </div>
+          <StaggerItem
+            index={0}
+            delayStart={100}
+            delayStep={50}
+            visibleClassName="translate-y-0 opacity-100"
+            hiddenClassName="translate-y-4 opacity-0"
+            durationClassName="duration-700"
+          >
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
+              <span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
+              <span className="text-xs font-medium uppercase tracking-wider">{badge}</span>
+            </div>
+          </StaggerItem>
 
-          <h1 className="mb-6 text-balance text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl lg:text-7xl">
-            {title}
-          </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-pretty text-lg leading-relaxed md:text-xl">
-            {subtitle}
-          </p>
+          <StaggerItem
+            index={1}
+            delayStart={100}
+            delayStep={50}
+            visibleClassName="translate-y-0 opacity-100"
+            hiddenClassName="translate-y-6 opacity-0"
+            durationClassName="duration-700"
+          >
+            <h1 className="mb-6 text-balance text-3xl font-bold leading-tight tracking-tight text-foreground md:text-5xl lg:text-7xl">
+              {title}
+            </h1>
+          </StaggerItem>
+
+          <StaggerItem
+            index={2}
+            delayStart={100}
+            delayStep={50}
+            visibleClassName="translate-y-0 opacity-100"
+            hiddenClassName="translate-y-4 opacity-0"
+            durationClassName="duration-700"
+          >
+            <p className="mx-auto mb-10 max-w-2xl text-pretty text-lg leading-relaxed md:text-xl">
+              {subtitle}
+            </p>
+          </StaggerItem>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link
-              href={contactHref}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+            <StaggerItem
+              index={3}
+              delayStart={100}
+              delayStep={50}
+              visibleClassName="translate-y-0 opacity-100 scale-100"
+              hiddenClassName="translate-y-4 opacity-0 scale-95"
+              durationClassName="duration-700"
             >
-              {ctaPrimary}
-            </Link>
-            <Link
-              href={moreHref}
-              className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+              <Link
+                href={contactHref}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+              >
+                {ctaPrimary}
+              </Link>
+            </StaggerItem>
+            <StaggerItem
+              index={4}
+              delayStart={100}
+              delayStep={50}
+              visibleClassName="translate-y-0 opacity-100 scale-100"
+              hiddenClassName="translate-y-4 opacity-0 scale-95"
+              durationClassName="duration-700"
             >
-              {ctaSecondary}
-            </Link>
+              <Link
+                href={moreHref}
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+              >
+                {ctaSecondary}
+              </Link>
+            </StaggerItem>
           </div>
         </div>
       </section>

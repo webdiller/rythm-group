@@ -3,6 +3,7 @@
 import { useLocale } from "@/lib/locale-context"
 import type { BlogCategory } from "@/lib/blog/types"
 import { BlogPageBreadcrumbs } from "@/components/blog/BlogPageBreadcrumbs"
+import { StaggerItem } from "@/components/ui/stagger-item"
 
 type BlogListingHeaderProps = {
   category?: BlogCategory | null
@@ -15,25 +16,47 @@ export function BlogListingHeader({ category }: BlogListingHeaderProps) {
     const title = locale === "en" ? category.name_en : category.name_ru
     return (
       <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
-        <BlogPageBreadcrumbs variant="category" category={category} />
-        <div className="space-y-3">
-          <h1 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-            {title}
-          </h1>
-        </div>
+        <StaggerItem index={0} delayStart={120} delayStep={60} durationClassName="duration-700">
+          <BlogPageBreadcrumbs variant="category" category={category} />
+        </StaggerItem>
+        <StaggerItem
+          index={1}
+          delayStart={120}
+          delayStep={60}
+          hiddenClassName="translate-y-4 opacity-0"
+          visibleClassName="translate-y-0 opacity-100"
+          durationClassName="duration-700"
+        >
+          <div className="space-y-3">
+            <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+              {title}
+            </h1>
+          </div>
+        </StaggerItem>
       </header>
     )
   }
 
   return (
     <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
-      <BlogPageBreadcrumbs variant="index" />
-      <div className="space-y-3">
-        <h1 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-          {t.blog.title}
-        </h1>
-        <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">{t.blog.subtitle}</p>
-      </div>
+      <StaggerItem index={0} delayStart={120} delayStep={60} durationClassName="duration-700">
+        <BlogPageBreadcrumbs variant="index" />
+      </StaggerItem>
+      <StaggerItem
+        index={1}
+        delayStart={120}
+        delayStep={60}
+        hiddenClassName="translate-y-4 opacity-0"
+        visibleClassName="translate-y-0 opacity-100"
+        durationClassName="duration-700"
+      >
+        <div className="space-y-3">
+          <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+            {t.blog.title}
+          </h1>
+          <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">{t.blog.subtitle}</p>
+        </div>
+      </StaggerItem>
     </header>
   )
 }

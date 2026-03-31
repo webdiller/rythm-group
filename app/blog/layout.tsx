@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
-import { PageEnterReveal } from "@/components/page-enter-reveal"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
 export const metadata: Metadata = {
@@ -66,7 +65,7 @@ export default async function BlogLayout({ children }: Readonly<{ children: Reac
           <div className="relative z-20">
             <Header sectionHrefPrefix="/" />
             <main className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
-              <PageEnterReveal>{children}</PageEnterReveal>
+              {children}
             </main>
             <Footer siteSettings={siteSettings} sectionHrefPrefix="/" />
           </div>

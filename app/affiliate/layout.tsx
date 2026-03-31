@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
-import { PageEnterReveal } from "@/components/page-enter-reveal"
 import { getAffiliateSeoFromDb } from "@/lib/affiliate/page-meta"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
@@ -68,7 +67,7 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
       <div className="relative z-20">
         <Header sectionHrefPrefix="/" />
         <main>
-          <PageEnterReveal>{children}</PageEnterReveal>
+          {children}
         </main>
         <Footer siteSettings={siteSettings} sectionHrefPrefix="/" />
       </div>

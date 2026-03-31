@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { LocaleProvider } from "@/lib/locale-context"
+import { PageRouteTransitionProvider } from "@/components/page-route-transition-provider"
 import { SiteShell } from "@/components/SiteShell"
 
 type RootShellProvidersProps = {
@@ -13,7 +14,9 @@ type RootShellProvidersProps = {
 export function RootShellProviders({ children, hasAnyCustomBackgrounds }: RootShellProvidersProps) {
   return (
     <LocaleProvider>
-      <SiteShell hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>{children}</SiteShell>
+      <PageRouteTransitionProvider>
+        <SiteShell hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>{children}</SiteShell>
+      </PageRouteTransitionProvider>
     </LocaleProvider>
   )
 }
