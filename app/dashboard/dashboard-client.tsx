@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout"
+import { DashboardLayout, type DashboardTabId } from "@/components/dashboard/DashboardLayout"
 import { TranslationsEditor } from "@/components/dashboard/TranslationsEditor"
 import { ChannelsEditor } from "@/components/dashboard/ChannelsEditor"
 import { PartnersEditor } from "@/components/dashboard/PartnersEditor"
@@ -14,7 +14,7 @@ import { AffiliateFormatsEditor } from "@/components/dashboard/AffiliateFormatsE
 import { AffiliateFaqEditor } from "@/components/dashboard/AffiliateFaqEditor"
 import { AffiliateSectionsEditor } from "@/components/dashboard/AffiliateSectionsEditor"
 
-const VALID_TABS = new Set([
+const VALID_TABS = new Set<DashboardTabId>([
   "translations",
   "channels",
   "partners",
@@ -27,16 +27,20 @@ const VALID_TABS = new Set([
   "affiliate-faq",
 ])
 
+function isDashboardTabId(value: string): value is DashboardTabId {
+  return VALID_TABS.has(value as DashboardTabId)
+}
+
 function DashboardInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState("translations")
+  const [activeTab, setActiveTab] = useState<DashboardTabId>("translations")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const tab = searchParams.get("tab")
-    if (tab && VALID_TABS.has(tab)) {
+    if (tab && isDashboardTabId(tab)) {
       setActiveTab(tab)
     }
   }, [searchParams])

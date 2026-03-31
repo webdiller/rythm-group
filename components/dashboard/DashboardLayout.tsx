@@ -2,13 +2,32 @@
 
 import { ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import type { LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LogOut, FileText, Tv, Users, Mail, Settings, Newspaper } from "lucide-react"
 
+type DashboardTabId =
+  | "translations"
+  | "channels"
+  | "partners"
+  | "affiliate-sections"
+  | "affiliate-hero"
+  | "affiliate-formats"
+  | "affiliate-faq"
+  | "blog"
+  | "contacts"
+  | "settings"
+
+type DashboardTab = {
+  id: DashboardTabId
+  label: string
+  icon: LucideIcon
+}
+
 interface DashboardLayoutProps {
   children: ReactNode
-  activeTab: string
-  onTabChange: (tab: string) => void
+  activeTab: DashboardTabId
+  onTabChange: (tab: DashboardTabId) => void
 }
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
@@ -19,17 +38,19 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
     router.push("/dashboard/login")
   }
 
-  const tabs = [
+  const tabs: DashboardTab[] = [
     { id: "translations", label: "Переводы", icon: FileText },
     { id: "channels", label: "Каналы", icon: Tv },
     { id: "partners", label: "Партнёры", icon: Users },
-    { id: "affiliate-sections", label: "Affiliate: секции", icon: Settings },
-    { id: "affiliate-hero", label: "Affiliate: Hero", icon: FileText },
-    { id: "affiliate-formats", label: "Affiliate: Форматы", icon: FileText },
-    { id: "affiliate-faq", label: "Affiliate: FAQ", icon: FileText },
     { id: "blog", label: "Блог", icon: Newspaper },
     { id: "contacts", label: "Контакты", icon: Mail },
     { id: "settings", label: "Настройки сайта", icon: Settings },
+  ]
+  const affiliateTabs: DashboardTab[] = [
+    { id: "affiliate-sections", label: "Секции", icon: Settings },
+    { id: "affiliate-hero", label: "Hero", icon: FileText },
+    { id: "affiliate-formats", label: "Форматы", icon: FileText },
+    { id: "affiliate-faq", label: "FAQ", icon: FileText },
   ]
 
   return (
@@ -66,6 +87,31 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               </button>
             )
           })}
+
+          <div className="rounded-lg border border-border bg-muted/40 p-2">
+            <div className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Affiliate
+            </div>
+            <div className="space-y-1">
+              {affiliateTabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => onTabChange(tab.id)}
+                    className={`flex w-full min-w-[180px] items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                      activeTab === tab.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background/60 hover:bg-accent"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </aside>
         <main className="w-full flex-1">{children}</main>
       </div>
