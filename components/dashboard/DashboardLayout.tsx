@@ -6,7 +6,7 @@ import type { LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LogOut, FileText, Tv, Users, Mail, Settings, Newspaper } from "lucide-react"
 
-type DashboardTabId =
+export type DashboardTabId =
   | "translations"
   | "channels"
   | "partners"

@@ -36,6 +36,7 @@ interface Partner {
   views?: number | null
   target_url?: string | null
   developer_url?: string | null
+  show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
   order_index: number
@@ -830,6 +831,7 @@ function PartnerForm({
     views: number
     target_url: string
     developer_url: string
+    show_in_landing_cases: boolean
     show_in_affiliate_cases: boolean
     show_in_affiliate_steam: boolean
     order_index: number
@@ -845,6 +847,7 @@ function PartnerForm({
     views: partner?.views ?? 0,
     target_url: partner?.target_url ?? "",
     developer_url: partner?.developer_url ?? "",
+    show_in_landing_cases: partner?.show_in_landing_cases ?? true,
     show_in_affiliate_cases: partner?.show_in_affiliate_cases ?? true,
     show_in_affiliate_steam: partner?.show_in_affiliate_steam ?? true,
     order_index: partner?.order_index ?? 0,
@@ -1082,20 +1085,35 @@ function PartnerForm({
           />
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-2">
         <div className="flex items-center justify-between rounded border p-3">
-          <Label>Показывать в блоке кейсов Affiliate</Label>
-          <Switch
+          <Label className="flex items-center justify-between w-full">
+            <p>Показывать в кейсах на главной</p>
+            <Switch
+            checked={formData.show_in_landing_cases}
+            onCheckedChange={(checked) => setFormData({ ...formData, show_in_landing_cases: checked })}
+          />
+          </Label>
+          
+        </div>
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label className="flex items-center justify-between w-full">
+           <p> Показывать в блоке кейсов Affiliate</p>
+            <Switch
             checked={formData.show_in_affiliate_cases}
             onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_cases: checked })}
           />
+            </Label>
+          
         </div>
         <div className="flex items-center justify-between rounded border p-3">
-          <Label>Показывать в Steam-блоке Affiliate</Label>
-          <Switch
-            checked={formData.show_in_affiliate_steam}
-            onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_steam: checked })}
-          />
+          <Label className="flex items-center justify-between w-full">
+            <p>Показывать в Steam-блоке Affiliate</p>
+            <Switch
+              checked={formData.show_in_affiliate_steam}
+              onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_steam: checked })}
+            />
+          </Label>
         </div>
       </div>
       <div className="space-y-2">

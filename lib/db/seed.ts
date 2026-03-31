@@ -184,6 +184,7 @@ export function runSeed(
   try { db.run(sql`ALTER TABLE partners ADD COLUMN views integer DEFAULT 0`) } catch {}
   try { db.run(sql`ALTER TABLE partners ADD COLUMN target_url text`) } catch {}
   try { db.run(sql`ALTER TABLE partners ADD COLUMN developer_url text`) } catch {}
+  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_landing_cases integer DEFAULT 1`) } catch {}
   try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_cases integer DEFAULT 1`) } catch {}
   try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_steam integer DEFAULT 1`) } catch {}
 

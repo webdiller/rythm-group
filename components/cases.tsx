@@ -29,6 +29,7 @@ export interface Partner {
   views?: number | null
   target_url?: string | null
   developer_url?: string | null
+  show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
   order_index: number
@@ -48,6 +49,7 @@ export function Cases({
   displayMode = "logoAndName",
 }: CasesProps) {
   const { locale, t } = useLocale()
+  const landingPartners = partners.filter((p) => p.show_in_landing_cases ?? true)
   const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({})
   const [showAllUncategorized, setShowAllUncategorized] = useState(false)
   const MAX_VISIBLE = 10
@@ -55,12 +57,12 @@ export function Cases({
   const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
   const partnersByCategory = categoriesOrdered.map((cat) => ({
     category: cat,
-    partners: partners
+    partners: landingPartners
       .filter((p) => p.category_id === cat.id)
       .sort((a, b) => a.order_index - b.order_index),
   }))
 
-  const uncategorizedPartners = partners
+  const uncategorizedPartners = landingPartners
     .filter((p) => p.category_id == null)
     .sort((a, b) => a.order_index - b.order_index)
 

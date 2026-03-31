@@ -104,6 +104,7 @@ export const tablePartners = sqliteTable("partners", {
   views: integer("views").default(0),
   target_url: text("target_url"),
   developer_url: text("developer_url"),
+  show_in_landing_cases: integer("show_in_landing_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_cases: integer("show_in_affiliate_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_steam: integer("show_in_affiliate_steam", { mode: "boolean" }).default(true),
   order_index: integer("order_index").default(0),
