@@ -22,8 +22,20 @@ export const VideoEmbed = Node.create({
 
   addAttributes() {
     return {
-      src: { default: "" },
-      poster: { default: null },
+      src: {
+        default: "",
+        parseHTML: (element) =>
+          element.getAttribute("data-video-src") ??
+          element.getAttribute("src") ??
+          "",
+      },
+      poster: {
+        default: null,
+        parseHTML: (element) =>
+          element.getAttribute("data-video-poster") ??
+          element.getAttribute("poster") ??
+          null,
+      },
     }
   },
 
@@ -39,15 +51,12 @@ export const VideoEmbed = Node.create({
     const poster = HTMLAttributes.poster ? String(HTMLAttributes.poster) : null
     return [
       "figure",
-      mergeAttributes(
-        {
-          "data-video-embed": "true",
-          "data-video-src": src,
-          ...(poster ? { "data-video-poster": poster } : {}),
-          class: "blog-video-embed my-4",
-        },
-        HTMLAttributes,
-      ),
+      mergeAttributes({
+        "data-video-embed": "true",
+        "data-video-src": src,
+        ...(poster ? { "data-video-poster": poster } : {}),
+        class: "blog-video-embed my-4",
+      }),
       [
         "video",
         {

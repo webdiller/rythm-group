@@ -146,6 +146,17 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
 
+  const getSelectedVideoAttrs = (): { src: string; poster: string | null } | null => {
+    if (!editor.isActive("videoEmbed")) return null
+    const attrs = editor.getAttributes("videoEmbed") as { src?: string; poster?: string | null }
+    const src = String(attrs.src ?? "").trim()
+    if (!src) return null
+    return {
+      src,
+      poster: attrs.poster ? String(attrs.poster) : null,
+    }
+  }
+
   const insertVideo = (src: string, poster?: string | null) => {
     const videoSrc = src.trim()
     if (!videoSrc) return
@@ -215,14 +226,12 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         toast.error("Не удалось получить URL постера")
         return
       }
-      const selectedVideoAttrs = editor.getAttributes("videoEmbed") as { src?: string }
-      const currentSrc = String(selectedVideoAttrs.src ?? "").trim()
-      if (!currentSrc) {
+      const selectedVideo = getSelectedVideoAttrs()
+      if (!selectedVideo) {
         toast.error("Выделите нужный видеоблок в редакторе")
         return
       }
-      editor.chain().focus().unsetSelectedVideoEmbed().run()
-      insertVideo(currentSrc, posterUrl)
+      editor.chain().focus().updateAttributes("videoEmbed", { src: selectedVideo.src, poster: posterUrl }).run()
       toast.success("Постер загружен")
     } catch {
       toast.error("Ошибка загрузки постера")
@@ -237,6 +246,8 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   //   if (!url) return
   //   editor.chain().focus().setImage({ src: url }).run()
   // }
+
+  const selectedVideo = getSelectedVideoAttrs()
 
   return (
     <div className={cn("rounded-lg border border-border bg-card overflow-hidden", className)}>
@@ -430,8 +441,8 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          title="Загрузить постер"
-          disabled={posterUploading}
+          title={selectedVideo ? "Загрузить постер для выбранного видео" : "Сначала выделите видео в редакторе"}
+          disabled={posterUploading || !selectedVideo}
           onClick={() => posterInputRef.current?.click()}
         >
           <ImageIcon className="h-4 w-4" />
@@ -442,10 +453,16 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           size="icon"
           className="h-8 w-8"
           title="Удалить выбранное видео"
+          disabled={!selectedVideo}
           onClick={() => editor.chain().focus().unsetSelectedVideoEmbed().run()}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
+      </div>
+      <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
+        {selectedVideo
+          ? `Выбрано видео: ${selectedVideo.src}${selectedVideo.poster ? " (постер установлен)" : " (без постера)"}`
+          : "Для установки постера сначала выделите видеоблок."}
       </div>
       <EditorContent editor={editor} className="tiptap-simple-editor max-h-[min(480px,55vh)] overflow-y-auto" />
     </div>
