@@ -3,7 +3,6 @@ import { drizzle } from "drizzle-orm/better-sqlite3"
 import path from "path"
 import fs from "fs"
 import * as schema from "./schema"
-import { runSeed } from "./seed"
 
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), "data", "cms.db")
 
@@ -21,7 +20,6 @@ export function getDb(): ReturnType<typeof drizzle<typeof schema>> {
   const sqlite = new Database(DB_PATH)
   sqlite.pragma("foreign_keys = ON")
   db = drizzle(sqlite, { schema })
-  runSeed(db)
   return db
 }
 

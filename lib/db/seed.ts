@@ -1,6 +1,6 @@
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3"
 import type * as schema from "./schema"
-import { sql, isNull } from "drizzle-orm"
+import { isNull } from "drizzle-orm"
 import {
   tableTranslations,
   tableChannelCategories,
@@ -142,105 +142,6 @@ export function runSeed(
       })
       .run()
   }
-
-  // Ensure new columns exist for site_settings without separate migrations
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN hero_animation_enabled integer DEFAULT 1`)
-  } catch {
-    // ignore if column already exists
-  }
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN header_nav_order text`)
-  } catch {
-    // ignore
-  }
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN blog_show_dates integer DEFAULT 1`)
-  } catch {
-    // ignore
-  }
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_blog_block integer DEFAULT 1`)
-  } catch {
-    // ignore
-  }
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_hero integer DEFAULT 1`)
-  } catch {}
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_formats integer DEFAULT 1`)
-  } catch {}
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_cases integer DEFAULT 1`)
-  } catch {}
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_steam integer DEFAULT 1`)
-  } catch {}
-  try {
-    db.run(sql`ALTER TABLE site_settings ADD COLUMN affiliate_show_faq integer DEFAULT 1`)
-  } catch {}
-
-  // Partners: affiliate specific columns
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN title_ru text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN title_en text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN short_description_ru text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN short_description_en text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN published_at text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN wishlists integer DEFAULT 0`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN views integer DEFAULT 0`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN target_url text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN developer_url text`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_landing_cases integer DEFAULT 1`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_cases integer DEFAULT 1`) } catch {}
-  try { db.run(sql`ALTER TABLE partners ADD COLUMN show_in_affiliate_steam integer DEFAULT 1`) } catch {}
-
-  // Additional affiliate tables
-  db.run(sql`
-    CREATE TABLE IF NOT EXISTS affiliate_hero (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      badge_ru text NOT NULL,
-      badge_en text NOT NULL,
-      title_ru text NOT NULL,
-      title_en text NOT NULL,
-      subtitle_ru text NOT NULL,
-      subtitle_en text NOT NULL,
-      cta_primary_ru text NOT NULL,
-      cta_primary_en text NOT NULL,
-      cta_secondary_ru text NOT NULL,
-      cta_secondary_en text NOT NULL
-    )
-  `)
-  db.run(sql`
-    CREATE TABLE IF NOT EXISTS affiliate_formats (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      title_ru text NOT NULL,
-      title_en text NOT NULL,
-      body_ru text NOT NULL,
-      body_en text NOT NULL,
-      hidden integer DEFAULT 0,
-      order_index integer DEFAULT 0
-    )
-  `)
-  db.run(sql`
-    CREATE TABLE IF NOT EXISTS affiliate_faq (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      question_ru text NOT NULL,
-      question_en text NOT NULL,
-      answer_ru text NOT NULL,
-      answer_en text NOT NULL,
-      hidden integer DEFAULT 0,
-      order_index integer DEFAULT 0
-    )
-  `)
-  db.run(sql`
-    CREATE TABLE IF NOT EXISTS affiliate_partner_views (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      partner_id integer NOT NULL REFERENCES partners(id) ON UPDATE cascade ON DELETE cascade,
-      ip_hash text NOT NULL,
-      created_at text DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT affiliate_partner_views_partner_ip_unique UNIQUE(partner_id, ip_hash)
-    )
-  `)
 
   const existingBlogCats = db.select().from(tableBlogCategories).limit(1).all()
   if (existingBlogCats.length === 0) {
