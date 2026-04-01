@@ -25,7 +25,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
   const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({})
   const [showAllUncategorized, setShowAllUncategorized] = useState(false)
   const [brokenImageByPartner, setBrokenImageByPartner] = useState<Record<number, true>>({})
-  const MAX_VISIBLE = 10
+  const MAX_VISIBLE = 6
 
   const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
   const partnersSorted = [...partners].sort((a, b) => a.order_index - b.order_index)
