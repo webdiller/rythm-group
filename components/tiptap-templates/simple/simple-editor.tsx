@@ -264,14 +264,14 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         >
           <ListOrdered className="h-4 w-4" />
         </Toggle>
-        <Toggle
+        {/* <Toggle
           size="sm"
           pressed={editor.isActive("taskList")}
           onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
           aria-label="Чеклист"
         >
           <ListTodo className="h-4 w-4" />
-        </Toggle>
+        </Toggle> */}
         <Toggle
           size="sm"
           pressed={editor.isActive("blockquote")}
