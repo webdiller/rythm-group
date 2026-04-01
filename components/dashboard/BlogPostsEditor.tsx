@@ -66,6 +66,7 @@ export function BlogPostsEditor() {
       if (filterStatus !== "all") params.set("status", filterStatus)
       const res = await fetch(`/api/content/blog/posts?${params.toString()}`, {
         headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+        cache: "no-store",
       })
       if (!res.ok) throw new Error("load")
       const json = (await res.json()) as { data?: AdminPost[] }
@@ -114,6 +115,7 @@ export function BlogPostsEditor() {
           Authorization: `Bearer ${token ?? ""}`,
         },
         body: JSON.stringify({ status: "draft" }),
+        cache: "no-store",
       })
       if (!res.ok) {
         toast.error("Не удалось снять с публикации")

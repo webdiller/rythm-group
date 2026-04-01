@@ -118,7 +118,7 @@ export class ServiceBlogPosts {
     const safeRu = sanitizeBlogHtml(body.body_html_ru)
     const safeEn = sanitizeBlogHtml(body.body_html_en)
     const ts = unixNow()
-    const publishedAt = body.status === "published" ? ts : ts
+    const publishedAt = body.published_at ?? ts
     const db = getDb()
     const [created] = db
       .insert(tableBlogPosts)
@@ -143,7 +143,7 @@ export class ServiceBlogPosts {
     return { data: withSlug ?? created, meta: null }
   }
 
-  static async patch(id: number, body: PatchPostBody) {
+  static async patch(id: number, body: PatchPostBody, rawBody?: Record<string, unknown>) {
     const db = getDb()
     const existing = db
       .select()
@@ -159,7 +159,11 @@ export class ServiceBlogPosts {
       this.assertSlugFreeInCategory(nextCategoryId, body.slug, id)
     }
 
-    if (body.cover_image_url !== undefined) {
+    /** Обновлять обложку только если ключ явно передан в JSON (PATCH только со `status` не трогает cover). */
+    const coverKeyPresent =
+      rawBody != null && Object.prototype.hasOwnProperty.call(rawBody, "cover_image_url")
+
+    if (coverKeyPresent && body.cover_image_url !== undefined) {
       const oldUrl = existing.cover_image_url
       const newUrl = body.cover_image_url
       if (oldUrl && oldUrl !== newUrl && isLocalBlogUploadUrl(oldUrl)) {
@@ -188,7 +192,7 @@ export class ServiceBlogPosts {
         ...(body.excerpt_en !== undefined ? { excerpt_en: body.excerpt_en } : {}),
         ...(safeRu !== undefined ? { body_html_ru: safeRu } : {}),
         ...(safeEn !== undefined ? { body_html_en: safeEn } : {}),
-        ...(body.cover_image_url !== undefined ? { cover_image_url: body.cover_image_url } : {}),
+        ...(coverKeyPresent && body.cover_image_url !== undefined ? { cover_image_url: body.cover_image_url } : {}),
         ...(body.status !== undefined ? { status: body.status } : {}),
         published_at,
         updated_at: isoNow(),

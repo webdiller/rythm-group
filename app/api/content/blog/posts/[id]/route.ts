@@ -37,12 +37,12 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
     if (Number.isNaN(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 })
     }
-    const body = await request.json()
+    const body = (await request.json()) as Record<string, unknown>
     const parsed = PatchPostBody.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: "Validation failed", errors: parsed.error.flatten() }, { status: 400 })
     }
-    const result = await ServiceBlogPosts.patch(id, parsed.data)
+    const result = await ServiceBlogPosts.patch(id, parsed.data, body)
     return NextResponse.json(result)
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {

@@ -15,6 +15,18 @@ import { ArrowLeft, Trash2, Upload } from "lucide-react"
 import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
 import { slugifyRuTitle } from "@/lib/blog/slug"
 
+function unixToDatetimeLocal(sec: number): string {
+  const d = new Date(sec * 1000)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function datetimeLocalToUnix(s: string): number {
+  const t = new Date(s).getTime()
+  if (Number.isNaN(t)) return Math.floor(Date.now() / 1000)
+  return Math.floor(t / 1000)
+}
+
 type Category = {
   id: number
   slug: string
@@ -36,6 +48,7 @@ type AdminPost = {
   body_html_en: string
   cover_image_url: string | null
   status: "draft" | "published"
+  published_at: number
 }
 
 const emptyBody = "<p></p>"
@@ -62,6 +75,9 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   const [coverUploading, setCoverUploading] = useState(false)
   const coverFileInputRef = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<"draft" | "published">("draft")
+  const [publishedAtLocal, setPublishedAtLocal] = useState(() =>
+    unixToDatetimeLocal(Math.floor(Date.now() / 1000)),
+  )
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -114,6 +130,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       try {
         const res = await fetch(`/api/content/blog/posts/${postId}`, {
           headers: { Authorization: `Bearer ${token ?? ""}` },
+          cache: "no-store",
         })
         if (!res.ok) {
           toast.error("Запись не найдена")
@@ -136,6 +153,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         setBodyHtmlEn(row.body_html_en?.trim() ? row.body_html_en : emptyBody)
         setCoverImageUrl(row.cover_image_url ?? "")
         setStatus(row.status)
+        setPublishedAtLocal(unixToDatetimeLocal(row.published_at))
       } catch {
         toast.error("Ошибка загрузки")
         router.replace("/dashboard?tab=blog")
@@ -242,6 +260,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       body_html_en,
       cover_image_url: cover_image_url === "" ? null : cover_image_url,
       status,
+      published_at: datetimeLocalToUnix(publishedAtLocal),
     }
     setSaving(true)
     try {
@@ -482,6 +501,19 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
                 {coverUploading ? "Загрузка…" : "Загрузить файл"}
               </Button>
             )}
+          </div>
+
+          <div className="grid gap-2 sm:max-w-md">
+            <Label htmlFor="bps-published-at">Дата и время публикации (локальное время браузера)</Label>
+            <Input
+              id="bps-published-at"
+              type="datetime-local"
+              value={publishedAtLocal}
+              onChange={(e) => setPublishedAtLocal(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Используется для сортировки и отображения даты в карточках. При первой публикации черновика можно оставить или изменить.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">

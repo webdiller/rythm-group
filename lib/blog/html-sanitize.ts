@@ -9,12 +9,20 @@ const ALLOWED_TAGS = sanitizeHtml.defaults.allowedTags.concat([
   "span",
   "figure",
   "figcaption",
+  /** TipTap task list */
+  "input",
+  "label",
 ])
 
 const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
   ...sanitizeHtml.defaults.allowedAttributes,
   a: ["href", "name", "target", "rel"],
   img: ["src", "alt", "title", "width", "height", "loading"],
+  ul: ["data-type", "class"],
+  ol: ["data-type", "class"],
+  li: ["data-type", "data-checked", "class"],
+  input: ["type", "checked", "class", "disabled"],
+  label: ["class", "contenteditable"],
   "*": ["class"],
 }
 

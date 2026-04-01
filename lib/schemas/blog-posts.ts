@@ -27,6 +27,8 @@ export const CreatePostBody = z.object({
     .optional()
     .transform((v) => (v === "" || v === undefined ? null : v)),
   status: PostStatus,
+  /** Unix seconds; по умолчанию — now на сервере */
+  published_at: z.number().int().optional(),
 })
 
 export const PatchPostBody = z
