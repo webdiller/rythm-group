@@ -88,7 +88,7 @@ async function getHomeData(): Promise<{
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
 
-  const blogPosts = getPublishedPosts().slice(0, 6)
+  const blogPosts = getPublishedPosts().slice(0, 3)
   const blogCategories = getBlogCategoriesSorted()
   const blogShowDates = getBlogShowDatesEnabled()
 
