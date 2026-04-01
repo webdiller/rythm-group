@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
-const sections = ["hero", "about", "stats", "channels", "cases", "contact", "nav", "footer", "affiliate"]
+const sections = ["hero", "about", "stats", "channels", "cases", "contact", "nav", "footer", "blog", "affiliate"]
 const locales = ["ru", "en"]
 
 type TranslationRow = { id?: number; value: string }
@@ -185,6 +185,17 @@ export function TranslationsEditor() {
         "miniStats.supportLabel",
       ],
       footer: ["rights", "description", "ctaTitle", "privacy", "dataPolicy"],
+      blog: [
+        "title",
+        "subtitle",
+        "navLabel",
+        "breadcrumbHome",
+        "allCategories",
+        "readMore",
+        "backToBlog",
+        "emptyAll",
+        "dateLabel",
+      ],
       affiliate: [
         "pageTitle",
         "pageDescription",
