@@ -997,7 +997,7 @@ export function SiteSettingsEditor() {
             </div>
             <Switch id="blog_show_dates" checked={blogShowDates} onCheckedChange={setBlogShowDates} />
           </div>
-          <div className="flex items-center justify-between gap-4">
+          {/* <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
               <Label htmlFor="affiliate_blog_block">Мини-блог на странице /affiliate</Label>
               <p className="text-xs text-muted-foreground">
@@ -1009,7 +1009,7 @@ export function SiteSettingsEditor() {
               checked={affiliateShowBlogBlock}
               onCheckedChange={setAffiliateShowBlogBlock}
             />
-          </div>
+          </div> */}
         </CardContent>
       </Card>
       <Card>

@@ -29,7 +29,7 @@ export function LandingBlogSection({
   if (posts.length === 0) return null
 
   return (
-    <section id="blog" className="relative scroll-mt-24 px-6 py-12 md:py-16">
+    <section id="blog" className="relative px-6 py-12 md:py-16">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute right-0 top-1/4 h-[420px] w-[520px] rounded-full bg-primary/4 blur-[120px]" />
       </div>

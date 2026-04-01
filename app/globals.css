@@ -115,6 +115,7 @@
 
 html {
   scroll-behavior: smooth;
+  @apply scroll-pt-24;
 }
 
 @keyframes glow-pulse {

@@ -18,7 +18,7 @@ export function AffiliateMiniBlog() {
   const posts = AFFILIATE_MINI_BLOG_MOCK.slice(0, 6)
 
   return (
-    <section id="affiliate-feed" className="scroll-mt-28 border-y border-border/60 bg-muted/20 py-16 md:py-20">
+    <section id="affiliate-feed" className="border-y border-border/60 bg-muted/20 py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl space-y-3">

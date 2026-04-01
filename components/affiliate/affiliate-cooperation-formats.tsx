@@ -21,7 +21,7 @@ export function AffiliateCooperationFormats({ items = [] }: AffiliateCooperation
   const visible = items.filter((f) => !f.hidden)
 
   return (
-    <section id="affiliate-formats" className="scroll-mt-28 py-16 md:py-20">
+    <section id="affiliate-formats" className="py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 max-w-3xl space-y-3">
           <h2 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
