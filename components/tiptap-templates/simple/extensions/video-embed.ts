@@ -9,7 +9,7 @@ declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     videoEmbed: {
       setVideoEmbed: (attrs: VideoEmbedAttrs) => ReturnType
-      unsetVideoEmbed: () => ReturnType
+      unsetSelectedVideoEmbed: () => ReturnType
     }
   }
 }
@@ -69,20 +69,15 @@ export const VideoEmbed = Node.create({
         (attrs) =>
         ({ chain }) =>
           chain().insertContent({ type: this.name, attrs }).run(),
-      unsetVideoEmbed:
+      unsetSelectedVideoEmbed:
         () =>
-        ({ state, tr, dispatch }) => {
-          let changed = false
-          state.doc.descendants((node, pos) => {
-            if (node.type.name === this.name) {
-              tr.delete(pos, pos + node.nodeSize)
-              changed = true
-              return false
-            }
-            return true
-          })
-          if (changed && dispatch) dispatch(tr)
-          return changed
+        ({ state, chain }) => {
+          const { $from } = state.selection
+          const node = $from.nodeAfter ?? $from.nodeBefore
+          if (!node || node.type.name !== this.name) {
+            return false
+          }
+          return chain().deleteSelection().run()
         },
     }
   },

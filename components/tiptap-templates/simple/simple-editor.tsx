@@ -146,24 +146,9 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
 
-  const hasVideoEmbed = () => {
-    let hasVideo = false
-    editor.state.doc.descendants((node) => {
-      if (node.type.name === "videoEmbed") {
-        hasVideo = true
-        return false
-      }
-      return true
-    })
-    return hasVideo
-  }
-
-  const upsertVideo = (src: string, poster?: string | null) => {
+  const insertVideo = (src: string, poster?: string | null) => {
     const videoSrc = src.trim()
     if (!videoSrc) return
-    if (hasVideoEmbed()) {
-      editor.chain().focus().unsetVideoEmbed().run()
-    }
     editor.chain().focus().setVideoEmbed({ src: videoSrc, poster: poster?.trim() || null }).run()
   }
 
@@ -171,7 +156,7 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
     const url = typeof window !== "undefined" ? window.prompt("URL видео (mp4/webm или стрим-ссылка)", "https://") : null
     if (!url || !url.trim()) return
     const poster = typeof window !== "undefined" ? window.prompt("URL постера (необязательно)", "") : null
-    upsertVideo(url, poster)
+    insertVideo(url, poster)
   }
 
   const uploadVideoFile = async (file: File | null) => {
@@ -197,7 +182,7 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         toast.error("Не удалось получить URL видео")
         return
       }
-      upsertVideo(url)
+      insertVideo(url)
       toast.success("Видео загружено")
     } catch {
       toast.error("Ошибка загрузки видео")
@@ -230,19 +215,14 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         toast.error("Не удалось получить URL постера")
         return
       }
-      let currentSrc = ""
-      editor.state.doc.descendants((node) => {
-        if (node.type.name === "videoEmbed") {
-          currentSrc = String(node.attrs.src ?? "")
-          return false
-        }
-        return true
-      })
+      const selectedVideoAttrs = editor.getAttributes("videoEmbed") as { src?: string }
+      const currentSrc = String(selectedVideoAttrs.src ?? "").trim()
       if (!currentSrc) {
-        toast.error("Сначала добавьте видео")
+        toast.error("Выделите нужный видеоблок в редакторе")
         return
       }
-      upsertVideo(currentSrc, posterUrl)
+      editor.chain().focus().unsetSelectedVideoEmbed().run()
+      insertVideo(currentSrc, posterUrl)
       toast.success("Постер загружен")
     } catch {
       toast.error("Ошибка загрузки постера")
@@ -461,8 +441,8 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          title="Удалить видео"
-          onClick={() => editor.chain().focus().unsetVideoEmbed().run()}
+          title="Удалить выбранное видео"
+          onClick={() => editor.chain().focus().unsetSelectedVideoEmbed().run()}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
