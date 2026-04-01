@@ -18,6 +18,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
   const { locale, t } = useLocale()
   const cp = t.affiliate.casePage
   const [views, setViews] = useState(c.views)
+  const [coverBroken, setCoverBroken] = useState(false)
   const title = locale === "en" ? c.title_en : c.title_ru
   const desc = locale === "en" ? c.shortDescription_en : c.shortDescription_ru
   const category = locale === "en" ? c.category_en : c.category_ru
@@ -29,6 +30,8 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
       : locale === "en"
         ? "No date"
         : "Без даты"
+  const coverSrc = c.coverImage?.trim() || ""
+  const showCover = Boolean(coverSrc) && !coverBroken
 
   useEffect(() => {
     let cancelled = false
@@ -68,15 +71,18 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
       </Link>
 
       <header className="space-y-4">
-        <div className="overflow-hidden rounded-2xl border border-border/80 bg-muted">
-          <img
-            src={c.coverImage}
-            alt=""
-            className="aspect-21/9 w-full object-cover md:aspect-[2.6/1]"
-            loading="eager"
-            decoding="async"
-          />
-        </div>
+        {showCover ? (
+          <div className="overflow-hidden rounded-2xl border border-border/80 bg-muted">
+            <img
+              src={coverSrc}
+              alt=""
+              className="aspect-21/9 w-full object-cover md:aspect-[2.6/1]"
+              loading="eager"
+              decoding="async"
+              onError={() => setCoverBroken(true)}
+            />
+          </div>
+        ) : null}
         <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
           {title}
         </h1>
