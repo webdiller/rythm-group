@@ -24,6 +24,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
   const dateLocale = locale === "en" ? enUS : ru
   const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({})
   const [showAllUncategorized, setShowAllUncategorized] = useState(false)
+  const [brokenImageByPartner, setBrokenImageByPartner] = useState<Record<number, true>>({})
   const MAX_VISIBLE = 10
 
   const categoriesOrdered = [...categories].sort((a, b) => a.order_index - b.order_index)
@@ -51,31 +52,35 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
           : "Без даты"
     const href = partner.target_url || `/affiliate/cases/${ui.slug}`
     const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
+    const imageSrc = cover || ui.coverImage?.trim() || ""
+    const showImage = Boolean(imageSrc) && !brokenImageByPartner[partner.id]
     const title =
       locale === "en" ? partner.title_en || partner.name : partner.title_ru || partner.name
 
     return (
       <Link key={ui.slug} href={href} className="group block h-full">
         <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
-          <div className="relative aspect-3/2 w-full overflow-hidden bg-muted">
-            {cover ? (
+          {showImage ? (
+            <div className="relative aspect-3/2 w-full overflow-hidden bg-muted">
               <img
-                src={cover}
+                src={imageSrc}
                 alt=""
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 loading="lazy"
                 decoding="async"
+                onError={() =>
+                  setBrokenImageByPartner((prev) =>
+                    prev[partner.id]
+                      ? prev
+                      : {
+                          ...prev,
+                          [partner.id]: true,
+                        },
+                  )
+                }
               />
-            ) : (
-              <img
-                src={ui.coverImage}
-                alt=""
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                loading="lazy"
-                decoding="async"
-              />
-            )}
-          </div>
+            </div>
+          ) : null}
           <CardContent className="space-y-3 p-5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>
