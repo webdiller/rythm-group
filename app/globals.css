@@ -334,3 +334,8 @@ html {
 .blog-article-body em {
   @apply italic text-foreground/90;
 }
+.blog-article-body .blog-video-embed,
+.blog-article-body video[data-video-embed] {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}

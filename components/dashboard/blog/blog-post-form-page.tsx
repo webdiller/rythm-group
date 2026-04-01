@@ -425,6 +425,9 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
           <div className="grid gap-2">
             <Label>Тело статьи (RU)</Label>
             <SimpleEditor value={body_html_ru} onChange={setBodyHtmlRu} placeholder="Текст на русском…" />
+            <p className="text-xs text-muted-foreground">
+              В редакторе можно добавить одно видео (URL или загрузка mp4/webm до 100MB) и постер.
+            </p>
           </div>
 
           <div className="grid gap-2">

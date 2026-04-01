@@ -4,7 +4,7 @@
  * Редактор на базе TipTap (набор расширений и тулбар в духе официального Simple Editor template).
  * @see https://tiptap.dev/docs/ui-components/templates/simple-editor
  */
-import { useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Link from "@tiptap/extension-link"
@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
+import { VideoEmbed } from "@/components/tiptap-templates/simple/extensions/video-embed"
+import { toast } from "sonner"
 import {
   AlignCenter,
   AlignJustify,
@@ -32,12 +34,12 @@ import {
   Heading2,
   Heading3,
   Highlighter,
-  ImageIcon,
+  Film,
   Italic,
+  ImageIcon,
   Link2,
   List,
   ListOrdered,
-  ListTodo,
   Minus,
   Quote,
   Redo2,
@@ -45,8 +47,10 @@ import {
   Strikethrough,
   Subscript as SubIcon,
   Superscript as SupIcon,
+  Trash2,
   Underline as UnderlineIcon,
   Undo2,
+  Upload,
 } from "lucide-react"
 
 export type SimpleEditorProps = {
@@ -57,6 +61,10 @@ export type SimpleEditorProps = {
 }
 
 export function SimpleEditor({ value, onChange, placeholder = "Начните ввод…", className }: SimpleEditorProps) {
+  const [videoUploading, setVideoUploading] = useState(false)
+  const [posterUploading, setPosterUploading] = useState(false)
+  const videoInputRef = useRef<HTMLInputElement>(null)
+  const posterInputRef = useRef<HTMLInputElement>(null)
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -86,6 +94,7 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         Superscript,
         TaskList,
         TaskItem.configure({ nested: true }),
+        VideoEmbed,
       ],
       content: value || "<p></p>",
       editorProps: {
@@ -134,6 +143,115 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run()
   }
 
+  const getToken = () =>
+    document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
+
+  const hasVideoEmbed = () => {
+    let hasVideo = false
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === "videoEmbed") {
+        hasVideo = true
+        return false
+      }
+      return true
+    })
+    return hasVideo
+  }
+
+  const upsertVideo = (src: string, poster?: string | null) => {
+    const videoSrc = src.trim()
+    if (!videoSrc) return
+    if (hasVideoEmbed()) {
+      editor.chain().focus().unsetVideoEmbed().run()
+    }
+    editor.chain().focus().setVideoEmbed({ src: videoSrc, poster: poster?.trim() || null }).run()
+  }
+
+  const setVideoByUrl = () => {
+    const url = typeof window !== "undefined" ? window.prompt("URL видео (mp4/webm или стрим-ссылка)", "https://") : null
+    if (!url || !url.trim()) return
+    const poster = typeof window !== "undefined" ? window.prompt("URL постера (необязательно)", "") : null
+    upsertVideo(url, poster)
+  }
+
+  const uploadVideoFile = async (file: File | null) => {
+    if (!file) return
+    setVideoUploading(true)
+    const token = getToken()
+    const fd = new FormData()
+    fd.append("file", file)
+    try {
+      const res = await fetch("/api/content/blog/upload/video", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(err.error ?? "Не удалось загрузить видео")
+        return
+      }
+      const json = (await res.json()) as { data?: { url?: string } }
+      const url = json.data?.url
+      if (!url) {
+        toast.error("Не удалось получить URL видео")
+        return
+      }
+      upsertVideo(url)
+      toast.success("Видео загружено")
+    } catch {
+      toast.error("Ошибка загрузки видео")
+    } finally {
+      setVideoUploading(false)
+      if (videoInputRef.current) videoInputRef.current.value = ""
+    }
+  }
+
+  const uploadPosterFile = async (file: File | null) => {
+    if (!file) return
+    setPosterUploading(true)
+    const token = getToken()
+    const fd = new FormData()
+    fd.append("file", file)
+    try {
+      const res = await fetch("/api/content/blog/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(err.error ?? "Не удалось загрузить постер")
+        return
+      }
+      const json = (await res.json()) as { data?: { url?: string } }
+      const posterUrl = json.data?.url
+      if (!posterUrl) {
+        toast.error("Не удалось получить URL постера")
+        return
+      }
+      let currentSrc = ""
+      editor.state.doc.descendants((node) => {
+        if (node.type.name === "videoEmbed") {
+          currentSrc = String(node.attrs.src ?? "")
+          return false
+        }
+        return true
+      })
+      if (!currentSrc) {
+        toast.error("Сначала добавьте видео")
+        return
+      }
+      upsertVideo(currentSrc, posterUrl)
+      toast.success("Постер загружен")
+    } catch {
+      toast.error("Ошибка загрузки постера")
+    } finally {
+      setPosterUploading(false)
+      if (posterInputRef.current) posterInputRef.current.value = ""
+    }
+  }
+
   // const addImage = () => {
   //   const url = typeof window !== "undefined" ? window.prompt("URL изображения", "https://") : null
   //   if (!url) return
@@ -143,6 +261,24 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   return (
     <div className={cn("rounded-lg border border-border bg-card overflow-hidden", className)}>
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 px-1 py-1">
+        <input
+          ref={videoInputRef}
+          type="file"
+          className="sr-only"
+          accept="video/mp4,video/webm"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => void uploadVideoFile(e.target.files?.[0] ?? null)}
+        />
+        <input
+          ref={posterInputRef}
+          type="file"
+          className="sr-only"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => void uploadPosterFile(e.target.files?.[0] ?? null)}
+        />
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor.chain().focus().undo().run()} title="Отменить">
           <Undo2 className="h-4 w-4" />
         </Button>
@@ -295,9 +431,41 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setLink} title="Ссылка">
           <Link2 className="h-4 w-4" />
         </Button>
-        {/* <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={addImage} title="Изображение по URL">
+        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setVideoByUrl} title="Видео по URL">
+          <Film className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Загрузить видео (mp4/webm, до 100MB)"
+          disabled={videoUploading}
+          onClick={() => videoInputRef.current?.click()}
+        >
+          <Upload className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Загрузить постер"
+          disabled={posterUploading}
+          onClick={() => posterInputRef.current?.click()}
+        >
           <ImageIcon className="h-4 w-4" />
-        </Button> */}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Удалить видео"
+          onClick={() => editor.chain().focus().unsetVideoEmbed().run()}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
       <EditorContent editor={editor} className="tiptap-simple-editor max-h-[min(480px,55vh)] overflow-y-auto" />
     </div>

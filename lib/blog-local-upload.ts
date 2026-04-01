@@ -1,9 +1,15 @@
 import { randomUUID } from "node:crypto"
 import fs from "node:fs/promises"
 import path from "node:path"
-import { BLOG_UPLOAD_PUBLIC_PREFIX, isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
+import {
+  BLOG_UPLOAD_PUBLIC_PREFIX,
+  BLOG_VIDEO_UPLOAD_PUBLIC_PREFIX,
+  isLocalBlogUploadUrl,
+  isLocalBlogVideoUploadUrl,
+} from "@/lib/blog/local-upload-url"
 
 export { BLOG_UPLOAD_PUBLIC_PREFIX, isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
+export { BLOG_VIDEO_UPLOAD_PUBLIC_PREFIX, isLocalBlogVideoUploadUrl } from "@/lib/blog/local-upload-url"
 
 function blogUploadAbsDir(): string {
   return path.join(process.cwd(), "public", "uploads", "blog")
@@ -46,4 +52,14 @@ export async function putBlogImageToPublic(buf: Buffer, mime: string): Promise<s
   await fs.mkdir(absDir, { recursive: true })
   await fs.writeFile(path.join(absDir, name), buf)
   return `/uploads/blog/${name}`
+}
+
+/** Локальная загрузка видео блога в `public/uploads/blog/videos/` (URL вида `/uploads/blog/videos/...`). */
+export async function putBlogVideoToPublic(buf: Buffer, mime: string): Promise<string> {
+  const ext = mime === "video/webm" ? ".webm" : ".mp4"
+  const name = `${Date.now()}-${randomUUID().slice(0, 8)}${ext}`
+  const absDir = path.join(process.cwd(), "public", "uploads", "blog", "videos")
+  await fs.mkdir(absDir, { recursive: true })
+  await fs.writeFile(path.join(absDir, name), buf)
+  return `${BLOG_VIDEO_UPLOAD_PUBLIC_PREFIX}${name}`
 }
