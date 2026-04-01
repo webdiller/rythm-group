@@ -3,6 +3,7 @@ import { AffiliateCooperationFormats } from "@/components/affiliate/affiliate-co
 import { AffiliateCasesGrid } from "@/components/affiliate/affiliate-cases-grid"
 import { AffiliateSteamSection } from "@/components/affiliate/affiliate-steam-section"
 import { AffiliateFaq } from "@/components/affiliate/affiliate-faq"
+import { ContactForm } from "@/components/contact-form"
 import type { Partner, PartnerCategory } from "@/components/cases"
 import { getSiteBaseUrl } from "@/lib/site-url"
 
@@ -12,6 +13,9 @@ type AffiliateSettings = {
   affiliate_show_cases?: boolean | null
   affiliate_show_steam?: boolean | null
   affiliate_show_faq?: boolean | null
+  heroAnimationEnabled?: boolean | null
+  contactLayout?: "formFirst" | "contactsFirst" | null
+  contactFormHidden?: boolean | null
 }
 
 type AffiliateHeroRecord = {
@@ -84,6 +88,9 @@ async function getAffiliateData(): Promise<{
 
 export default async function AffiliatePage() {
   const { partnerCategories, partners, settings, hero, formats, faq } = await getAffiliateData()
+  const animationsEnabled = settings.heroAnimationEnabled ?? true
+  const contactLayout = settings.contactLayout ?? "formFirst"
+  const contactFormHidden = settings.contactFormHidden ?? false
 
   return (
     <>
@@ -92,6 +99,11 @@ export default async function AffiliatePage() {
       {settings.affiliate_show_cases ?? true ? <AffiliateCasesGrid categories={partnerCategories} partners={partners} /> : null}
       {settings.affiliate_show_steam ?? true ? <AffiliateSteamSection partners={partners} /> : null}
       {settings.affiliate_show_faq ?? true ? <AffiliateFaq items={faq} /> : null}
+      <ContactForm
+        animationsEnabled={animationsEnabled}
+        layout={contactLayout}
+        hideForm={contactFormHidden}
+      />
     </>
   )
 }
