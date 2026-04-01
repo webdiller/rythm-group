@@ -3,6 +3,7 @@ import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
 import { getAffiliateSeoFromDb } from "@/lib/affiliate/page-meta"
 import { getSiteBaseUrl } from "@/lib/site-url"
+import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 
 export const dynamic = "force-dynamic"
 
@@ -14,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function getAffiliateShellMeta(): Promise<{
   siteSettings: SiteSettings | null
   hasCustomGlobalBackgroundForBothThemes: boolean
+  headerNavOrder: HeaderNavItemId[]
 }> {
   const baseUrl = getSiteBaseUrl()
   const [settingsRes, globalLightBgRes, globalDarkBgRes] = await Promise.all([
@@ -23,9 +25,17 @@ async function getAffiliateShellMeta(): Promise<{
   ])
 
   let siteSettings: SiteSettings | null = null
+  let headerNavOrder: HeaderNavItemId[] = normalizeHeaderNavOrder(undefined)
   if (settingsRes.ok) {
     const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
     siteSettings = settingsJson.data ?? null
+    try {
+      headerNavOrder = normalizeHeaderNavOrder(
+        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+      )
+    } catch {
+      headerNavOrder = normalizeHeaderNavOrder(undefined)
+    }
   }
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
@@ -33,11 +43,13 @@ async function getAffiliateShellMeta(): Promise<{
   return {
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
+    headerNavOrder,
   }
 }
 
 export default async function AffiliateLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { siteSettings, hasCustomGlobalBackgroundForBothThemes } = await getAffiliateShellMeta()
+  const { siteSettings, hasCustomGlobalBackgroundForBothThemes, headerNavOrder } =
+    await getAffiliateShellMeta()
 
   return (
     <div className="relative min-h-screen w-full">
@@ -65,7 +77,7 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
       )}
 
       <div className="relative z-20">
-        <Header sectionHrefPrefix="/" />
+        <Header sectionHrefPrefix="/" navOrder={headerNavOrder} />
         <main>
           {children}
         </main>

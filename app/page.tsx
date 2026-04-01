@@ -6,6 +6,7 @@ import { Stats } from "@/components/stats"
 import { Cases, type Partner, type PartnerCategory } from "@/components/cases"
 import { ContactForm } from "@/components/contact-form"
 import { Footer, type SiteSettings } from "@/components/footer"
+import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { LandingBlogSection } from "@/components/landing-blog-section"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
 import { getBlogCategoriesSorted, getBlogShowDatesEnabled, getPublishedPosts } from "@/lib/blog/queries"
@@ -22,6 +23,7 @@ async function getHomeData(): Promise<{
   blogPosts: BlogPost[]
   blogCategories: BlogCategory[]
   blogShowDates: boolean
+  headerNavOrder: HeaderNavItemId[]
 }> {
   const baseUrl = getSiteBaseUrl()
 
@@ -81,9 +83,17 @@ async function getHomeData(): Promise<{
   const partners = partnersJson.data ?? []
 
   let siteSettings: SiteSettings | null = null
+  let headerNavOrder: HeaderNavItemId[] = normalizeHeaderNavOrder(undefined)
   if (settingsRes.ok) {
     const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
     siteSettings = settingsJson.data ?? null
+    try {
+      headerNavOrder = normalizeHeaderNavOrder(
+        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+      )
+    } catch {
+      headerNavOrder = normalizeHeaderNavOrder(undefined)
+    }
   }
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
@@ -102,6 +112,7 @@ async function getHomeData(): Promise<{
     blogPosts,
     blogCategories,
     blogShowDates,
+    headerNavOrder,
   }
 }
 
@@ -116,6 +127,7 @@ export default async function Home() {
     blogPosts,
     blogCategories,
     blogShowDates,
+    headerNavOrder,
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
@@ -152,7 +164,7 @@ export default async function Home() {
           )}
 
           <div className="relative z-20">
-            <Header />
+            <Header navOrder={headerNavOrder} />
             <main>
               <Hero animationEnabled={animationsEnabled} />
               <About animationsEnabled={animationsEnabled} />

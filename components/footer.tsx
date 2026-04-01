@@ -8,6 +8,7 @@ import imgLogo from "@/public/logo.jpg"
 export type SiteSettings = {
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
+  headerNavOrder?: string | null
   heroAnimationEnabled?: boolean | null
   partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
   contactLayout?: "formFirst" | "contactsFirst" | null

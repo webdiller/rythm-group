@@ -1,12 +1,64 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import type { ReactNode } from "react"
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { GripVertical } from "lucide-react"
 import { toast } from "sonner"
+import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
+
+function SortableNavList({ items, children }: { items: HeaderNavItemId[]; children: ReactNode }) {
+  return (
+    // @ts-ignore — occasional TS2786 between @dnd-kit/sortable and React 19 type packages
+    <SortableContext items={items} strategy={verticalListSortingStrategy}>
+      {children}
+    </SortableContext>
+  )
+}
+
+function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  return (
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1 }}
+      className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
+    >
+      <span className="text-sm">{label}</span>
+      <button
+        type="button"
+        className="inline-flex cursor-grab touch-none rounded-md p-1.5 text-muted-foreground hover:bg-muted active:cursor-grabbing"
+        aria-label="Перетащить для смены порядка"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+    </li>
+  )
+}
 
 export function SiteSettingsEditor() {
   const [hasFavicon, setHasFavicon] = useState(false)
@@ -45,6 +97,7 @@ export function SiteSettingsEditor() {
   const [contactFormHidden, setContactFormHidden] = useState(false)
   const [blogShowDates, setBlogShowDates] = useState(true)
   const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
+  const [headerNavOrder, setHeaderNavOrder] = useState<HeaderNavItemId[]>([...DEFAULT_HEADER_NAV_ORDER])
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
@@ -58,7 +111,32 @@ export function SiteSettingsEditor() {
     contactFormHidden: boolean
     blogShowDates: boolean
     affiliateShowBlogBlock: boolean
+    headerNavOrder: HeaderNavItemId[]
   } | null>(null)
+
+  const navLabelById: Record<HeaderNavItemId, string> = {
+    about: "О нас",
+    channels: "Каналы",
+    cases: "Кейсы",
+    affiliate: "Affiliate",
+    blog: "Блог",
+    contacts: "Контакты",
+  }
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const handleHeaderNavDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = headerNavOrder.findIndex((id) => id === active.id)
+    const newIndex = headerNavOrder.findIndex((id) => id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+    setHeaderNavOrder(arrayMove(headerNavOrder, oldIndex, newIndex))
+  }
 
   useEffect(() => {
     const img = new Image()
@@ -116,6 +194,7 @@ export function SiteSettingsEditor() {
             contactFormHidden?: boolean | null
             blog_show_dates?: boolean | null
             affiliate_show_blog_block?: boolean | null
+            headerNavOrder?: string | null
           } | null
         }
 
@@ -128,6 +207,14 @@ export function SiteSettingsEditor() {
         const formHidden = data?.contactFormHidden ?? false
         const blogDates = data?.blog_show_dates ?? true
         const affBlog = data?.affiliate_show_blog_block ?? true
+        const parsedHeaderNavOrder = (() => {
+          try {
+            if (!data?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
+            return normalizeHeaderNavOrder(JSON.parse(data.headerNavOrder))
+          } catch {
+            return [...DEFAULT_HEADER_NAV_ORDER]
+          }
+        })()
 
         setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
@@ -141,12 +228,14 @@ export function SiteSettingsEditor() {
           contactFormHidden: formHidden,
           blogShowDates: blogDates,
           affiliateShowBlogBlock: affBlog,
+          headerNavOrder: parsedHeaderNavOrder,
         })
         setPartnersDisplayMode(partnersMode)
         setContactLayout(layoutMode)
         setContactFormHidden(formHidden)
         setBlogShowDates(blogDates)
         setAffiliateShowBlogBlock(affBlog)
+        setHeaderNavOrder(parsedHeaderNavOrder)
       } catch {
         // ignore, settings are optional
       } finally {
@@ -180,6 +269,7 @@ export function SiteSettingsEditor() {
           contactFormHidden,
           blog_show_dates: blogShowDates,
           affiliate_show_blog_block: affiliateShowBlogBlock,
+          headerNavOrder,
         }),
       })
 
@@ -198,6 +288,7 @@ export function SiteSettingsEditor() {
         contactFormHidden,
         blogShowDates,
         affiliateShowBlogBlock,
+        headerNavOrder,
       })
     } catch {
       toast.error("Не удалось сохранить настройки сайта")
@@ -919,6 +1010,29 @@ export function SiteSettingsEditor() {
               onCheckedChange={setAffiliateShowBlogBlock}
             />
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Порядок кнопок в шапке</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Перетащите пункты для изменения порядка кнопок разделов в `Header`.
+          </p>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleHeaderNavDragEnd}
+          >
+            <SortableNavList items={headerNavOrder}>
+              <ul className="space-y-2">
+                {headerNavOrder.map((id) => (
+                  <SortableNavItem key={id} id={id} label={navLabelById[id]} />
+                ))}
+              </ul>
+            </SortableNavList>
+          </DndContext>
         </CardContent>
       </Card>
       <Card>

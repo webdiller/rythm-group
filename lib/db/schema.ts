@@ -140,6 +140,8 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   favicon: text("favicon"),
   privacyPolicyUrl: text("privacy_policy_url"),
   dataProcessingPolicyUrl: text("data_processing_policy_url"),
+  // JSON-encoded array of header section ids
+  headerNavOrder: text("header_nav_order"),
   heroAnimationEnabled: integer("hero_animation_enabled", { mode: "boolean" }).default(true),
   // How to display partners on landing: "name", "logo", "logoAndName"
   partnersDisplayMode: text("partners_display_mode"),

@@ -17,6 +17,7 @@ import {
 } from "./schema"
 import { fallbackTranslations } from "@/lib/i18n"
 import { channelCategories, partnerLogos } from "@/lib/data"
+import { DEFAULT_HEADER_NAV_ORDER } from "@/lib/header-nav"
 
 function insertNested(
   insert: (locale: string, section: string, fullKey: string, value: string) => void,
@@ -149,6 +150,11 @@ export function runSeed(
     // ignore if column already exists
   }
   try {
+    db.run(sql`ALTER TABLE site_settings ADD COLUMN header_nav_order text`)
+  } catch {
+    // ignore
+  }
+  try {
     db.run(sql`ALTER TABLE site_settings ADD COLUMN blog_show_dates integer DEFAULT 1`)
   } catch {
     // ignore
@@ -256,6 +262,7 @@ export function runSeed(
         favicon: null,
         privacyPolicyUrl: null,
         dataProcessingPolicyUrl: null,
+        headerNavOrder: JSON.stringify(DEFAULT_HEADER_NAV_ORDER),
         heroAnimationEnabled: true,
         partnersDisplayMode: "logoAndName",
         contactLayout: "formFirst",

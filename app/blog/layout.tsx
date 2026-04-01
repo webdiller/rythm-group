@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
 import { getSiteBaseUrl } from "@/lib/site-url"
+import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 
 export const metadata: Metadata = {
   title: "Блог | Rythm Group",
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 async function getBlogShellMeta(): Promise<{
   siteSettings: SiteSettings | null
   hasCustomGlobalBackgroundForBothThemes: boolean
+  headerNavOrder: HeaderNavItemId[]
 }> {
   const baseUrl = getSiteBaseUrl()
   const [settingsRes, globalLightBgRes, globalDarkBgRes] = await Promise.all([
@@ -21,9 +23,17 @@ async function getBlogShellMeta(): Promise<{
   ])
 
   let siteSettings: SiteSettings | null = null
+  let headerNavOrder: HeaderNavItemId[] = normalizeHeaderNavOrder(undefined)
   if (settingsRes.ok) {
     const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
     siteSettings = settingsJson.data ?? null
+    try {
+      headerNavOrder = normalizeHeaderNavOrder(
+        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+      )
+    } catch {
+      headerNavOrder = normalizeHeaderNavOrder(undefined)
+    }
   }
 
   const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
@@ -31,11 +41,12 @@ async function getBlogShellMeta(): Promise<{
   return {
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes,
+    headerNavOrder,
   }
 }
 
 export default async function BlogLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { siteSettings, hasCustomGlobalBackgroundForBothThemes } = await getBlogShellMeta()
+  const { siteSettings, hasCustomGlobalBackgroundForBothThemes, headerNavOrder } = await getBlogShellMeta()
 
   return (
     <div className="relative min-h-screen w-full">
@@ -63,7 +74,7 @@ export default async function BlogLayout({ children }: Readonly<{ children: Reac
           )}
 
           <div className="relative z-20">
-            <Header sectionHrefPrefix="/" />
+            <Header sectionHrefPrefix="/" navOrder={headerNavOrder} />
             <main className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
               {children}
             </main>

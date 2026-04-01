@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth"
+import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder } from "@/lib/header-nav"
 
 export const runtime = "nodejs"
 
@@ -23,6 +24,7 @@ type SiteSettingsPayload = {
   affiliate_show_cases?: boolean | null
   affiliate_show_steam?: boolean | null
   affiliate_show_faq?: boolean | null
+  headerNavOrder?: string[] | null
 }
 
 export async function GET() {
@@ -56,8 +58,16 @@ export async function PUT(request: NextRequest) {
     const currentAffiliateCases = existing?.affiliate_show_cases ?? true
     const currentAffiliateSteam = existing?.affiliate_show_steam ?? true
     const currentAffiliateFaq = existing?.affiliate_show_faq ?? true
+    const currentHeaderNavOrder = (() => {
+      try {
+        if (!existing?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
+        return normalizeHeaderNavOrder(JSON.parse(existing.headerNavOrder))
+      } catch {
+        return [...DEFAULT_HEADER_NAV_ORDER]
+      }
+    })()
 
-    const updateValues: SiteSettingsPayload = {
+    const updateValues = {
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
       dataProcessingPolicyUrl: body.dataProcessingPolicyUrl ?? null,
       heroAnimationEnabled:
@@ -86,6 +96,11 @@ export async function PUT(request: NextRequest) {
         typeof body.affiliate_show_steam === "boolean" ? body.affiliate_show_steam : currentAffiliateSteam,
       affiliate_show_faq:
         typeof body.affiliate_show_faq === "boolean" ? body.affiliate_show_faq : currentAffiliateFaq,
+      headerNavOrder: JSON.stringify(
+        Array.isArray(body.headerNavOrder)
+          ? normalizeHeaderNavOrder(body.headerNavOrder)
+          : currentHeaderNavOrder,
+      ),
     }
 
     if (existing) {
@@ -105,6 +120,7 @@ export async function PUT(request: NextRequest) {
         favicon: null,
         privacyPolicyUrl: updateValues.privacyPolicyUrl ?? null,
         dataProcessingPolicyUrl: updateValues.dataProcessingPolicyUrl ?? null,
+        headerNavOrder: updateValues.headerNavOrder ?? JSON.stringify(DEFAULT_HEADER_NAV_ORDER),
         heroAnimationEnabled: updateValues.heroAnimationEnabled ?? true,
         partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
         contactLayout: updateValues.contactLayout ?? "formFirst",

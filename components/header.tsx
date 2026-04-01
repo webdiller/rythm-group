@@ -7,24 +7,29 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { resolveNavHref } from "@/lib/nav-hrefs"
 import { Menu, X } from "lucide-react"
 import imgLogo from "@/public/logo.jpg"
+import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 
 type HeaderProps = {
   /** На подстраницах (`/blog`, `/affiliate`) якоря ведут на главную: `/#section`. */
   sectionHrefPrefix?: "" | "/"
+  /** Порядок пунктов меню, вычисленный на сервере. */
+  navOrder?: HeaderNavItemId[]
 }
 
-export function Header({ sectionHrefPrefix = "" }: HeaderProps) {
+export function Header({ sectionHrefPrefix = "", navOrder }: HeaderProps) {
   const { locale, setLocale, t } = useLocale()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const resolvedNavOrder = normalizeHeaderNavOrder(navOrder ?? DEFAULT_HEADER_NAV_ORDER)
 
-  const navItems = [
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.channels, href: "#channels" },
-    { label: t.nav.cases, href: "#cases" },
-    { label: t.nav.affiliate, href: "/affiliate" },
-    { label: t.blog.navLabel, href: "/blog" },
-    { label: t.nav.contacts, href: "#contact" },
-  ]
+  const navById: Record<HeaderNavItemId, { label: string; href: string }> = {
+    about: { label: t.nav.about, href: "#about" },
+    channels: { label: t.nav.channels, href: "#channels" },
+    cases: { label: t.nav.cases, href: "#cases" },
+    affiliate: { label: t.nav.affiliate, href: "/affiliate" },
+    blog: { label: t.blog.navLabel, href: "/blog" },
+    contacts: { label: t.nav.contacts, href: "#contact" },
+  }
+  const navItems = resolvedNavOrder.map((id) => navById[id])
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
