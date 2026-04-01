@@ -6,6 +6,7 @@ import { useLocale } from "@/lib/locale-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { resolveNavHref } from "@/lib/nav-hrefs"
 import { Menu, X } from "lucide-react"
+import imgLogo from "@/public/logo.jpg"
 
 type HeaderProps = {
   /** На подстраницах (`/blog`, `/affiliate`) якоря ведут на главную: `/#section`. */
@@ -38,7 +39,7 @@ export function Header({ sectionHrefPrefix = "" }: HeaderProps) {
         >
           <span className="text-lg font-bold tracking-tight flex items-center gap-1 sm:gap-2 text-foreground">
             <div className="rounded-full overflow-hidden bg-primary">
-              <img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" />
+              <img src={imgLogo.src} width={imgLogo.width} height={imgLogo.height} alt="Rythm Group" className="h-8 w-8" />
             </div>
             <span className="text-xs sm:text-sm md:text-base">Rythm<span className="text-primary">Group</span></span>
           </span>

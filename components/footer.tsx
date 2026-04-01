@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
 import { resolveNavHref } from "@/lib/nav-hrefs"
+import imgLogo from "@/public/logo.jpg"
 
 export type SiteSettings = {
   privacyPolicyUrl?: string | null
@@ -49,7 +50,7 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
               >
                 <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
                   <div className="overflow-hidden rounded-full bg-primary">
-                    <img src="./logo.jpg" alt="Rythm Group" className="h-8 w-8" />
+                    <img src={imgLogo.src} width={imgLogo.width} height={imgLogo.height} alt="Rythm Group" className="h-8 w-8" />
                   </div>
                   <span>
                     Rythm<span className="text-primary">Group</span>
