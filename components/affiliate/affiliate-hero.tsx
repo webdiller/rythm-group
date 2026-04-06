@@ -20,9 +20,10 @@ type AffiliateHeroData = {
 
 type AffiliateHeroProps = {
   data?: AffiliateHeroData | null
+  enableAffiliateCooperationFormats: boolean
 }
 
-export function AffiliateHero({ data }: AffiliateHeroProps) {
+export function AffiliateHero({ data, enableAffiliateCooperationFormats }: AffiliateHeroProps) {
   const { locale, t } = useLocale()
   const a = t.affiliate.hero
   const contactHref = resolveNavHref("#contact", "/")
@@ -111,21 +112,23 @@ export function AffiliateHero({ data }: AffiliateHeroProps) {
                 {ctaPrimary}
               </Link>
             </StaggerItem>
-            <StaggerItem
-              index={4}
-              delayStart={100}
-              delayStep={50}
-              visibleClassName="translate-y-0 opacity-100 scale-100"
-              hiddenClassName="translate-y-4 opacity-0 scale-95"
-              durationClassName="duration-700"
-            >
-              <a
-                href={moreHref}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+            {enableAffiliateCooperationFormats ? (
+              <StaggerItem
+                index={4}
+                delayStart={100}
+                delayStep={50}
+                visibleClassName="translate-y-0 opacity-100 scale-100"
+                hiddenClassName="translate-y-4 opacity-0 scale-95"
+                durationClassName="duration-700"
               >
-                {ctaSecondary}
-              </a>
-            </StaggerItem>
+                <a
+                  href={moreHref}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
+                >
+                  {ctaSecondary}
+                </a>
+              </StaggerItem>
+            ) : null}
           </div>
         </div>
       </section>

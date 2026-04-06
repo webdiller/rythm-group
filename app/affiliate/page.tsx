@@ -91,11 +91,17 @@ export default async function AffiliatePage() {
   const animationsEnabled = settings.heroAnimationEnabled ?? true
   const contactLayout = settings.contactLayout ?? "formFirst"
   const contactFormHidden = settings.contactFormHidden ?? false
+  const showFormatsSection = settings.affiliate_show_formats ?? true
 
   return (
     <>
-      {settings.affiliate_show_hero ?? true ? <AffiliateHero data={hero} /> : null}
-      {settings.affiliate_show_formats ?? true ? <AffiliateCooperationFormats items={formats} /> : null}
+      {settings.affiliate_show_hero ?? true ? (
+        <AffiliateHero
+          data={hero}
+          enableAffiliateCooperationFormats={showFormatsSection}
+        />
+      ) : null}
+      {showFormatsSection ? <AffiliateCooperationFormats items={formats} /> : null}
       {settings.affiliate_show_cases ?? true ? <AffiliateCasesGrid categories={partnerCategories} partners={partners} /> : null}
       {settings.affiliate_show_steam ?? true ? <AffiliateSteamSection partners={partners} /> : null}
       {settings.affiliate_show_faq ?? true ? <AffiliateFaq items={faq} /> : null}
