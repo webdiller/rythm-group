@@ -62,7 +62,7 @@ function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) 
 
 export function SiteSettingsEditor() {
   const [hasFavicon, setHasFavicon] = useState(false)
-  const [faviconVersion, setFaviconVersion] = useState(0)
+  const [faviconVersion, setFaviconVersion] = useState(() => Date.now())
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [hasHeroBackground, setHasHeroBackground] = useState(false)
@@ -250,6 +250,21 @@ export function SiteSettingsEditor() {
     return document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
   }
 
+  const syncDocumentFavicon = (version: number) => {
+    const faviconHref = `/api/site/favicon?ts=${version}`
+    const iconSelectors = ['link[rel="icon"]', 'link[rel="shortcut icon"]'] as const
+
+    for (const selector of iconSelectors) {
+      let link = document.head.querySelector(selector) as HTMLLinkElement | null
+      if (!link) {
+        link = document.createElement("link")
+        link.rel = selector.includes("shortcut") ? "shortcut icon" : "icon"
+        document.head.appendChild(link)
+      }
+      link.href = faviconHref
+    }
+  }
+
   const handleSaveSettings = async () => {
     setSavingSettings(true)
     try {
@@ -322,7 +337,9 @@ export function SiteSettingsEditor() {
       }
 
       setHasFavicon(true)
-      setFaviconVersion((v) => v + 1)
+      const nextVersion = Date.now()
+      setFaviconVersion(nextVersion)
+      syncDocumentFavicon(nextVersion)
       toast.success("Фавикон обновлён")
     } catch {
       toast.error("Не удалось загрузить фавикон")
@@ -626,7 +643,9 @@ export function SiteSettingsEditor() {
       }
 
       setHasFavicon(false)
-      setFaviconVersion((v) => v + 1)
+      const nextVersion = Date.now()
+      setFaviconVersion(nextVersion)
+      syncDocumentFavicon(nextVersion)
       toast.success("Фавикон сброшен до значения по умолчанию")
     } catch {
       toast.error("Не удалось удалить фавикон")

@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RootShellProviders } from '@/components/RootShellProviders'
-import { getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
+import { getFaviconVersion, getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
 import './globals.css'
 
 const inter = Inter({
@@ -39,11 +39,12 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const { hasAnyCustomBackgrounds } = await getRootShellBackgroundFlags()
+  const faviconVersion = getFaviconVersion()
 
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/api/site/favicon" />
+        <link rel="icon" href={`/api/site/favicon?v=${faviconVersion}`} />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
