@@ -139,7 +139,6 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
         className={`route-transition-overlay ${overlayVisible ? "is-visible" : ""} ${overlayCovering ? "is-covering" : ""}`}
         aria-hidden={!overlayVisible}
       >
-        <span className="route-transition-title">{targetLabel}</span>
       </div>
     </>
   )

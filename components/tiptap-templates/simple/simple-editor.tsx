@@ -51,6 +51,7 @@ import {
   Underline as UnderlineIcon,
   Undo2,
   Upload,
+  Loader2,
 } from "lucide-react"
 
 export type SimpleEditorProps = {
@@ -248,6 +249,12 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   // }
 
   const selectedVideo = getSelectedVideoAttrs()
+  const mediaUploading = videoUploading || posterUploading
+  const mediaUploadingLabel = videoUploading
+    ? "Загрузка видео..."
+    : posterUploading
+      ? "Загрузка постера..."
+      : null
 
   return (
     <div className={cn("rounded-lg border border-border bg-card overflow-hidden", className)}>
@@ -422,7 +429,15 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setLink} title="Ссылка">
           <Link2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setVideoByUrl} title="Видео по URL">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={setVideoByUrl}
+          title="Видео по URL"
+          disabled={mediaUploading}
+        >
           <Film className="h-4 w-4" />
         </Button>
         <Button
@@ -431,10 +446,10 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           size="icon"
           className="h-8 w-8"
           title="Загрузить видео (mp4/webm, до 100MB)"
-          disabled={videoUploading}
+          disabled={mediaUploading}
           onClick={() => videoInputRef.current?.click()}
         >
-          <Upload className="h-4 w-4" />
+          {videoUploading ? <div className="relative w-4 h-4"><Loader2 className="size-4 inset-0 absolute animate-spin" /></div> : <Upload className="h-4 w-4" />}
         </Button>
         <Button
           type="button"
@@ -442,10 +457,14 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           size="icon"
           className="h-8 w-8"
           title={selectedVideo ? "Загрузить постер для выбранного видео" : "Сначала выделите видео в редакторе"}
-          disabled={posterUploading || !selectedVideo}
+          disabled={mediaUploading || !selectedVideo}
           onClick={() => posterInputRef.current?.click()}
         >
-          <ImageIcon className="h-4 w-4" />
+          {posterUploading ? (
+            <div className="relative w-4 h-4"><Loader2 className="size-4 inset-0 absolute animate-spin" /></div>
+          ) : (
+            <ImageIcon className="h-4 w-4" />
+          )}
         </Button>
         <Button
           type="button"
@@ -453,12 +472,18 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           size="icon"
           className="h-8 w-8"
           title="Удалить выбранное видео"
-          disabled={!selectedVideo}
+          disabled={!selectedVideo || mediaUploading}
           onClick={() => editor.chain().focus().unsetSelectedVideoEmbed().run()}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
+      {mediaUploading ? (
+        <div className="flex items-center gap-2 border-b border-border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
+          <div className="relative h-3.5 w-3.5"><Loader2 className="size-3.5 inset-0 absolute animate-spin" /></div>
+          <span>{mediaUploadingLabel}</span>
+        </div>
+      ) : null}
       <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
         {selectedVideo
           ? `Выбрано видео: ${selectedVideo.src}${selectedVideo.poster ? " (постер установлен)" : " (без постера)"}`
