@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import type { Partner } from "@/components/cases"
 import { Card } from "@/components/ui/card"
@@ -15,10 +16,13 @@ function buildSteamSearchUrl(name: string): string {
 
 export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) {
   const { locale, t } = useLocale()
+  const [showAll, setShowAll] = useState(false)
+  const MAX_VISIBLE = 6
   const items = [...partners]
     .filter((p) => p.show_in_affiliate_steam ?? true)
     .sort((a, b) => a.order_index - b.order_index)
-    .slice(0, 8)
+  const visibleItems = showAll ? items : items.slice(0, MAX_VISIBLE)
+  const hiddenCount = Math.max(0, items.length - MAX_VISIBLE)
 
   return (
     <section className="border-t border-border/60 py-16 md:py-20">
@@ -31,7 +35,7 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2">
-          {items.map((p) => {
+          {visibleItems.map((p) => {
             const steamUrl = p.developer_url || buildSteamSearchUrl(p.name)
             return (
               <a
@@ -73,6 +77,23 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
             )
           })}
         </div>
+        {items.length > MAX_VISIBLE ? (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowAll((prev) => !prev)}
+              className="rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              {showAll
+                ? locale === "ru"
+                  ? `Свернуть список (${hiddenCount})`
+                  : `Show less (${hiddenCount})`
+                : locale === "ru"
+                  ? `Показать ещё ${hiddenCount}`
+                  : `Show ${hiddenCount} more`}
+            </button>
+          </div>
+        ) : null}
         {items.length === 0 ? (
           <p className="pt-6 text-sm text-muted-foreground">
             {locale === "en" ? "Publishers are not added yet." : "Издатели пока не добавлены."}
