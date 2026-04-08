@@ -250,6 +250,11 @@ export function SiteSettingsEditor() {
     return document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
   }
 
+  const notifyMutationError = (message: string) => {
+    alert(message)
+    toast.error(message)
+  }
+
   const syncDocumentFavicon = (version: number) => {
     const faviconHref = `/api/site/favicon?ts=${version}`
     const iconSelectors = ['link[rel="icon"]', 'link[rel="shortcut icon"]'] as const
@@ -289,7 +294,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось сохранить настройки сайта")
+        notifyMutationError("Не удалось сохранить настройки сайта")
         return
       }
 
@@ -306,7 +311,7 @@ export function SiteSettingsEditor() {
         headerNavOrder,
       })
     } catch {
-      toast.error("Не удалось сохранить настройки сайта")
+      notifyMutationError("Не удалось сохранить настройки сайта")
     } finally {
       setSavingSettings(false)
     }
@@ -332,7 +337,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось загрузить фавикон")
+        notifyMutationError("Не удалось загрузить фавикон")
         return
       }
 
@@ -342,7 +347,7 @@ export function SiteSettingsEditor() {
       syncDocumentFavicon(nextVersion)
       toast.success("Фавикон обновлён")
     } catch {
-      toast.error("Не удалось загрузить фавикон")
+      notifyMutationError("Не удалось загрузить фавикон")
     } finally {
       setUploading(false)
     }
@@ -369,7 +374,7 @@ export function SiteSettingsEditor() {
 
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as { error?: string } | null
-        toast.error(json?.error ?? "Не удалось загрузить фон для hero")
+        notifyMutationError(json?.error ?? "Не удалось загрузить фон для hero")
         return
       }
 
@@ -377,7 +382,7 @@ export function SiteSettingsEditor() {
       setHeroBackgroundVersion((v) => v + 1)
       toast.success("Фон hero обновлён")
     } catch {
-      toast.error("Не удалось загрузить фон для hero")
+      notifyMutationError("Не удалось загрузить фон для hero")
     } finally {
       setUploadingHeroBackground(false)
     }
@@ -407,7 +412,7 @@ export function SiteSettingsEditor() {
 
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as { error?: string } | null
-        toast.error(json?.error ?? "Не удалось загрузить фон для hero")
+        notifyMutationError(json?.error ?? "Не удалось загрузить фон для hero")
         return
       }
 
@@ -422,7 +427,7 @@ export function SiteSettingsEditor() {
         theme === "light" ? "Фон hero для светлой темы обновлён" : "Фон hero для тёмной темы обновлён",
       )
     } catch {
-      toast.error("Не удалось загрузить фон для hero")
+      notifyMutationError("Не удалось загрузить фон для hero")
     } finally {
       setUploadingFn(false)
     }
@@ -438,7 +443,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось удалить фон для hero")
+        notifyMutationError("Не удалось удалить фон для hero")
         return
       }
 
@@ -446,7 +451,7 @@ export function SiteSettingsEditor() {
       setHeroBackgroundVersion((v) => v + 1)
       toast.success("Фон hero сброшен")
     } catch {
-      toast.error("Не удалось удалить фон для hero")
+      notifyMutationError("Не удалось удалить фон для hero")
     } finally {
       setDeletingHeroBackground(false)
     }
@@ -465,7 +470,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось удалить фон для hero")
+        notifyMutationError("Не удалось удалить фон для hero")
         return
       }
 
@@ -480,7 +485,7 @@ export function SiteSettingsEditor() {
         theme === "light" ? "Фон hero для светлой темы сброшен" : "Фон hero для тёмной темы сброшен",
       )
     } catch {
-      toast.error("Не удалось удалить фон для hero")
+      notifyMutationError("Не удалось удалить фон для hero")
     } finally {
       setDeletingFn(false)
     }
@@ -507,7 +512,7 @@ export function SiteSettingsEditor() {
 
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as { error?: string } | null
-        toast.error(json?.error ?? "Не удалось загрузить общий фон")
+        notifyMutationError(json?.error ?? "Не удалось загрузить общий фон")
         return
       }
 
@@ -515,7 +520,7 @@ export function SiteSettingsEditor() {
       setGlobalBackgroundVersion((v) => v + 1)
       toast.success("Общий фон обновлён")
     } catch {
-      toast.error("Не удалось загрузить общий фон")
+      notifyMutationError("Не удалось загрузить общий фон")
     } finally {
       setUploadingGlobalBackground(false)
     }
@@ -545,7 +550,7 @@ export function SiteSettingsEditor() {
 
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as { error?: string } | null
-        toast.error(json?.error ?? "Не удалось загрузить общий фон")
+        notifyMutationError(json?.error ?? "Не удалось загрузить общий фон")
         return
       }
 
@@ -562,7 +567,7 @@ export function SiteSettingsEditor() {
           : "Общий фон для тёмной темы обновлён",
       )
     } catch {
-      toast.error("Не удалось загрузить общий фон")
+      notifyMutationError("Не удалось загрузить общий фон")
     } finally {
       setUploadingFn(false)
     }
@@ -578,7 +583,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось удалить общий фон")
+        notifyMutationError("Не удалось удалить общий фон")
         return
       }
 
@@ -586,7 +591,7 @@ export function SiteSettingsEditor() {
       setGlobalBackgroundVersion((v) => v + 1)
       toast.success("Общий фон сброшен")
     } catch {
-      toast.error("Не удалось удалить общий фон")
+      notifyMutationError("Не удалось удалить общий фон")
     } finally {
       setDeletingGlobalBackground(false)
     }
@@ -605,7 +610,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось удалить общий фон")
+        notifyMutationError("Не удалось удалить общий фон")
         return
       }
 
@@ -622,7 +627,7 @@ export function SiteSettingsEditor() {
           : "Общий фон для тёмной темы сброшен",
       )
     } catch {
-      toast.error("Не удалось удалить общий фон")
+      notifyMutationError("Не удалось удалить общий фон")
     } finally {
       setDeletingFn(false)
     }
@@ -638,7 +643,7 @@ export function SiteSettingsEditor() {
       })
 
       if (!res.ok) {
-        toast.error("Не удалось удалить фавикон")
+        notifyMutationError("Не удалось удалить фавикон")
         return
       }
 
@@ -648,7 +653,7 @@ export function SiteSettingsEditor() {
       syncDocumentFavicon(nextVersion)
       toast.success("Фавикон сброшен до значения по умолчанию")
     } catch {
-      toast.error("Не удалось удалить фавикон")
+      notifyMutationError("Не удалось удалить фавикон")
     } finally {
       setDeleting(false)
     }

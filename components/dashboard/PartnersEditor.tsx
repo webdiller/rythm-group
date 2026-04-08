@@ -64,6 +64,8 @@ export function PartnersEditor() {
   const [draggingCategoryId, setDraggingCategoryId] = useState<number | null>(null)
   const [draggingPartnerId, setDraggingPartnerId] = useState<number | null>(null)
   const [draggingPartnerCategoryId, setDraggingPartnerCategoryId] = useState<number | null>(null)
+  const [savingPartner, setSavingPartner] = useState(false)
+  const [savingCategory, setSavingCategory] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -96,6 +98,8 @@ export function PartnersEditor() {
   }
 
   const handleSavePartner = async (partner: Partial<Partner>, logoFile?: File | null) => {
+    if (savingPartner) return
+    setSavingPartner(true)
     try {
       const token = getToken()
       const url = "/api/content/partners"
@@ -174,10 +178,14 @@ export function PartnersEditor() {
         setEditingPartner(null)
         loadData()
       } else {
+        alert("Не удалось сохранить кейс")
         toast.error("Не удалось сохранить кейс")
       }
     } catch (error) {
+      alert("Не удалось сохранить кейс")
       toast.error("Не удалось сохранить кейс")
+    } finally {
+      setSavingPartner(false)
     }
   }
 
@@ -193,14 +201,18 @@ export function PartnersEditor() {
         toast.success("Кейс удалён")
         loadData()
       } else {
+        alert("Не удалось удалить кейс")
         toast.error("Не удалось удалить кейс")
       }
     } catch (error) {
+      alert("Не удалось удалить кейс")
       toast.error("Не удалось удалить кейс")
     }
   }
 
   const handleSaveCategory = async (category: Partial<PartnerCategory>) => {
+    if (savingCategory) return
+    setSavingCategory(true)
     try {
       const token = getToken()
       const url = "/api/content/partner-categories"
@@ -233,10 +245,14 @@ export function PartnersEditor() {
         setEditingCategory(null)
         loadData()
       } else {
+        alert("Не удалось сохранить категорию")
         toast.error("Не удалось сохранить категорию")
       }
     } catch (error) {
+      alert("Не удалось сохранить категорию")
       toast.error("Не удалось сохранить категорию")
+    } finally {
+      setSavingCategory(false)
     }
   }
 
@@ -256,6 +272,7 @@ export function PartnersEditor() {
         ),
       )
     } catch {
+      alert("Не удалось сохранить порядок категорий")
       toast.error("Не удалось сохранить порядок категорий")
     }
   }
@@ -310,6 +327,7 @@ export function PartnersEditor() {
         ),
       )
     } catch {
+      alert("Не удалось сохранить порядок кейсов")
       toast.error("Не удалось сохранить порядок кейсов")
     }
   }
@@ -394,9 +412,11 @@ export function PartnersEditor() {
         toast.success("Категория удалена")
         loadData()
       } else {
+        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить категорию")
       }
     } catch (error) {
+      alert("Не удалось удалить категорию")
       toast.error("Не удалось удалить категорию")
     }
   }
@@ -444,6 +464,7 @@ export function PartnersEditor() {
                 <CategoryForm
                   category={editingCategory}
                   onSave={handleSaveCategory}
+                  submitting={savingCategory}
                   onCancel={() => {
                     setIsCategoryDialogOpen(false)
                     setEditingCategory(null)
@@ -546,6 +567,7 @@ export function PartnersEditor() {
                   partner={editingPartner}
                   categories={categories}
                   onSave={handleSavePartner}
+                  submitting={savingPartner}
                   onCancel={() => {
                     setIsPartnerDialogOpen(false)
                     setEditingPartner(null)
@@ -762,10 +784,12 @@ export function PartnersEditor() {
 function CategoryForm({
   category,
   onSave,
+  submitting,
   onCancel,
 }: {
   category: PartnerCategory | null
   onSave: (category: Partial<PartnerCategory>) => void
+  submitting: boolean
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState({
@@ -799,10 +823,12 @@ function CategoryForm({
         />
       </div>
       <div className="sticky bottom-0 z-10 -mx-4 flex justify-end gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:px-6">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Отменить
         </Button>
-        <Button type="submit">Сохранить</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Сохранение..." : "Сохранить"}
+        </Button>
       </div>
     </form>
   )
@@ -812,11 +838,13 @@ function PartnerForm({
   partner,
   categories,
   onSave,
+  submitting,
   onCancel,
 }: {
   partner: Partner | null
   categories: PartnerCategory[]
   onSave: (partner: Partial<Partner>, logoFile?: File | null) => void
+  submitting: boolean
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState<{
@@ -1161,6 +1189,7 @@ function PartnerForm({
                     setLogoVersion((v) => v + 1)
                     toast.success("Логотип обновлён")
                   } else {
+                    alert("Не удалось загрузить логотип")
                     toast.error("Не удалось загрузить логотип")
                   }
                   e.target.value = ""
@@ -1189,6 +1218,7 @@ function PartnerForm({
                       setLogoVersion((v) => v + 1)
                       toast.success("Логотип удалён")
                     } else {
+                      alert("Не удалось удалить логотип")
                       toast.error("Не удалось удалить логотип")
                     }
                   }}
@@ -1222,10 +1252,12 @@ function PartnerForm({
         )}
       </div>
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Отменить
         </Button>
-        <Button type="submit">Сохранить</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Сохранение..." : "Сохранить"}
+        </Button>
       </div>
     </form>
   )

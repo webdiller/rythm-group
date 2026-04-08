@@ -82,6 +82,7 @@ export function TranslationsEditor() {
       return true
     }
     const err = (await response.json()) as { error?: string }
+    alert(err.error ?? "Failed to save translation")
     toast.error(err.error ?? "Failed to save translation")
     return false
   }
@@ -116,6 +117,7 @@ export function TranslationsEditor() {
         toast.success("Translations saved")
       }
     } catch (error) {
+      alert("Failed to save translations")
       toast.error("Failed to save translations")
     } finally {
       setSaving(false)

@@ -180,6 +180,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     })
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { error?: string }
+      alert(err.error ?? "Не удалось удалить файл с диска")
       toast.error(err.error ?? "Не удалось удалить файл с диска")
       return false
     }
@@ -201,6 +202,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       })
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string }
+        alert(err.error ?? "Загрузка не удалась")
         toast.error(err.error ?? "Загрузка не удалась")
         return
       }
@@ -219,6 +221,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         toast.success("Файл загружен")
       }
     } catch {
+      alert("Ошибка загрузки")
       toast.error("Ошибка загрузки")
     } finally {
       setCoverUploading(false)
@@ -275,6 +278,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
+          alert(err.error ?? "Не удалось сохранить")
           toast.error(err.error ?? "Не удалось сохранить")
           return
         }
@@ -290,6 +294,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
+          alert(err.error ?? "Не удалось создать")
           toast.error(err.error ?? "Не удалось создать")
           return
         }
@@ -297,6 +302,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       }
       router.push("/dashboard?tab=blog")
     } catch {
+      alert("Ошибка сети")
       toast.error("Ошибка сети")
     } finally {
       setSaving(false)

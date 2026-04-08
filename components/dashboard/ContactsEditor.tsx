@@ -172,9 +172,11 @@ export function ContactsEditor() {
           setInitialContact(payload)
         }
       } else {
+        alert("Failed to save contacts")
         toast.error("Failed to save contacts")
       }
     } catch (error) {
+      alert("Failed to save contacts")
       toast.error("Failed to save contacts")
     } finally {
       setSaving(false)

@@ -40,6 +40,8 @@ export function ChannelsEditor() {
   const [draggingCategoryId, setDraggingCategoryId] = useState<string | null>(null)
   const [draggingChannelId, setDraggingChannelId] = useState<number | null>(null)
   const [draggingChannelCategoryId, setDraggingChannelCategoryId] = useState<string | null>(null)
+  const [savingChannel, setSavingChannel] = useState(false)
+  const [savingCategory, setSavingCategory] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -77,6 +79,8 @@ export function ChannelsEditor() {
   }
 
   const handleSave = async (channel: Partial<Channel>, avatarFile?: File | null) => {
+    if (savingChannel) return
+    setSavingChannel(true)
     try {
       const token = getToken()
       const url = "/api/content/channels"
@@ -122,10 +126,14 @@ export function ChannelsEditor() {
         setEditingChannel(null)
         loadData()
       } else {
+        alert("Failed to save channel")
         toast.error("Failed to save channel")
       }
     } catch (error) {
+      alert("Failed to save channel")
       toast.error("Failed to save channel")
+    } finally {
+      setSavingChannel(false)
     }
   }
 
@@ -145,9 +153,11 @@ export function ChannelsEditor() {
         toast.success("Channel deleted")
         loadData()
       } else {
+        alert("Failed to delete channel")
         toast.error("Failed to delete channel")
       }
     } catch (error) {
+      alert("Failed to delete channel")
       toast.error("Failed to delete channel")
     }
   }
@@ -191,9 +201,11 @@ export function ChannelsEditor() {
         await loadData()
         setAvatarsVersion((v) => v + 1)
       } else {
+        alert("Не удалось загрузить аватар")
         toast.error("Не удалось загрузить аватар")
       }
     } catch {
+      alert("Не удалось загрузить аватар")
       toast.error("Не удалось загрузить аватар")
     }
   }
@@ -217,14 +229,18 @@ export function ChannelsEditor() {
         await loadData()
         setAvatarsVersion((v) => v + 1)
       } else {
+        alert("Не удалось удалить аватар")
         toast.error("Не удалось удалить аватар")
       }
     } catch {
+      alert("Не удалось удалить аватар")
       toast.error("Не удалось удалить аватар")
     }
   }
 
   const handleSaveCategory = async (category: Partial<Category>) => {
+    if (savingCategory) return
+    setSavingCategory(true)
     try {
       const token = getToken()
       const url = "/api/content/channel-categories"
@@ -277,10 +293,14 @@ export function ChannelsEditor() {
         setEditingCategory(null)
         loadData()
       } else {
+        alert("Не удалось сохранить категорию")
         toast.error("Не удалось сохранить категорию")
       }
     } catch (error) {
+      alert("Не удалось сохранить категорию")
       toast.error("Не удалось сохранить категорию")
+    } finally {
+      setSavingCategory(false)
     }
   }
 
@@ -300,6 +320,7 @@ export function ChannelsEditor() {
         ),
       )
     } catch {
+      alert("Не удалось сохранить порядок категорий")
       toast.error("Не удалось сохранить порядок категорий")
     }
   }
@@ -352,6 +373,7 @@ export function ChannelsEditor() {
         ),
       )
     } catch {
+      alert("Не удалось сохранить порядок каналов")
       toast.error("Не удалось сохранить порядок каналов")
     }
   }
@@ -438,9 +460,11 @@ export function ChannelsEditor() {
         toast.success("Категория удалена")
         loadData()
       } else {
+        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить категорию")
       }
     } catch (error) {
+      alert("Не удалось удалить категорию")
       toast.error("Не удалось удалить категорию")
     }
   }
@@ -475,6 +499,7 @@ export function ChannelsEditor() {
               <CategoryForm
                 category={editingCategory}
                 onSave={handleSaveCategory}
+                submitting={savingCategory}
                 onCancel={() => {
                   setIsCategoryDialogOpen(false)
                   setEditingCategory(null)
@@ -573,6 +598,7 @@ export function ChannelsEditor() {
                 channel={editingChannel}
                 categories={categories}
                 onSave={handleSave}
+                submitting={savingChannel}
                 onUploadAvatar={handleUploadAvatar}
                 onDeleteAvatar={handleDeleteAvatar}
                 onCancel={() => {
@@ -809,10 +835,12 @@ function AdminChannelAvatar({
 function CategoryForm({
   category,
   onSave,
+  submitting,
   onCancel,
 }: {
   category: Category | null
   onSave: (category: Partial<Category>) => void
+  submitting: boolean
   onCancel: () => void
 }) {
   const [formData, setFormData] = useState({
@@ -864,10 +892,12 @@ function CategoryForm({
         />
       </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Отменить
         </Button>
-        <Button type="submit">Сохранить</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Сохранение..." : "Сохранить"}
+        </Button>
       </div>
     </form>
   )
@@ -877,6 +907,7 @@ function ChannelForm({
   channel,
   categories,
   onSave,
+  submitting,
   onUploadAvatar,
   onDeleteAvatar,
   onCancel,
@@ -884,6 +915,7 @@ function ChannelForm({
   channel: Channel | null
   categories: Category[]
   onSave: (channel: Partial<Channel>, avatarFile?: File | null) => void
+  submitting: boolean
   onUploadAvatar: (channelId: number, file: File) => Promise<void> | void
   onDeleteAvatar: (channelId: number) => void
   onCancel: () => void
@@ -1053,10 +1085,12 @@ function ChannelForm({
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Отменить
         </Button>
-        <Button type="submit">Сохранить</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Сохранение..." : "Сохранить"}
+        </Button>
       </div>
     </form>
   )

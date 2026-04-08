@@ -53,6 +53,14 @@ export function AffiliateContentEditor() {
     affiliate_show_steam: true,
     affiliate_show_faq: true,
   })
+  const [savingSections, setSavingSections] = useState(false)
+  const [savingHero, setSavingHero] = useState(false)
+  const [savingFormatId, setSavingFormatId] = useState<number | null>(null)
+  const [deletingFormatId, setDeletingFormatId] = useState<number | null>(null)
+  const [addingFormat, setAddingFormat] = useState(false)
+  const [savingFaqId, setSavingFaqId] = useState<number | null>(null)
+  const [deletingFaqId, setDeletingFaqId] = useState<number | null>(null)
+  const [addingFaq, setAddingFaq] = useState(false)
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -98,6 +106,8 @@ export function AffiliateContentEditor() {
   }, [])
 
   const saveSections = async () => {
+    if (savingSections) return
+    setSavingSections(true)
     try {
       const token = getToken()
       const res = await fetch("/api/site/settings", {
@@ -105,15 +115,22 @@ export function AffiliateContentEditor() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(sections),
       })
-      if (!res.ok) return toast.error("Не удалось сохранить секции")
+      if (!res.ok) {
+        alert("Не удалось сохранить секции")
+        return toast.error("Не удалось сохранить секции")
+      }
       toast.success("Секции Affiliate обновлены")
     } catch {
+      alert("Не удалось сохранить секции")
       toast.error("Не удалось сохранить секции")
+    } finally {
+      setSavingSections(false)
     }
   }
 
   const saveHero = async () => {
-    if (!hero) return
+    if (!hero || savingHero) return
+    setSavingHero(true)
     try {
       const token = getToken()
       const res = await fetch("/api/content/affiliate-hero", {
@@ -121,10 +138,16 @@ export function AffiliateContentEditor() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(hero),
       })
-      if (!res.ok) return toast.error("Не удалось сохранить Hero")
+      if (!res.ok) {
+        alert("Не удалось сохранить Hero")
+        return toast.error("Не удалось сохранить Hero")
+      }
       toast.success("Hero Affiliate обновлён")
     } catch {
+      alert("Не удалось сохранить Hero")
       toast.error("Не удалось сохранить Hero")
+    } finally {
+      setSavingHero(false)
     }
   }
 
@@ -170,7 +193,11 @@ export function AffiliateContentEditor() {
               />
             </div>
           ))}
-          <div className="flex justify-end"><Button onClick={saveSections}>Сохранить секции</Button></div>
+          <div className="flex justify-end">
+            <Button onClick={saveSections} disabled={savingSections}>
+              {savingSections ? "Сохранение..." : "Сохранить секции"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -189,7 +216,11 @@ export function AffiliateContentEditor() {
               <Input value={hero.cta_primary_en} onChange={(e) => setHero({ ...hero, cta_primary_en: e.target.value })} placeholder="CTA primary EN" />
               <Input value={hero.cta_secondary_ru} onChange={(e) => setHero({ ...hero, cta_secondary_ru: e.target.value })} placeholder="CTA secondary RU" />
               <Input value={hero.cta_secondary_en} onChange={(e) => setHero({ ...hero, cta_secondary_en: e.target.value })} placeholder="CTA secondary EN" />
-              <div className="md:col-span-2 flex justify-end"><Button onClick={saveHero}>Сохранить Hero</Button></div>
+              <div className="md:col-span-2 flex justify-end">
+                <Button onClick={saveHero} disabled={savingHero}>
+                  {savingHero ? "Сохранение..." : "Сохранить Hero"}
+                </Button>
+              </div>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Загрузка...</p>
@@ -214,30 +245,63 @@ export function AffiliateContentEditor() {
               <div className="md:col-span-2 flex justify-end gap-2">
                 <Button
                   variant="outline"
+                  disabled={deletingFormatId === item.id || savingFormatId === item.id}
                   onClick={async () => {
+                    setDeletingFormatId(item.id)
                     const token = getToken()
-                    const res = await fetch(`/api/content/affiliate-formats?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
-                    if (!res.ok) return toast.error("Не удалось удалить формат")
-                    toast.success("Формат удалён")
-                    void load()
+                    try {
+                      const res = await fetch(`/api/content/affiliate-formats?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+                      if (!res.ok) {
+                        alert("Не удалось удалить формат")
+                        return toast.error("Не удалось удалить формат")
+                      }
+                      toast.success("Формат удалён")
+                      void load()
+                    } catch {
+                      alert("Не удалось удалить формат")
+                      toast.error("Не удалось удалить формат")
+                    } finally {
+                      setDeletingFormatId(null)
+                    }
                   }}
-                >Удалить</Button>
-                <Button onClick={async () => { try { await upsertFormat(item); toast.success("Формат обновлён") } catch { toast.error("Не удалось сохранить формат") } }}>Сохранить</Button>
+                >{deletingFormatId === item.id ? "Удаление..." : "Удалить"}</Button>
+                <Button
+                  disabled={deletingFormatId === item.id || savingFormatId === item.id}
+                  onClick={async () => {
+                    setSavingFormatId(item.id)
+                    try {
+                      await upsertFormat(item); toast.success("Формат обновлён")
+                    } catch {
+                      alert("Не удалось сохранить формат")
+                      toast.error("Не удалось сохранить формат")
+                    } finally {
+                      setSavingFormatId(null)
+                    }
+                  }}
+                >
+                  {savingFormatId === item.id ? "Сохранение..." : "Сохранить"}
+                </Button>
               </div>
             </div>
           ))}
           <div className="flex justify-end">
             <Button
+              disabled={addingFormat}
               onClick={async () => {
+                if (addingFormat) return
+                setAddingFormat(true)
                 try {
                   await upsertFormat({ title_ru: "Новый формат", title_en: "New format", body_ru: "", body_en: "", hidden: false, order_index: formats.length })
                   toast.success("Формат добавлен")
                   void load()
                 } catch {
+                  alert("Не удалось добавить формат")
                   toast.error("Не удалось добавить формат")
+                } finally {
+                  setAddingFormat(false)
                 }
               }}
-            >Добавить формат</Button>
+            >{addingFormat ? "Добавление..." : "Добавить формат"}</Button>
           </div>
         </CardContent>
       </Card>
@@ -259,30 +323,63 @@ export function AffiliateContentEditor() {
               <div className="md:col-span-2 flex justify-end gap-2">
                 <Button
                   variant="outline"
+                  disabled={deletingFaqId === item.id || savingFaqId === item.id}
                   onClick={async () => {
+                    setDeletingFaqId(item.id)
                     const token = getToken()
-                    const res = await fetch(`/api/content/affiliate-faq?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
-                    if (!res.ok) return toast.error("Не удалось удалить FAQ")
-                    toast.success("FAQ удалён")
-                    void load()
+                    try {
+                      const res = await fetch(`/api/content/affiliate-faq?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+                      if (!res.ok) {
+                        alert("Не удалось удалить FAQ")
+                        return toast.error("Не удалось удалить FAQ")
+                      }
+                      toast.success("FAQ удалён")
+                      void load()
+                    } catch {
+                      alert("Не удалось удалить FAQ")
+                      toast.error("Не удалось удалить FAQ")
+                    } finally {
+                      setDeletingFaqId(null)
+                    }
                   }}
-                >Удалить</Button>
-                <Button onClick={async () => { try { await upsertFaq(item); toast.success("FAQ обновлён") } catch { toast.error("Не удалось сохранить FAQ") } }}>Сохранить</Button>
+                >{deletingFaqId === item.id ? "Удаление..." : "Удалить"}</Button>
+                <Button
+                  disabled={deletingFaqId === item.id || savingFaqId === item.id}
+                  onClick={async () => {
+                    setSavingFaqId(item.id)
+                    try {
+                      await upsertFaq(item); toast.success("FAQ обновлён")
+                    } catch {
+                      alert("Не удалось сохранить FAQ")
+                      toast.error("Не удалось сохранить FAQ")
+                    } finally {
+                      setSavingFaqId(null)
+                    }
+                  }}
+                >
+                  {savingFaqId === item.id ? "Сохранение..." : "Сохранить"}
+                </Button>
               </div>
             </div>
           ))}
           <div className="flex justify-end">
             <Button
+              disabled={addingFaq}
               onClick={async () => {
+                if (addingFaq) return
+                setAddingFaq(true)
                 try {
                   await upsertFaq({ question_ru: "Новый вопрос", question_en: "New question", answer_ru: "", answer_en: "", hidden: false, order_index: faq.length })
                   toast.success("FAQ добавлен")
                   void load()
                 } catch {
+                  alert("Не удалось добавить FAQ")
                   toast.error("Не удалось добавить FAQ")
+                } finally {
+                  setAddingFaq(false)
                 }
               }}
-            >Добавить FAQ</Button>
+            >{addingFaq ? "Добавление..." : "Добавить FAQ"}</Button>
           </div>
         </CardContent>
       </Card>
