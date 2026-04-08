@@ -52,6 +52,7 @@ import {
   Undo2,
   Upload,
   Loader2,
+  RotateCcw,
 } from "lucide-react"
 
 export type SimpleEditorProps = {
@@ -164,11 +165,57 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
     editor.chain().focus().setVideoEmbed({ src: videoSrc, poster: poster?.trim() || null }).run()
   }
 
+  const replaceSelectedVideoSrc = (src: string) => {
+    const selected = getSelectedVideoAttrs()
+    if (!selected) return false
+    const videoSrc = src.trim()
+    if (!videoSrc) return false
+    editor
+      .chain()
+      .focus()
+      .updateAttributes("videoEmbed", { src: videoSrc, poster: selected.poster ?? null })
+      .run()
+    return true
+  }
+
+  const setSelectedVideoPoster = (poster: string | null) => {
+    const selected = getSelectedVideoAttrs()
+    if (!selected) return false
+    editor
+      .chain()
+      .focus()
+      .updateAttributes("videoEmbed", { src: selected.src, poster: poster?.trim() || null })
+      .run()
+    return true
+  }
+
+  const resetSelectedVideoPreviewToPoster = () => {
+    const selected = getSelectedVideoAttrs()
+    if (!selected) return false
+    const selectedVideoEl = editor.view.dom.querySelector(
+      "figure.blog-video-embed.ProseMirror-selectednode video",
+    ) as HTMLVideoElement | null
+    if (!selectedVideoEl) return false
+    selectedVideoEl.pause()
+    selectedVideoEl.currentTime = 0
+    selectedVideoEl.load()
+    return true
+  }
+
   const setVideoByUrl = () => {
-    const url = typeof window !== "undefined" ? window.prompt("URL видео (mp4/webm или стрим-ссылка)", "https://") : null
+    const selected = getSelectedVideoAttrs()
+    const url = typeof window !== "undefined"
+      ? window.prompt("URL видео (mp4/webm или стрим-ссылка)", selected?.src ?? "https://")
+      : null
     if (!url || !url.trim()) return
+    if (selected) {
+      replaceSelectedVideoSrc(url)
+      toast.success("Видео обновлено")
+      return
+    }
     const poster = typeof window !== "undefined" ? window.prompt("URL постера (необязательно)", "") : null
     insertVideo(url, poster)
+    toast.success("Видео добавлено")
   }
 
   const uploadVideoFile = async (file: File | null) => {
@@ -194,8 +241,12 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         toast.error("Не удалось получить URL видео")
         return
       }
-      insertVideo(url)
-      toast.success("Видео загружено")
+      if (replaceSelectedVideoSrc(url)) {
+        toast.success("Видео обновлено")
+      } else {
+        insertVideo(url)
+        toast.success("Видео загружено")
+      }
     } catch {
       toast.error("Ошибка загрузки видео")
     } finally {
@@ -232,7 +283,7 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         toast.error("Выделите нужный видеоблок в редакторе")
         return
       }
-      editor.chain().focus().updateAttributes("videoEmbed", { src: selectedVideo.src, poster: posterUrl }).run()
+      setSelectedVideoPoster(posterUrl)
       toast.success("Постер загружен")
     } catch {
       toast.error("Ошибка загрузки постера")
@@ -445,6 +496,23 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           variant="ghost"
           size="icon"
           className="h-8 w-8"
+          title={selectedVideo ? "Вернуть отображение постера" : "Сначала выделите видео"}
+          disabled={!selectedVideo || mediaUploading}
+          onClick={() => {
+            if (!resetSelectedVideoPreviewToPoster()) {
+              toast.error("Не удалось вернуть отображение постера")
+              return
+            }
+            toast.success("Постер снова отображается")
+          }}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
           title="Загрузить видео (mp4/webm, до 100MB)"
           disabled={mediaUploading}
           onClick={() => videoInputRef.current?.click()}
@@ -471,6 +539,20 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
           variant="ghost"
           size="icon"
           className="h-8 w-8"
+          title={selectedVideo?.poster ? "Удалить постер у выбранного видео" : "У выбранного видео нет постера"}
+          disabled={mediaUploading || !selectedVideo?.poster}
+          onClick={() => {
+            if (!setSelectedVideoPoster(null)) return
+            toast.success("Постер удалён")
+          }}
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
           title="Удалить выбранное видео"
           disabled={!selectedVideo || mediaUploading}
           onClick={() => editor.chain().focus().unsetSelectedVideoEmbed().run()}
@@ -486,8 +568,8 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
       ) : null}
       <div className="border-b border-border bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
         {selectedVideo
-          ? `Выбрано видео: ${selectedVideo.src}${selectedVideo.poster ? " (постер установлен)" : " (без постера)"}`
-          : "Для установки постера сначала выделите видеоблок."}
+          ? `Выбрано видео: ${selectedVideo.src}${selectedVideo.poster ? ` (постер: ${selectedVideo.poster})` : " (без постера)"}`
+          : "Выделите видеоблок в редакторе, чтобы заменить видео/постер или удалить их."}
       </div>
       <EditorContent editor={editor} className="tiptap-simple-editor max-h-[min(480px,55vh)] overflow-y-auto" />
     </div>
