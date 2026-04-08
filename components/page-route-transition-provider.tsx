@@ -10,9 +10,9 @@ type PageRouteTransitionProviderProps = {
 
 type TransitionPhase = "idle" | "covering" | "navigating" | "revealing"
 
-const COVER_DELAY_MS = 420
-const REVEAL_DELAY_MS = 180
-const HIDE_DELAY_MS = 520
+const COVER_DELAY_MS = 400
+const POST_SCROLL_SETTLE_MS = 120
+const HIDE_DELAY_MS = 620
 
 function normalizePathname(pathname: string): string {
   if (!pathname) return "/"
@@ -22,6 +22,10 @@ function normalizePathname(pathname: string): string {
 
 function isAnimatedDestination(pathname: string): boolean {
   return pathname === "/affiliate" || pathname === "/blog"
+}
+
+function isAnimatedTransition(fromPathname: string, toPathname: string): boolean {
+  return fromPathname === "/" && isAnimatedDestination(toPathname)
 }
 
 export function PageRouteTransitionProvider({ children }: PageRouteTransitionProviderProps) {
@@ -55,7 +59,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
       if (url.origin !== window.location.origin) return
 
       const nextPathname = normalizePathname(url.pathname)
-      if (!isAnimatedDestination(nextPathname)) return
+      if (!isAnimatedTransition(normalizedPathname, nextPathname)) return
       if (nextPathname === normalizedPathname) return
 
       event.preventDefault()
@@ -85,7 +89,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
       if (url.origin !== window.location.origin) return
 
       const nextPathname = normalizePathname(url.pathname)
-      if (!isAnimatedDestination(nextPathname)) return
+      if (!isAnimatedTransition(normalizedPathname, nextPathname)) return
       if (nextPathname === normalizedPathname) return
 
       const nextHref = `${url.pathname}${url.search}${url.hash}`
@@ -110,11 +114,32 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     if (!targetPathname) return
     if (normalizedPathname !== targetPathname) return
 
-    const revealTimer = window.setTimeout(() => {
-      setPhase("revealing")
-    }, REVEAL_DELAY_MS)
+    let frameId = 0
+    let revealTimer = 0
+    let attempts = 0
+    const MAX_ATTEMPTS = 60
 
-    return () => window.clearTimeout(revealTimer)
+    const ensureTopAndReveal = () => {
+      attempts += 1
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" })
+      const atTop = Math.abs(window.scrollY) <= 1
+
+      if (atTop || attempts >= MAX_ATTEMPTS) {
+        revealTimer = window.setTimeout(() => {
+          setPhase("revealing")
+        }, POST_SCROLL_SETTLE_MS)
+        return
+      }
+
+      frameId = window.requestAnimationFrame(ensureTopAndReveal)
+    }
+
+    frameId = window.requestAnimationFrame(ensureTopAndReveal)
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+      window.clearTimeout(revealTimer)
+    }
   }, [phase, normalizedPathname, targetPathname])
 
   useEffect(() => {
@@ -129,14 +154,36 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     return () => window.clearTimeout(hideTimer)
   }, [phase])
 
+  useEffect(() => {
+    const shouldLock = phase !== "idle"
+    const htmlEl = document.documentElement
+    const bodyEl = document.body
+    const prevHtmlOverflow = htmlEl.style.overflow
+    const prevBodyOverflow = bodyEl.style.overflow
+    const prevBodyTouchAction = bodyEl.style.touchAction
+
+    if (shouldLock) {
+      htmlEl.style.overflow = "hidden"
+      bodyEl.style.overflow = "hidden"
+      bodyEl.style.touchAction = "none"
+    }
+
+    return () => {
+      htmlEl.style.overflow = prevHtmlOverflow
+      bodyEl.style.overflow = prevBodyOverflow
+      bodyEl.style.touchAction = prevBodyTouchAction
+    }
+  }, [phase])
+
   const overlayVisible = phase !== "idle"
   const overlayCovering = phase === "covering" || phase === "navigating"
+  const overlayRevealing = phase === "revealing"
 
   return (
     <>
       {children}
       <div
-        className={`route-transition-overlay ${overlayVisible ? "is-visible" : ""} ${overlayCovering ? "is-covering" : ""}`}
+        className={`route-transition-overlay ${overlayVisible ? "is-visible" : ""} ${overlayCovering ? "is-covering" : ""} ${overlayRevealing ? "is-revealing" : ""}`}
         aria-hidden={!overlayVisible}
       >
       </div>
