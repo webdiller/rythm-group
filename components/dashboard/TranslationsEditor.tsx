@@ -161,7 +161,7 @@ export function TranslationsEditor() {
     // Generate keys based on section structure
     const keysMap: Record<string, string[]> = {
       hero: ["title", "subtitle", "badge", "cta", "scroll"],
-      nav: ["about", "channels", "cases", "contacts", "order"],
+      nav: ["about", "channels", "cases", "affiliate", "blog", "contacts", "order"],
       about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
       stats: ["title", "subtitle", "items"],
       channels: ["title", "subtitle", "subscribers", "reach"],

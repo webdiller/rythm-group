@@ -26,7 +26,7 @@ export function Header({ sectionHrefPrefix = "", navOrder }: HeaderProps) {
     channels: { label: t.nav.channels, href: "#channels" },
     cases: { label: t.nav.cases, href: "#cases" },
     affiliate: { label: t.nav.affiliate, href: "/affiliate" },
-    blog: { label: t.blog.navLabel, href: "/blog" },
+    blog: { label: t.nav.blog ?? t.blog.navLabel, href: "/blog" },
     contacts: { label: t.nav.contacts, href: "#contact" },
   }
   const navItems = resolvedNavOrder.map((id) => navById[id])

@@ -96,7 +96,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
       event.preventDefault()
 
       setTargetPathname(nextPathname)
-      setTargetLabel(nextPathname === "/blog" ? t.blog.navLabel : t.nav.affiliate)
+      setTargetLabel(nextPathname === "/blog" ? (t.nav.blog ?? t.blog.navLabel) : t.nav.affiliate)
       setPhase("covering")
 
       window.setTimeout(() => {
@@ -107,7 +107,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
 
     document.addEventListener("click", onClickCapture, true)
     return () => document.removeEventListener("click", onClickCapture, true)
-  }, [phase, normalizedPathname, router, t.blog.navLabel, t.nav.affiliate])
+  }, [phase, normalizedPathname, router, t.blog.navLabel, t.nav.affiliate, t.nav.blog])
 
   useEffect(() => {
     if (phase !== "navigating") return
