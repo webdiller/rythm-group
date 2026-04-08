@@ -4,6 +4,7 @@ import { z } from "zod"
 import { ServiceContacts } from "@/lib/services/contacts"
 
 const ContactFormSchema = z.object({
+  scope: z.enum(["landing", "affiliate"]).optional().default("landing"),
   name: z.string().min(1),
   email: z.string().email(),
   company: z.string().optional().default(""),
@@ -25,8 +26,8 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data
 
-    const contacts = ServiceContacts.getAll().data
-    const rawEmails = contacts?.[0]?.email ?? ""
+    const contactRow = ServiceContacts.getByContext(data.scope) ?? ServiceContacts.getByContext("landing")
+    const rawEmails = contactRow?.email ?? ""
     const recipients = rawEmails
       .split(/[;,]/)
       .map((e) => e.trim())

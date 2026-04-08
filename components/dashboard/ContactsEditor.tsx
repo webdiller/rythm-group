@@ -10,11 +10,13 @@ import { toast } from "sonner"
 
 interface Contact {
   id: number
+  scope?: string | null
   email: string
   telegram_url: string
   telegram_username: string
   direct_contacts?: string | null
 }
+type ContactContext = "landing" | "affiliate"
 
 type DirectContactLink = {
   id: string
@@ -35,6 +37,7 @@ function isCustomIcon(icon: string | null | undefined): boolean {
 }
 
 export function ContactsEditor() {
+  const [context, setContext] = useState<ContactContext>("landing")
   const [contact, setContact] = useState<Contact>({
     id: 0,
     email: "",
@@ -48,17 +51,18 @@ export function ContactsEditor() {
   const [validationError, setValidationError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadContact()
-  }, [])
+    void loadContact(context)
+  }, [context])
 
-  const loadContact = async () => {
+  const loadContact = async (nextContext: ContactContext) => {
     setLoading(true)
+    setValidationError(null)
     try {
-      const response = await fetch("/api/content/contacts")
+      const response = await fetch(`/api/content/contacts?context=${nextContext}`)
       if (response.ok) {
-        const json = (await response.json()) as { data?: Contact[] }
+        const json = (await response.json()) as { data?: Contact | null }
         const loaded: Contact =
-          json.data?.[0] ?? { id: 0, email: "", telegram_url: "", telegram_username: "", direct_contacts: null }
+          json.data ?? { id: 0, email: "", telegram_url: "", telegram_username: "", direct_contacts: null }
 
         setContact(loaded)
         setInitialContact(loaded)
@@ -146,6 +150,7 @@ export function ContactsEditor() {
       const isCreate = !contact.id
       const payload: Contact = {
         ...contact,
+        scope: context,
         direct_contacts: directContacts.length
           ? JSON.stringify(
               directContacts.map(({ icon, ...rest }) => ({
@@ -167,7 +172,7 @@ export function ContactsEditor() {
       if (response.ok) {
         toast.success(isCreate ? "Contact created" : "Contacts updated")
         if (isCreate) {
-          loadContact()
+          void loadContact(context)
         } else {
           setInitialContact(payload)
         }
@@ -193,6 +198,21 @@ export function ContactsEditor() {
           <CardTitle>Edit Contact Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="contacts_context">Страница</Label>
+            <select
+              id="contacts_context"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value={context}
+              onChange={(e) => setContext(e.target.value === "affiliate" ? "affiliate" : "landing")}
+            >
+              <option value="landing">Главная страница</option>
+              <option value="affiliate">Affiliate</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Контакты для главной и страницы Affiliate редактируются отдельно.
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email(s)</Label>
             <Input

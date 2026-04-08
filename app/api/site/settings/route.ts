@@ -17,6 +17,8 @@ type SiteSettingsPayload = {
   partnersDisplayMode?: PartnersDisplayMode | null
   contactLayout?: ContactLayout | null
   contactFormHidden?: boolean | null
+  affiliate_contact_layout?: ContactLayout | null
+  affiliate_contact_form_hidden?: boolean | null
   blog_show_dates?: boolean | null
   affiliate_show_blog_block?: boolean | null
   affiliate_show_hero?: boolean | null
@@ -51,6 +53,9 @@ export async function PUT(request: NextRequest) {
     const currentContactLayout =
       (existing?.contactLayout as ContactLayout | null | undefined) ?? "formFirst"
     const currentContactFormHidden = existing?.contactFormHidden ?? false
+    const currentAffiliateContactLayout =
+      (existing?.affiliate_contact_layout as ContactLayout | null | undefined) ?? "formFirst"
+    const currentAffiliateContactFormHidden = existing?.affiliate_contact_form_hidden ?? false
     const currentBlogShowDates = existing?.blog_show_dates ?? true
     const currentAffiliateBlog = existing?.affiliate_show_blog_block ?? true
     const currentAffiliateHero = existing?.affiliate_show_hero ?? true
@@ -78,6 +83,11 @@ export async function PUT(request: NextRequest) {
         typeof body.contactFormHidden === "boolean"
           ? body.contactFormHidden
           : currentContactFormHidden,
+      affiliate_contact_layout: body.affiliate_contact_layout ?? currentAffiliateContactLayout,
+      affiliate_contact_form_hidden:
+        typeof body.affiliate_contact_form_hidden === "boolean"
+          ? body.affiliate_contact_form_hidden
+          : currentAffiliateContactFormHidden,
       blog_show_dates:
         typeof body.blog_show_dates === "boolean" ? body.blog_show_dates : currentBlogShowDates,
       affiliate_show_blog_block:
@@ -125,6 +135,8 @@ export async function PUT(request: NextRequest) {
         partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
         contactLayout: updateValues.contactLayout ?? "formFirst",
         contactFormHidden: updateValues.contactFormHidden ?? false,
+        affiliate_contact_layout: updateValues.affiliate_contact_layout ?? "formFirst",
+        affiliate_contact_form_hidden: updateValues.affiliate_contact_form_hidden ?? false,
         blog_show_dates: updateValues.blog_show_dates ?? true,
         affiliate_show_blog_block: updateValues.affiliate_show_blog_block ?? true,
         affiliate_show_hero: updateValues.affiliate_show_hero ?? true,

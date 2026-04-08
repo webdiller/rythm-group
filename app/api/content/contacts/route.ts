@@ -9,6 +9,11 @@ import {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
+  const context = searchParams.get("context")
+  if (context === "landing" || context === "affiliate") {
+    const row = ServiceContacts.getByContext(context)
+    return NextResponse.json({ data: row, meta: null })
+  }
   const id = searchParams.get("id")
   if (id) {
     const result = ServiceContacts.getOne({ id })

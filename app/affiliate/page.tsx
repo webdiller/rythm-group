@@ -14,8 +14,8 @@ type AffiliateSettings = {
   affiliate_show_steam?: boolean | null
   affiliate_show_faq?: boolean | null
   heroAnimationEnabled?: boolean | null
-  contactLayout?: "formFirst" | "contactsFirst" | null
-  contactFormHidden?: boolean | null
+  affiliate_contact_layout?: "formFirst" | "contactsFirst" | null
+  affiliate_contact_form_hidden?: boolean | null
 }
 
 type AffiliateHeroRecord = {
@@ -89,8 +89,8 @@ async function getAffiliateData(): Promise<{
 export default async function AffiliatePage() {
   const { partnerCategories, partners, settings, hero, formats, faq } = await getAffiliateData()
   const animationsEnabled = settings.heroAnimationEnabled ?? true
-  const contactLayout = settings.contactLayout ?? "formFirst"
-  const contactFormHidden = settings.contactFormHidden ?? false
+  const contactLayout = settings.affiliate_contact_layout ?? "formFirst"
+  const contactFormHidden = settings.affiliate_contact_form_hidden ?? false
   const showFormatsSection = settings.affiliate_show_formats ?? true
 
   return (
@@ -109,6 +109,7 @@ export default async function AffiliatePage() {
         animationsEnabled={animationsEnabled}
         layout={contactLayout}
         hideForm={contactFormHidden}
+        scope="affiliate"
       />
     </>
   )

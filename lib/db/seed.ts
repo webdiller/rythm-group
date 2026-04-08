@@ -120,6 +120,7 @@ export function runSeed(
   if (existingContacts.length === 0) {
     db.insert(tableContacts)
       .values({
+        scope: "landing",
         email: "contact@rythmgroup.com",
         telegram_url: "https://t.me/RythmGroup",
         telegram_username: "@RythmGroup",
@@ -168,6 +169,8 @@ export function runSeed(
         partnersDisplayMode: "logoAndName",
         contactLayout: "formFirst",
         contactFormHidden: false,
+        affiliate_contact_layout: "formFirst",
+        affiliate_contact_form_hidden: false,
         blog_show_dates: true,
         affiliate_show_blog_block: true,
         affiliate_show_hero: true,

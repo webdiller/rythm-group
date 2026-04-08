@@ -12,6 +12,7 @@ export const GetOneResponse = SharedDefaultResponse.extend({
 })
 
 export const CreateOneBody = allZodSchemas.tableContacts.insert.pick({
+  scope: true,
   email: true,
   telegram_url: true,
   telegram_username: true,
@@ -26,6 +27,7 @@ export const UpdateOneParams = SharedGetOneParams
 
 export const UpdateOneBody = z.object({
   id: z.number(),
+  scope: z.string().optional(),
   email: z.string().optional(),
   telegram_url: z.string().optional(),
   telegram_username: z.string().optional().nullable(),

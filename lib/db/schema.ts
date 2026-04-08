@@ -122,6 +122,7 @@ export const relationsPartners = relations(tablePartners, ({ one }) => ({
 // ---------------------------------------------------------------------------
 export const tableContacts = sqliteTable("contacts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  scope: text("scope", { enum: ["landing", "affiliate"] }).default("landing"),
   email: text("email").notNull(),
   telegram_url: text("telegram_url").notNull(),
   telegram_username: text("telegram_username"),
@@ -149,6 +150,10 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   contactLayout: text("contact_layout"),
   // If true, hide email form and show only direct contacts
   contactFormHidden: integer("contact_form_hidden", { mode: "boolean" }).default(false),
+  // How to layout contact section on /affiliate: "formFirst" or "contactsFirst"
+  affiliate_contact_layout: text("affiliate_contact_layout"),
+  // If true, hide email form in contact block on /affiliate
+  affiliate_contact_form_hidden: integer("affiliate_contact_form_hidden", { mode: "boolean" }).default(false),
   /** Публичный блог: показывать даты у карточек и в записи */
   blog_show_dates: integer("blog_show_dates", { mode: "boolean" }).default(true),
   /** Страница /affiliate: блок мини-блога (до 6 записей) */

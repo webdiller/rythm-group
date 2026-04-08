@@ -95,6 +95,8 @@ export function SiteSettingsEditor() {
   )
   const [contactLayout, setContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
   const [contactFormHidden, setContactFormHidden] = useState(false)
+  const [affiliateContactLayout, setAffiliateContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
+  const [affiliateContactFormHidden, setAffiliateContactFormHidden] = useState(false)
   const [blogShowDates, setBlogShowDates] = useState(true)
   const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
   const [headerNavOrder, setHeaderNavOrder] = useState<HeaderNavItemId[]>([...DEFAULT_HEADER_NAV_ORDER])
@@ -109,6 +111,8 @@ export function SiteSettingsEditor() {
     partnersDisplayMode: "name" | "logo" | "logoAndName"
     contactLayout: "formFirst" | "contactsFirst"
     contactFormHidden: boolean
+    affiliateContactLayout: "formFirst" | "contactsFirst"
+    affiliateContactFormHidden: boolean
     blogShowDates: boolean
     affiliateShowBlogBlock: boolean
     headerNavOrder: HeaderNavItemId[]
@@ -192,6 +196,8 @@ export function SiteSettingsEditor() {
             partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
             contactLayout?: "formFirst" | "contactsFirst" | null
             contactFormHidden?: boolean | null
+            affiliate_contact_layout?: "formFirst" | "contactsFirst" | null
+            affiliate_contact_form_hidden?: boolean | null
             blog_show_dates?: boolean | null
             affiliate_show_blog_block?: boolean | null
             headerNavOrder?: string | null
@@ -205,6 +211,8 @@ export function SiteSettingsEditor() {
         const partnersMode = data?.partnersDisplayMode ?? "logoAndName"
         const layoutMode = data?.contactLayout ?? "formFirst"
         const formHidden = data?.contactFormHidden ?? false
+        const affiliateLayoutMode = data?.affiliate_contact_layout ?? "formFirst"
+        const affiliateFormHidden = data?.affiliate_contact_form_hidden ?? false
         const blogDates = data?.blog_show_dates ?? true
         const affBlog = data?.affiliate_show_blog_block ?? true
         const parsedHeaderNavOrder = (() => {
@@ -226,6 +234,8 @@ export function SiteSettingsEditor() {
           partnersDisplayMode: partnersMode,
           contactLayout: layoutMode,
           contactFormHidden: formHidden,
+          affiliateContactLayout: affiliateLayoutMode,
+          affiliateContactFormHidden: affiliateFormHidden,
           blogShowDates: blogDates,
           affiliateShowBlogBlock: affBlog,
           headerNavOrder: parsedHeaderNavOrder,
@@ -233,6 +243,8 @@ export function SiteSettingsEditor() {
         setPartnersDisplayMode(partnersMode)
         setContactLayout(layoutMode)
         setContactFormHidden(formHidden)
+        setAffiliateContactLayout(affiliateLayoutMode)
+        setAffiliateContactFormHidden(affiliateFormHidden)
         setBlogShowDates(blogDates)
         setAffiliateShowBlogBlock(affBlog)
         setHeaderNavOrder(parsedHeaderNavOrder)
@@ -286,6 +298,8 @@ export function SiteSettingsEditor() {
           partnersDisplayMode,
           contactLayout,
           contactFormHidden,
+          affiliate_contact_layout: affiliateContactLayout,
+          affiliate_contact_form_hidden: affiliateContactFormHidden,
           blog_show_dates: blogShowDates,
           affiliate_show_blog_block: affiliateShowBlogBlock,
           headerNavOrder,
@@ -305,6 +319,8 @@ export function SiteSettingsEditor() {
         partnersDisplayMode,
         contactLayout,
         contactFormHidden,
+        affiliateContactLayout,
+        affiliateContactFormHidden,
         blogShowDates,
         affiliateShowBlogBlock,
         headerNavOrder,
@@ -1002,6 +1018,40 @@ export function SiteSettingsEditor() {
               id="contact_form_hidden"
               checked={contactFormHidden}
               onCheckedChange={setContactFormHidden}
+            />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Контакты (Affiliate)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="affiliate_contact_layout">Порядок блоков</Label>
+            <select
+              id="affiliate_contact_layout"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value={affiliateContactLayout}
+              onChange={(e) =>
+                setAffiliateContactLayout(e.target.value === "contactsFirst" ? "contactsFirst" : "formFirst")
+              }
+            >
+              <option value="formFirst">Сначала форма, затем соцсети</option>
+              <option value="contactsFirst">Сначала соцсети, затем форма</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="affiliate_contact_form_hidden">Скрыть форму заявки</Label>
+              <p className="text-xs text-muted-foreground">
+                Если включено, на странице Affiliate будут отображаться только ссылки на Telegram и другие соцсети.
+              </p>
+            </div>
+            <Switch
+              id="affiliate_contact_form_hidden"
+              checked={affiliateContactFormHidden}
+              onCheckedChange={setAffiliateContactFormHidden}
             />
           </div>
         </CardContent>

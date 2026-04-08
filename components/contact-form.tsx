@@ -20,15 +20,18 @@ type DirectContactLink = {
 }
 
 type ContactLayout = "formFirst" | "contactsFirst"
+type ContactScope = "landing" | "affiliate"
 
 export function ContactForm({
   animationsEnabled = true,
   layout = "formFirst",
   hideForm = false,
+  scope = "landing",
 }: {
   animationsEnabled?: boolean
   layout?: ContactLayout
   hideForm?: boolean
+  scope?: ContactScope
 }) {
   const { locale, t } = useLocale()
   const [formData, setFormData] = useState({
@@ -45,17 +48,49 @@ export function ContactForm({
   useEffect(() => {
     const loadDirectContacts = async () => {
       try {
-        const response = await fetch("/api/content/contacts")
+        const response = await fetch(`/api/content/contacts?context=${scope}`)
         if (!response.ok) return
         const json = (await response.json()) as {
-          data?: Array<{
-            email?: string | null
-            telegram_url?: string | null
-            telegram_username?: string | null
-            direct_contacts?: string | null
-          }>
+          data?:
+            | {
+                email?: string | null
+                telegram_url?: string | null
+                telegram_username?: string | null
+                direct_contacts?: string | null
+              }
+            | Array<{
+                email?: string | null
+                telegram_url?: string | null
+                telegram_username?: string | null
+                direct_contacts?: string | null
+              }>
+          }
+        let row =
+          (Array.isArray(json.data) ? json.data[0] : json.data) ?? null
+
+        // Backward/empty-state fallback: if affiliate context has no dedicated row yet,
+        // use landing contacts so the section is not empty until it is configured.
+        if (!row && scope === "affiliate") {
+          const fallbackRes = await fetch("/api/content/contacts?context=landing")
+          if (fallbackRes.ok) {
+            const fallbackJson = (await fallbackRes.json()) as {
+              data?:
+                | {
+                    email?: string | null
+                    telegram_url?: string | null
+                    telegram_username?: string | null
+                    direct_contacts?: string | null
+                  }
+                | Array<{
+                    email?: string | null
+                    telegram_url?: string | null
+                    telegram_username?: string | null
+                    direct_contacts?: string | null
+                  }>
+            }
+            row = (Array.isArray(fallbackJson.data) ? fallbackJson.data[0] : fallbackJson.data) ?? null
+          }
         }
-        const row = json.data?.[0]
         if (!row) return
 
         let links: DirectContactLink[] = []
@@ -151,7 +186,7 @@ export function ContactForm({
     }
 
     void loadDirectContacts()
-  }, [])
+  }, [scope])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -165,6 +200,7 @@ export function ContactForm({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          scope,
           name: formData.name,
           email: formData.email,
           company: formData.company,

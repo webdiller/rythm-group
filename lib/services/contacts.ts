@@ -15,6 +15,16 @@ import type {
 } from "@/lib/schemas/contacts"
 
 export class ServiceContacts {
+  private static getByContextInternal(context: "landing" | "affiliate") {
+    const db = getDb()
+    const scoped = db.select().from(tableContacts).where(eq(tableContacts.scope, context)).get()
+    if (scoped) return scoped
+    // Backward compatibility for old DB rows without scope
+    const rows = db.select().from(tableContacts).orderBy(tableContacts.id).all()
+    if (context === "landing") return rows[0] ?? null
+    return rows[1] ?? null
+  }
+
   static getAll(): GetAllResponse {
     const db = getDb()
     const rows = db.select().from(tableContacts).all()
@@ -27,6 +37,10 @@ export class ServiceContacts {
     if (Number.isNaN(id)) return { data: null, meta: null }
     const row = db.select().from(tableContacts).where(eq(tableContacts.id, id)).get()
     return { data: row ?? null, meta: null }
+  }
+
+  static getByContext(context: "landing" | "affiliate") {
+    return this.getByContextInternal(context)
   }
 
   static createOne(body: CreateOneBody): CreateOneResponse {
@@ -42,6 +56,7 @@ export class ServiceContacts {
     if (Number.isNaN(id)) throw new Error("Invalid id")
     const set: Record<string, unknown> = {}
     if (body.email !== undefined) set.email = body.email
+    if (body.scope !== undefined) set.scope = body.scope
     if (body.telegram_url !== undefined) set.telegram_url = body.telegram_url
     if (body.telegram_username !== undefined) set.telegram_username = body.telegram_username
     if (body.direct_contacts !== undefined) set.direct_contacts = body.direct_contacts
