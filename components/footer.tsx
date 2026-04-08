@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
+import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { resolveNavHref } from "@/lib/nav-hrefs"
 import imgLogo from "@/public/logo.jpg"
 
@@ -23,14 +24,26 @@ type FooterProps = {
 export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
   const { t } = useLocale()
 
-  const navItems = [
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.channels, href: "#channels" },
-    { label: t.nav.cases, href: "#cases" },
-    { label: t.nav.affiliate, href: "/affiliate" },
-    { label: t.blog.navLabel, href: "/blog" },
-    { label: t.nav.contacts, href: "#contact" },
-  ]
+  const navItemById: Record<HeaderNavItemId, { label: string; href: string }> = {
+    about: { label: t.nav.about, href: "#about" },
+    channels: { label: t.nav.channels, href: "#channels" },
+    cases: { label: t.nav.cases, href: "#cases" },
+    affiliate: { label: t.nav.affiliate, href: "/affiliate" },
+    blog: { label: t.blog.navLabel, href: "/blog" },
+    contacts: { label: t.nav.contacts, href: "#contact" },
+  }
+
+  const navOrder = (() => {
+    try {
+      return normalizeHeaderNavOrder(
+        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+      )
+    } catch {
+      return normalizeHeaderNavOrder(undefined)
+    }
+  })()
+
+  const navItems = navOrder.map((id) => navItemById[id])
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
