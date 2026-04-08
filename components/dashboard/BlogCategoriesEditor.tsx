@@ -119,6 +119,8 @@ export function BlogCategoriesEditor() {
     order_index: 0,
   })
   const [savingOrder, setSavingOrder] = useState(false)
+  const [savingForm, setSavingForm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -198,6 +200,7 @@ export function BlogCategoriesEditor() {
         ),
       )
       if (results.some((r) => !r.ok)) {
+        alert("Не удалось сохранить порядок категорий")
         toast.error("Не удалось сохранить порядок")
         void load()
         return
@@ -227,6 +230,8 @@ export function BlogCategoriesEditor() {
 
   const save = async () => {
     const token = getToken()
+    if (savingForm) return
+    setSavingForm(true)
     try {
       if (editing) {
         const res = await fetch(`/api/content/blog/categories/${editing.id}`, {
@@ -244,6 +249,7 @@ export function BlogCategoriesEditor() {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
+          alert(err.error ?? "Не удалось сохранить категорию")
           toast.error(err.error ?? "Не удалось сохранить")
           return
         }
@@ -264,6 +270,7 @@ export function BlogCategoriesEditor() {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
+          alert(err.error ?? "Не удалось создать категорию")
           toast.error(err.error ?? "Не удалось создать")
           return
         }
@@ -272,12 +279,17 @@ export function BlogCategoriesEditor() {
       setDialogOpen(false)
       void load()
     } catch {
+      alert("Ошибка сети при сохранении категории")
       toast.error("Ошибка сети")
+    } finally {
+      setSavingForm(false)
     }
   }
 
   const confirmDelete = async () => {
     if (deleteId == null) return
+    if (deleting) return
+    setDeleting(true)
     const token = getToken()
     try {
       const res = await fetch(`/api/content/blog/categories/${deleteId}?confirm=true`, {
@@ -285,6 +297,7 @@ export function BlogCategoriesEditor() {
         headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       if (!res.ok) {
+        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить")
         return
       }
@@ -292,7 +305,10 @@ export function BlogCategoriesEditor() {
       setDeleteId(null)
       void load()
     } catch {
+      alert("Ошибка сети при удалении категории")
       toast.error("Ошибка сети")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -348,9 +364,26 @@ export function BlogCategoriesEditor() {
                   value={form.order_index}
                   onChange={(e) => setForm((f) => ({ ...f, order_index: Number(e.target.value) || 0 }))}
                 />
-                <p className="text-xs text-muted-foreground">Или перетащите строки в таблице — проще.</p>
               </div>
-              <Button onClick={() => void save()}>Сохранить</Button>
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() =>
+                    setForm((f) => ({
+                      ...f,
+                      slug: "game-updates",
+                      name_ru: "Обновления игр",
+                      name_en: "Game updates",
+                    }))
+                  }
+                >
+                  Пример заполнения
+                </Button>
+                <Button onClick={() => void save()} disabled={savingForm}>
+                  {savingForm ? "Сохранение..." : "Сохранить"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -409,7 +442,9 @@ export function BlogCategoriesEditor() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Отмена</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void confirmDelete()}>Удалить</AlertDialogAction>
+              <AlertDialogAction onClick={() => void confirmDelete()} disabled={deleting}>
+                {deleting ? "Удаление..." : "Удалить"}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

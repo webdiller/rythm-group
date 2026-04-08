@@ -22,6 +22,7 @@ type AffiliateHero = {
 
 export function AffiliateHeroEditor() {
   const [hero, setHero] = useState<AffiliateHero | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -41,7 +42,8 @@ export function AffiliateHeroEditor() {
   }, [])
 
   const save = async () => {
-    if (!hero) return
+    if (!hero || saving) return
+    setSaving(true)
     try {
       const token = getToken()
       const res = await fetch("/api/content/affiliate-hero", {
@@ -53,12 +55,16 @@ export function AffiliateHeroEditor() {
         body: JSON.stringify(hero),
       })
       if (!res.ok) {
+        alert("Не удалось сохранить Affiliate Hero")
         toast.error("Не удалось сохранить Affiliate Hero")
         return
       }
       toast.success("Affiliate Hero сохранён")
     } catch {
+      alert("Не удалось сохранить Affiliate Hero")
       toast.error("Не удалось сохранить Affiliate Hero")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -111,7 +117,9 @@ export function AffiliateHeroEditor() {
               <Input id="aff-hero-cta-secondary-en" value={hero.cta_secondary_en} onChange={(e) => setHero({ ...hero, cta_secondary_en: e.target.value })} placeholder="CTA secondary EN" />
             </div>
             <div className="md:col-span-2 flex justify-end">
-              <Button onClick={save}>Сохранить</Button>
+              <Button onClick={save} disabled={saving}>
+                {saving ? "Сохранение..." : "Сохранить"}
+              </Button>
             </div>
           </>
         ) : (

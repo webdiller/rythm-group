@@ -52,11 +52,15 @@ function SortableFaqCard({
   onChange,
   onDelete,
   onSave,
+  isSaving,
+  isDeleting,
 }: {
   item: AffiliateFaq
   onChange: (id: number, patch: Partial<AffiliateFaq>) => void
   onDelete: (id: number) => Promise<void>
   onSave: (item: AffiliateFaq) => Promise<void>
+  isSaving: boolean
+  isDeleting: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(item.id),
@@ -136,10 +140,12 @@ function SortableFaqCard({
         />
       </div>
       <div className="md:col-span-2 flex justify-end gap-2">
-        <Button variant="outline" onClick={() => void onDelete(item.id)}>
-          Удалить
+        <Button variant="outline" onClick={() => void onDelete(item.id)} disabled={isSaving || isDeleting}>
+          {isDeleting ? "Удаление..." : "Удалить"}
         </Button>
-        <Button onClick={() => void onSave(item)}>Сохранить</Button>
+        <Button onClick={() => void onSave(item)} disabled={isSaving || isDeleting}>
+          {isSaving ? "Сохранение..." : "Сохранить"}
+        </Button>
       </div>
     </div>
   )
@@ -148,6 +154,9 @@ function SortableFaqCard({
 export function AffiliateFaqEditor() {
   const [items, setItems] = useState<AffiliateFaq[]>([])
   const [savingOrder, setSavingOrder] = useState(false)
+  const [savingItemId, setSavingItemId] = useState<number | null>(null)
+  const [deletingItemId, setDeletingItemId] = useState<number | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -232,25 +241,38 @@ export function AffiliateFaqEditor() {
   }
 
   const deleteItem = async (id: number) => {
+    setDeletingItemId(id)
     const token = getToken()
-    const res = await fetch(`/api/content/affiliate-faq?id=${id}`, {
-      method: "DELETE",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
-    if (!res.ok) {
+    try {
+      const res = await fetch(`/api/content/affiliate-faq?id=${id}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+      if (!res.ok) {
+        alert("Не удалось удалить FAQ")
+        toast.error("Не удалось удалить FAQ")
+        return
+      }
+      toast.success("FAQ удалён")
+      void load()
+    } catch {
+      alert("Не удалось удалить FAQ")
       toast.error("Не удалось удалить FAQ")
-      return
+    } finally {
+      setDeletingItemId(null)
     }
-    toast.success("FAQ удалён")
-    void load()
   }
 
   const saveItem = async (item: AffiliateFaq) => {
+    setSavingItemId(item.id)
     try {
       await saveOne(item)
       toast.success("FAQ сохранён")
     } catch {
+      alert("Не удалось сохранить FAQ")
       toast.error("Не удалось сохранить FAQ")
+    } finally {
+      setSavingItemId(null)
     }
   }
 
@@ -273,6 +295,8 @@ export function AffiliateFaqEditor() {
                   onChange={updateItem}
                   onDelete={deleteItem}
                   onSave={saveItem}
+                  isSaving={savingItemId === item.id}
+                  isDeleting={deletingItemId === item.id}
                 />
               ))}
             </div>
@@ -281,7 +305,10 @@ export function AffiliateFaqEditor() {
         {savingOrder ? <p className="text-xs text-muted-foreground">Сохранение порядка…</p> : null}
         <div className="flex justify-end">
           <Button
+            disabled={creating}
             onClick={async () => {
+              if (creating) return
+              setCreating(true)
               try {
                 await saveOne({
                   question_ru: "Новый вопрос",
@@ -294,11 +321,14 @@ export function AffiliateFaqEditor() {
                 toast.success("FAQ добавлен")
                 void load()
               } catch {
+                alert("Не удалось добавить FAQ")
                 toast.error("Не удалось добавить FAQ")
+              } finally {
+                setCreating(false)
               }
             }}
           >
-            Добавить FAQ
+            {creating ? "Добавление..." : "Добавить FAQ"}
           </Button>
         </div>
       </CardContent>

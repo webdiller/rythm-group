@@ -39,6 +39,8 @@ export function BlogPostsEditor() {
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
+  const [processingPostId, setProcessingPostId] = useState<number | null>(null)
+  const [processingAction, setProcessingAction] = useState<"delete" | "unpublish" | null>(null)
   const [filterCategoryId, setFilterCategoryId] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
@@ -87,7 +89,10 @@ export function BlogPostsEditor() {
   }, [loadPosts])
 
   const handleDelete = async (id: number) => {
+    if (processingPostId != null) return
     if (!confirm("Пометить запись как удалённую (soft delete)?")) return
+    setProcessingPostId(id)
+    setProcessingAction("delete")
     const token = getToken()
     try {
       const res = await fetch(`/api/content/blog/posts/${id}`, {
@@ -95,17 +100,25 @@ export function BlogPostsEditor() {
         headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       if (!res.ok) {
+        alert("Не удалось удалить запись блога")
         toast.error("Не удалось удалить")
         return
       }
       toast.success("Запись скрыта")
       void loadPosts()
     } catch {
+      alert("Ошибка сети при удалении записи блога")
       toast.error("Ошибка сети")
+    } finally {
+      setProcessingPostId(null)
+      setProcessingAction(null)
     }
   }
 
   const handleUnpublish = async (id: number) => {
+    if (processingPostId != null) return
+    setProcessingPostId(id)
+    setProcessingAction("unpublish")
     const token = getToken()
     try {
       const res = await fetch(`/api/content/blog/posts/${id}`, {
@@ -118,13 +131,18 @@ export function BlogPostsEditor() {
         cache: "no-store",
       })
       if (!res.ok) {
+        alert("Не удалось снять запись с публикации")
         toast.error("Не удалось снять с публикации")
         return
       }
       toast.success("Снято с публикации")
       void loadPosts()
     } catch {
+      alert("Ошибка сети при изменении статуса записи")
       toast.error("Ошибка сети")
+    } finally {
+      setProcessingPostId(null)
+      setProcessingAction(null)
     }
   }
 
@@ -215,11 +233,22 @@ export function BlogPostsEditor() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         {p.status === "published" ? (
-                          <Button variant="outline" size="sm" onClick={() => void handleUnpublish(p.id)}>
-                            Снять
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void handleUnpublish(p.id)}
+                            disabled={processingPostId === p.id}
+                          >
+                            {processingPostId === p.id && processingAction === "unpublish" ? "Снятие..." : "Снять"}
                           </Button>
                         ) : null}
-                        <Button variant="ghost" size="icon" onClick={() => void handleDelete(p.id)} aria-label="Delete">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void handleDelete(p.id)}
+                          aria-label="Delete"
+                          disabled={processingPostId === p.id}
+                        >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>

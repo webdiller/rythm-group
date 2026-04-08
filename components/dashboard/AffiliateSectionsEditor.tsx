@@ -23,6 +23,7 @@ export function AffiliateSectionsEditor() {
     affiliate_show_steam: true,
     affiliate_show_faq: true,
   })
+  const [saving, setSaving] = useState(false)
 
   const getToken = () =>
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
@@ -51,6 +52,8 @@ export function AffiliateSectionsEditor() {
   }, [])
 
   const save = async () => {
+    if (saving) return
+    setSaving(true)
     try {
       const token = getToken()
       const res = await fetch("/api/site/settings", {
@@ -62,12 +65,16 @@ export function AffiliateSectionsEditor() {
         body: JSON.stringify(sections),
       })
       if (!res.ok) {
+        alert("Не удалось сохранить настройки секций Affiliate")
         toast.error("Не удалось сохранить настройки секций Affiliate")
         return
       }
       toast.success("Настройки секций Affiliate сохранены")
     } catch {
+      alert("Не удалось сохранить настройки секций Affiliate")
       toast.error("Не удалось сохранить настройки секций Affiliate")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -95,7 +102,9 @@ export function AffiliateSectionsEditor() {
           </div>
         ))}
         <div className="flex justify-end">
-          <Button onClick={save}>Сохранить</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Сохранение..." : "Сохранить"}
+          </Button>
         </div>
       </CardContent>
     </Card>
