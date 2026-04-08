@@ -165,6 +165,7 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   affiliate_show_cases: integer("affiliate_show_cases", { mode: "boolean" }).default(true),
   affiliate_show_steam: integer("affiliate_show_steam", { mode: "boolean" }).default(true),
   affiliate_show_faq: integer("affiliate_show_faq", { mode: "boolean" }).default(true),
+  affiliate_show_contacts: integer("affiliate_show_contacts", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

@@ -13,6 +13,7 @@ type AffiliateSections = {
   affiliate_show_cases: boolean
   affiliate_show_steam: boolean
   affiliate_show_faq: boolean
+  affiliate_show_contacts: boolean
 }
 
 export function AffiliateSectionsEditor() {
@@ -22,6 +23,7 @@ export function AffiliateSectionsEditor() {
     affiliate_show_cases: true,
     affiliate_show_steam: true,
     affiliate_show_faq: true,
+    affiliate_show_contacts: true,
   })
   const [saving, setSaving] = useState(false)
 
@@ -43,6 +45,7 @@ export function AffiliateSectionsEditor() {
           affiliate_show_cases: data.affiliate_show_cases ?? true,
           affiliate_show_steam: data.affiliate_show_steam ?? true,
           affiliate_show_faq: data.affiliate_show_faq ?? true,
+          affiliate_show_contacts: data.affiliate_show_contacts ?? true,
         })
       } catch {
         toast.error("Не удалось загрузить настройки секций Affiliate")
@@ -88,6 +91,7 @@ export function AffiliateSectionsEditor() {
           ["affiliate_show_cases", "Кейсы"],
           ["affiliate_show_steam", "Steam блок"],
           ["affiliate_show_faq", "FAQ"],
+          ["affiliate_show_contacts", "Контакты"],
         ].map(([key, label]) => (
           <div key={key} className="flex items-center justify-between">
             <Label>{label}</Label>

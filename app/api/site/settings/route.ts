@@ -26,6 +26,7 @@ type SiteSettingsPayload = {
   affiliate_show_cases?: boolean | null
   affiliate_show_steam?: boolean | null
   affiliate_show_faq?: boolean | null
+  affiliate_show_contacts?: boolean | null
   headerNavOrder?: string[] | null
 }
 
@@ -63,6 +64,7 @@ export async function PUT(request: NextRequest) {
     const currentAffiliateCases = existing?.affiliate_show_cases ?? true
     const currentAffiliateSteam = existing?.affiliate_show_steam ?? true
     const currentAffiliateFaq = existing?.affiliate_show_faq ?? true
+    const currentAffiliateContacts = existing?.affiliate_show_contacts ?? true
     const currentHeaderNavOrder = (() => {
       try {
         if (!existing?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
@@ -106,6 +108,10 @@ export async function PUT(request: NextRequest) {
         typeof body.affiliate_show_steam === "boolean" ? body.affiliate_show_steam : currentAffiliateSteam,
       affiliate_show_faq:
         typeof body.affiliate_show_faq === "boolean" ? body.affiliate_show_faq : currentAffiliateFaq,
+      affiliate_show_contacts:
+        typeof body.affiliate_show_contacts === "boolean"
+          ? body.affiliate_show_contacts
+          : currentAffiliateContacts,
       headerNavOrder: JSON.stringify(
         Array.isArray(body.headerNavOrder)
           ? normalizeHeaderNavOrder(body.headerNavOrder)
@@ -144,6 +150,7 @@ export async function PUT(request: NextRequest) {
         affiliate_show_cases: updateValues.affiliate_show_cases ?? true,
         affiliate_show_steam: updateValues.affiliate_show_steam ?? true,
         affiliate_show_faq: updateValues.affiliate_show_faq ?? true,
+        affiliate_show_contacts: updateValues.affiliate_show_contacts ?? true,
       })
       .returning()
       .all()

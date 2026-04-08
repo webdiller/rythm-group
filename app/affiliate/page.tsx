@@ -13,6 +13,7 @@ type AffiliateSettings = {
   affiliate_show_cases?: boolean | null
   affiliate_show_steam?: boolean | null
   affiliate_show_faq?: boolean | null
+  affiliate_show_contacts?: boolean | null
   heroAnimationEnabled?: boolean | null
   affiliate_contact_layout?: "formFirst" | "contactsFirst" | null
   affiliate_contact_form_hidden?: boolean | null
@@ -105,12 +106,14 @@ export default async function AffiliatePage() {
       {settings.affiliate_show_cases ?? true ? <AffiliateCasesGrid categories={partnerCategories} partners={partners} /> : null}
       {settings.affiliate_show_steam ?? true ? <AffiliateSteamSection partners={partners} /> : null}
       {settings.affiliate_show_faq ?? true ? <AffiliateFaq items={faq} /> : null}
-      <ContactForm
-        animationsEnabled={animationsEnabled}
-        layout={contactLayout}
-        hideForm={contactFormHidden}
-        scope="affiliate"
-      />
+      {settings.affiliate_show_contacts ?? true ? (
+        <ContactForm
+          animationsEnabled={animationsEnabled}
+          layout={contactLayout}
+          hideForm={contactFormHidden}
+          scope="affiliate"
+        />
+      ) : null}
     </>
   )
 }
