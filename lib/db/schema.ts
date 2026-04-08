@@ -128,6 +128,8 @@ export const tableContacts = sqliteTable("contacts", {
   telegram_username: text("telegram_username"),
   // JSON-encoded array of direct contact links (social networks, etc.)
   direct_contacts: text("direct_contacts"),
+  // JSON-encoded config for mini stats in contact section
+  mini_stats: text("mini_stats"),
 })
 
 export const relationsContacts = relations(tableContacts, () => ({}))

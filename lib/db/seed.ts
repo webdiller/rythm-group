@@ -140,6 +140,10 @@ export function runSeed(
             type: "email",
           },
         ]),
+        mini_stats: JSON.stringify([
+          { id: "fastResponse", value: "24/7", label_ru: "Быстрый ответ", label_en: "Fast response" },
+          { id: "support", value: "< 1h", label_ru: "Поддержка", label_en: "Support" },
+        ]),
       })
       .run()
   }

@@ -15,6 +15,7 @@ interface Contact {
   telegram_url: string
   telegram_username: string
   direct_contacts?: string | null
+  mini_stats?: string | null
 }
 type ContactContext = "landing" | "affiliate"
 
@@ -27,6 +28,13 @@ type DirectContactLink = {
   label_en: string
   description_ru?: string
   description_en?: string
+}
+
+type MiniStatItem = {
+  id: "fastResponse" | "support"
+  value: string
+  label_ru: string
+  label_en: string
 }
 
 const MAX_ICON_SIZE_BYTES = 500 * 1024
@@ -46,6 +54,10 @@ export function ContactsEditor() {
   })
   const [initialContact, setInitialContact] = useState<Contact | null>(null)
   const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
+  const [miniStats, setMiniStats] = useState<MiniStatItem[]>([
+    { id: "fastResponse", value: "", label_ru: "", label_en: "" },
+    { id: "support", value: "", label_ru: "", label_en: "" },
+  ])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
@@ -125,6 +137,48 @@ export function ContactsEditor() {
         } else {
           setDirectContacts([])
         }
+
+        if (loaded.mini_stats) {
+          try {
+            const parsed = JSON.parse(loaded.mini_stats) as unknown
+            if (Array.isArray(parsed)) {
+              const parsedStats = (parsed as unknown[])
+                .map((item): MiniStatItem | null => {
+                  if (!item || typeof item !== "object") return null
+                  const raw = item as Record<string, unknown>
+                  const id = raw.id === "support" ? "support" : raw.id === "fastResponse" ? "fastResponse" : null
+                  if (!id) return null
+                  return {
+                    id,
+                    value: typeof raw.value === "string" ? raw.value : "",
+                    label_ru: typeof raw.label_ru === "string" ? raw.label_ru : "",
+                    label_en: typeof raw.label_en === "string" ? raw.label_en : "",
+                  }
+                })
+                .filter((v): v is MiniStatItem => v !== null)
+              const byId = new Map(parsedStats.map((s) => [s.id, s]))
+              setMiniStats([
+                byId.get("fastResponse") ?? { id: "fastResponse", value: "", label_ru: "", label_en: "" },
+                byId.get("support") ?? { id: "support", value: "", label_ru: "", label_en: "" },
+              ])
+            } else {
+              setMiniStats([
+                { id: "fastResponse", value: "", label_ru: "", label_en: "" },
+                { id: "support", value: "", label_ru: "", label_en: "" },
+              ])
+            }
+          } catch {
+            setMiniStats([
+              { id: "fastResponse", value: "", label_ru: "", label_en: "" },
+              { id: "support", value: "", label_ru: "", label_en: "" },
+            ])
+          }
+        } else {
+          setMiniStats([
+            { id: "fastResponse", value: "", label_ru: "", label_en: "" },
+            { id: "support", value: "", label_ru: "", label_en: "" },
+          ])
+        }
       }
     } catch (error) {
       toast.error("Failed to load contacts")
@@ -159,6 +213,7 @@ export function ContactsEditor() {
               }))
             )
           : null,
+        mini_stats: JSON.stringify(miniStats),
       }
       const response = await fetch("/api/content/contacts", {
         method: isCreate ? "POST" : "PUT",
@@ -477,6 +532,49 @@ export function ContactsEditor() {
               </Button>
             </div>
           </div>
+          <div className="space-y-3">
+            <Label>Mini stats (контактный блок)</Label>
+            {miniStats.map((stat, index) => (
+              <div key={stat.id} className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 md:grid-cols-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Value</Label>
+                  <Input
+                    value={stat.value}
+                    onChange={(e) => {
+                      const next = [...miniStats]
+                      next[index] = { ...next[index], value: e.target.value }
+                      setMiniStats(next)
+                    }}
+                    placeholder={stat.id === "fastResponse" ? "24/7" : "< 1h"}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Label (RU)</Label>
+                  <Input
+                    value={stat.label_ru}
+                    onChange={(e) => {
+                      const next = [...miniStats]
+                      next[index] = { ...next[index], label_ru: e.target.value }
+                      setMiniStats(next)
+                    }}
+                    placeholder={stat.id === "fastResponse" ? "Быстрый ответ" : "Поддержка"}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Label (EN)</Label>
+                  <Input
+                    value={stat.label_en}
+                    onChange={(e) => {
+                      const next = [...miniStats]
+                      next[index] = { ...next[index], label_en: e.target.value }
+                      setMiniStats(next)
+                    }}
+                    placeholder={stat.id === "fastResponse" ? "Fast response" : "Support"}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
           <div className="flex flex-col items-end gap-2">
             {validationError && (
               <p className="w-full text-sm text-destructive" role="alert">
@@ -487,7 +585,10 @@ export function ContactsEditor() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => initialContact && setContact(initialContact)}
+                onClick={() => {
+                  if (!initialContact) return
+                  void loadContact(context)
+                }}
                 disabled={!initialContact}>
                 Отменить
               </Button>

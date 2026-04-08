@@ -21,6 +21,12 @@ type DirectContactLink = {
 
 type ContactLayout = "formFirst" | "contactsFirst"
 type ContactScope = "landing" | "affiliate"
+type MiniStatItem = {
+  id: "fastResponse" | "support"
+  value: string
+  label_ru: string
+  label_en: string
+}
 
 export function ContactForm({
   animationsEnabled = true,
@@ -44,6 +50,20 @@ export function ContactForm({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
+  const [miniStats, setMiniStats] = useState<MiniStatItem[]>([
+    {
+      id: "fastResponse",
+      value: fallbackTranslations.ru.contact.miniStats.fastResponseValue,
+      label_ru: fallbackTranslations.ru.contact.miniStats.fastResponseLabel,
+      label_en: fallbackTranslations.en.contact.miniStats.fastResponseLabel,
+    },
+    {
+      id: "support",
+      value: fallbackTranslations.ru.contact.miniStats.supportValue,
+      label_ru: fallbackTranslations.ru.contact.miniStats.supportLabel,
+      label_en: fallbackTranslations.en.contact.miniStats.supportLabel,
+    },
+  ])
 
   useEffect(() => {
     const loadDirectContacts = async () => {
@@ -57,12 +77,14 @@ export function ContactForm({
                 telegram_url?: string | null
                 telegram_username?: string | null
                 direct_contacts?: string | null
+                mini_stats?: string | null
               }
             | Array<{
                 email?: string | null
                 telegram_url?: string | null
                 telegram_username?: string | null
                 direct_contacts?: string | null
+                mini_stats?: string | null
               }>
           }
         let row =
@@ -80,12 +102,14 @@ export function ContactForm({
                     telegram_url?: string | null
                     telegram_username?: string | null
                     direct_contacts?: string | null
+                    mini_stats?: string | null
                   }
                 | Array<{
                     email?: string | null
                     telegram_url?: string | null
                     telegram_username?: string | null
                     direct_contacts?: string | null
+                    mini_stats?: string | null
                   }>
             }
             row = (Array.isArray(fallbackJson.data) ? fallbackJson.data[0] : fallbackJson.data) ?? null
@@ -180,6 +204,35 @@ export function ContactForm({
         }
 
         setDirectContacts(links)
+
+        if (row.mini_stats) {
+          try {
+            const parsed = JSON.parse(row.mini_stats) as unknown
+            if (Array.isArray(parsed)) {
+              const parsedStats = (parsed as unknown[])
+                .map((item): MiniStatItem | null => {
+                  if (!item || typeof item !== "object") return null
+                  const raw = item as Record<string, unknown>
+                  const id = raw.id === "support" ? "support" : raw.id === "fastResponse" ? "fastResponse" : null
+                  if (!id) return null
+                  return {
+                    id,
+                    value: typeof raw.value === "string" ? raw.value : "",
+                    label_ru: typeof raw.label_ru === "string" ? raw.label_ru : "",
+                    label_en: typeof raw.label_en === "string" ? raw.label_en : "",
+                  }
+                })
+                .filter((v): v is MiniStatItem => v !== null)
+              const byId = new Map(parsedStats.map((s) => [s.id, s]))
+              setMiniStats([
+                byId.get("fastResponse") ?? miniStats[0],
+                byId.get("support") ?? miniStats[1],
+              ])
+            }
+          } catch {
+            // ignore and keep i18n defaults
+          }
+        }
       } catch {
         // silent failure, we still have the form as main CTA
       }
@@ -458,20 +511,24 @@ export function ContactForm({
                 <ScrollStagger index={0} delayStep={100} disabled={!animationsEnabled}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
                     <span className="block text-2xl font-bold text-primary text-glow">
-                      {t.contact.miniStats.fastResponseValue}
+                      {miniStats[0].value || t.contact.miniStats.fastResponseValue}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {t.contact.miniStats.fastResponseLabel}
+                      {locale === "ru"
+                        ? (miniStats[0].label_ru || t.contact.miniStats.fastResponseLabel)
+                        : (miniStats[0].label_en || t.contact.miniStats.fastResponseLabel)}
                     </span>
                   </div>
                 </ScrollStagger>
                 <ScrollStagger index={1} delayStep={100} disabled={!animationsEnabled}>
                   <div className="rounded-xl border border-border bg-card p-5 text-center">
                     <span className="block text-2xl font-bold text-primary text-glow">
-                      {t.contact.miniStats.supportValue}
+                      {miniStats[1].value || t.contact.miniStats.supportValue}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {t.contact.miniStats.supportLabel}
+                      {locale === "ru"
+                        ? (miniStats[1].label_ru || t.contact.miniStats.supportLabel)
+                        : (miniStats[1].label_en || t.contact.miniStats.supportLabel)}
                     </span>
                   </div>
                 </ScrollStagger>
