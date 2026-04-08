@@ -4,6 +4,7 @@ import { useLocale } from "@/lib/locale-context"
 import type { BlogCategory } from "@/lib/blog/types"
 import { BlogPageBreadcrumbs } from "@/components/blog/BlogPageBreadcrumbs"
 import { StaggerItem } from "@/components/ui/stagger-item"
+import { useEffect, useState } from "react"
 
 type BlogListingHeaderProps = {
   category?: BlogCategory | null
@@ -11,18 +12,40 @@ type BlogListingHeaderProps = {
 
 export function BlogListingHeader({ category }: BlogListingHeaderProps) {
   const { locale, t } = useLocale()
+  const [shouldAnimate, setShouldAnimate] = useState(false)
+
+  useEffect(() => {
+    try {
+      const marker = window.sessionStorage.getItem("blog-listing-header-animate-next")
+      if (marker === "1") {
+        setShouldAnimate(true)
+        window.sessionStorage.removeItem("blog-listing-header-animate-next")
+        return
+      }
+    } catch {
+      // ignore storage failures
+    }
+    setShouldAnimate(false)
+  }, [])
 
   if (category) {
     const title = locale === "en" ? category.name_en : category.name_ru
     return (
       <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
-        <StaggerItem index={0} delayStart={120} delayStep={60} durationClassName="duration-700">
+        <StaggerItem
+          index={0}
+          delayStart={120}
+          delayStep={60}
+          durationClassName="duration-700"
+          disabled={!shouldAnimate}
+        >
           <BlogPageBreadcrumbs variant="category" category={category} />
         </StaggerItem>
         <StaggerItem
           index={1}
           delayStart={120}
           delayStep={60}
+          disabled={!shouldAnimate}
           hiddenClassName="translate-y-4 opacity-0"
           visibleClassName="translate-y-0 opacity-100"
           durationClassName="duration-700"
@@ -39,13 +62,20 @@ export function BlogListingHeader({ category }: BlogListingHeaderProps) {
 
   return (
     <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
-      <StaggerItem index={0} delayStart={120} delayStep={60} durationClassName="duration-700">
+      <StaggerItem
+        index={0}
+        delayStart={120}
+        delayStep={60}
+        durationClassName="duration-700"
+        disabled={!shouldAnimate}
+      >
         <BlogPageBreadcrumbs variant="index" />
       </StaggerItem>
       <StaggerItem
         index={1}
         delayStart={120}
         delayStep={60}
+        disabled={!shouldAnimate}
         hiddenClassName="translate-y-4 opacity-0"
         visibleClassName="translate-y-0 opacity-100"
         durationClassName="duration-700"

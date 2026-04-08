@@ -38,8 +38,10 @@ export function StaggerItem({
   durationClassName = "duration-500",
   delayStep = 80,
   delayStart = 0,
+  onceKey,
+  disabled = false,
 }: StaggerItemProps) {
-  const { visible, style } = useStaggerVisible(index, { delayStep, delayStart })
+  const { visible, style } = useStaggerVisible(index, { delayStep, delayStart, onceKey, disabled })
 
   return (
     <div

@@ -94,6 +94,13 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
 
       const nextHref = `${url.pathname}${url.search}${url.hash}`
       event.preventDefault()
+      if (nextPathname === "/blog") {
+        try {
+          window.sessionStorage.setItem("blog-listing-header-animate-next", "1")
+        } catch {
+          // ignore storage failures
+        }
+      }
 
       setTargetPathname(nextPathname)
       setTargetLabel(nextPathname === "/blog" ? (t.nav.blog ?? t.blog.navLabel) : t.nav.affiliate)
