@@ -11,10 +11,20 @@ interface LocaleContextType {
 
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined)
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>("ru")
-  const [translations, setTranslations] = useState<Translations>(() => 
-    JSON.parse(JSON.stringify(fallbackTranslations.ru)) as Translations
+export function LocaleProvider({
+  children,
+  initialLocale = "ru",
+  initialTranslations,
+}: {
+  children: ReactNode
+  initialLocale?: Locale
+  initialTranslations?: Translations
+}) {
+  const [locale, setLocale] = useState<Locale>(initialLocale)
+  const [translations, setTranslations] = useState<Translations>(
+    () =>
+      initialTranslations ??
+      (JSON.parse(JSON.stringify(fallbackTranslations[initialLocale])) as Translations),
   )
 
   useEffect(() => {

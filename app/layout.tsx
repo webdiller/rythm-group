@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RootShellProviders } from '@/components/RootShellProviders'
 import { getFaviconVersion, getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
+import { getInitialTranslations } from '@/lib/server/initial-translations'
 import './globals.css'
 
 const inter = Inter({
@@ -40,6 +41,7 @@ export default async function RootLayout({
 }>) {
   const { hasAnyCustomBackgrounds } = await getRootShellBackgroundFlags()
   const faviconVersion = getFaviconVersion()
+  const initialTranslations = getInitialTranslations("ru")
 
   return (
     <html lang="ru" suppressHydrationWarning>
@@ -48,7 +50,10 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <RootShellProviders hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>
+          <RootShellProviders
+            hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}
+            initialTranslations={initialTranslations}
+          >
             {children}
           </RootShellProviders>
         </ThemeProvider>
