@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RootShellProviders } from '@/components/RootShellProviders'
+import { Toaster } from '@/components/ui/sonner'
 import { getFaviconVersion, getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
 import './globals.css'
 
@@ -51,6 +52,7 @@ export default async function RootLayout({
           <RootShellProviders hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>
             {children}
           </RootShellProviders>
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
         <Analytics />
       </body>

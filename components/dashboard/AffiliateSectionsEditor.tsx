@@ -65,13 +65,11 @@ export function AffiliateSectionsEditor() {
         body: JSON.stringify(sections),
       })
       if (!res.ok) {
-        alert("Не удалось сохранить настройки секций Affiliate")
         toast.error("Не удалось сохранить настройки секций Affiliate")
         return
       }
       toast.success("Настройки секций Affiliate сохранены")
     } catch {
-      alert("Не удалось сохранить настройки секций Affiliate")
       toast.error("Не удалось сохранить настройки секций Affiliate")
     } finally {
       setSaving(false)

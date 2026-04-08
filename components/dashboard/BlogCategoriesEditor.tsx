@@ -200,7 +200,6 @@ export function BlogCategoriesEditor() {
         ),
       )
       if (results.some((r) => !r.ok)) {
-        alert("Не удалось сохранить порядок категорий")
         toast.error("Не удалось сохранить порядок")
         void load()
         return
@@ -249,7 +248,6 @@ export function BlogCategoriesEditor() {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
-          alert(err.error ?? "Не удалось сохранить категорию")
           toast.error(err.error ?? "Не удалось сохранить")
           return
         }
@@ -270,7 +268,6 @@ export function BlogCategoriesEditor() {
         })
         if (!res.ok) {
           const err = (await res.json().catch(() => ({}))) as { error?: string }
-          alert(err.error ?? "Не удалось создать категорию")
           toast.error(err.error ?? "Не удалось создать")
           return
         }
@@ -279,7 +276,6 @@ export function BlogCategoriesEditor() {
       setDialogOpen(false)
       void load()
     } catch {
-      alert("Ошибка сети при сохранении категории")
       toast.error("Ошибка сети")
     } finally {
       setSavingForm(false)
@@ -297,7 +293,6 @@ export function BlogCategoriesEditor() {
         headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       if (!res.ok) {
-        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить")
         return
       }
@@ -305,7 +300,6 @@ export function BlogCategoriesEditor() {
       setDeleteId(null)
       void load()
     } catch {
-      alert("Ошибка сети при удалении категории")
       toast.error("Ошибка сети")
     } finally {
       setDeleting(false)

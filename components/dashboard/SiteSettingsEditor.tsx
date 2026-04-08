@@ -251,7 +251,6 @@ export function SiteSettingsEditor() {
   }
 
   const notifyMutationError = (message: string) => {
-    alert(message)
     toast.error(message)
   }
 

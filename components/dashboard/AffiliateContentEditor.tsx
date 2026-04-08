@@ -116,12 +116,10 @@ export function AffiliateContentEditor() {
         body: JSON.stringify(sections),
       })
       if (!res.ok) {
-        alert("Не удалось сохранить секции")
         return toast.error("Не удалось сохранить секции")
       }
       toast.success("Секции Affiliate обновлены")
     } catch {
-      alert("Не удалось сохранить секции")
       toast.error("Не удалось сохранить секции")
     } finally {
       setSavingSections(false)
@@ -139,12 +137,10 @@ export function AffiliateContentEditor() {
         body: JSON.stringify(hero),
       })
       if (!res.ok) {
-        alert("Не удалось сохранить Hero")
         return toast.error("Не удалось сохранить Hero")
       }
       toast.success("Hero Affiliate обновлён")
     } catch {
-      alert("Не удалось сохранить Hero")
       toast.error("Не удалось сохранить Hero")
     } finally {
       setSavingHero(false)
@@ -252,13 +248,11 @@ export function AffiliateContentEditor() {
                     try {
                       const res = await fetch(`/api/content/affiliate-formats?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
                       if (!res.ok) {
-                        alert("Не удалось удалить формат")
                         return toast.error("Не удалось удалить формат")
                       }
                       toast.success("Формат удалён")
                       void load()
                     } catch {
-                      alert("Не удалось удалить формат")
                       toast.error("Не удалось удалить формат")
                     } finally {
                       setDeletingFormatId(null)
@@ -272,7 +266,6 @@ export function AffiliateContentEditor() {
                     try {
                       await upsertFormat(item); toast.success("Формат обновлён")
                     } catch {
-                      alert("Не удалось сохранить формат")
                       toast.error("Не удалось сохранить формат")
                     } finally {
                       setSavingFormatId(null)
@@ -295,7 +288,6 @@ export function AffiliateContentEditor() {
                   toast.success("Формат добавлен")
                   void load()
                 } catch {
-                  alert("Не удалось добавить формат")
                   toast.error("Не удалось добавить формат")
                 } finally {
                   setAddingFormat(false)
@@ -330,13 +322,11 @@ export function AffiliateContentEditor() {
                     try {
                       const res = await fetch(`/api/content/affiliate-faq?id=${item.id}`, { method: "DELETE", headers: token ? { Authorization: `Bearer ${token}` } : undefined })
                       if (!res.ok) {
-                        alert("Не удалось удалить FAQ")
                         return toast.error("Не удалось удалить FAQ")
                       }
                       toast.success("FAQ удалён")
                       void load()
                     } catch {
-                      alert("Не удалось удалить FAQ")
                       toast.error("Не удалось удалить FAQ")
                     } finally {
                       setDeletingFaqId(null)
@@ -350,7 +340,6 @@ export function AffiliateContentEditor() {
                     try {
                       await upsertFaq(item); toast.success("FAQ обновлён")
                     } catch {
-                      alert("Не удалось сохранить FAQ")
                       toast.error("Не удалось сохранить FAQ")
                     } finally {
                       setSavingFaqId(null)
@@ -373,7 +362,6 @@ export function AffiliateContentEditor() {
                   toast.success("FAQ добавлен")
                   void load()
                 } catch {
-                  alert("Не удалось добавить FAQ")
                   toast.error("Не удалось добавить FAQ")
                 } finally {
                   setAddingFaq(false)

@@ -126,11 +126,9 @@ export function ChannelsEditor() {
         setEditingChannel(null)
         loadData()
       } else {
-        alert("Failed to save channel")
         toast.error("Failed to save channel")
       }
     } catch (error) {
-      alert("Failed to save channel")
       toast.error("Failed to save channel")
     } finally {
       setSavingChannel(false)
@@ -153,11 +151,9 @@ export function ChannelsEditor() {
         toast.success("Channel deleted")
         loadData()
       } else {
-        alert("Failed to delete channel")
         toast.error("Failed to delete channel")
       }
     } catch (error) {
-      alert("Failed to delete channel")
       toast.error("Failed to delete channel")
     }
   }
@@ -201,11 +197,9 @@ export function ChannelsEditor() {
         await loadData()
         setAvatarsVersion((v) => v + 1)
       } else {
-        alert("Не удалось загрузить аватар")
         toast.error("Не удалось загрузить аватар")
       }
     } catch {
-      alert("Не удалось загрузить аватар")
       toast.error("Не удалось загрузить аватар")
     }
   }
@@ -229,11 +223,9 @@ export function ChannelsEditor() {
         await loadData()
         setAvatarsVersion((v) => v + 1)
       } else {
-        alert("Не удалось удалить аватар")
         toast.error("Не удалось удалить аватар")
       }
     } catch {
-      alert("Не удалось удалить аватар")
       toast.error("Не удалось удалить аватар")
     }
   }
@@ -293,11 +285,9 @@ export function ChannelsEditor() {
         setEditingCategory(null)
         loadData()
       } else {
-        alert("Не удалось сохранить категорию")
         toast.error("Не удалось сохранить категорию")
       }
     } catch (error) {
-      alert("Не удалось сохранить категорию")
       toast.error("Не удалось сохранить категорию")
     } finally {
       setSavingCategory(false)
@@ -319,8 +309,8 @@ export function ChannelsEditor() {
           }),
         ),
       )
+      toast.success("Порядок категорий сохранен")
     } catch {
-      alert("Не удалось сохранить порядок категорий")
       toast.error("Не удалось сохранить порядок категорий")
     }
   }
@@ -372,8 +362,8 @@ export function ChannelsEditor() {
           }),
         ),
       )
+      toast.success("Порядок каналов сохранен")
     } catch {
-      alert("Не удалось сохранить порядок каналов")
       toast.error("Не удалось сохранить порядок каналов")
     }
   }
@@ -460,11 +450,9 @@ export function ChannelsEditor() {
         toast.success("Категория удалена")
         loadData()
       } else {
-        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить категорию")
       }
     } catch (error) {
-      alert("Не удалось удалить категорию")
       toast.error("Не удалось удалить категорию")
     }
   }

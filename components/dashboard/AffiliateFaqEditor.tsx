@@ -141,7 +141,7 @@ function SortableFaqCard({
       </div>
       <div className="md:col-span-2 flex justify-end gap-2">
         <Button variant="outline" onClick={() => void onDelete(item.id)} disabled={isSaving || isDeleting}>
-          {isDeleting ? "Удаление..." : "Удалить"}
+          {isDeleting ? "Удаление..." : "Удалить 1"}
         </Button>
         <Button onClick={() => void onSave(item)} disabled={isSaving || isDeleting}>
           {isSaving ? "Сохранение..." : "Сохранить"}
@@ -249,14 +249,12 @@ export function AffiliateFaqEditor() {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
       if (!res.ok) {
-        alert("Не удалось удалить FAQ")
         toast.error("Не удалось удалить FAQ")
         return
       }
       toast.success("FAQ удалён")
       void load()
     } catch {
-      alert("Не удалось удалить FAQ")
       toast.error("Не удалось удалить FAQ")
     } finally {
       setDeletingItemId(null)
@@ -269,7 +267,6 @@ export function AffiliateFaqEditor() {
       await saveOne(item)
       toast.success("FAQ сохранён")
     } catch {
-      alert("Не удалось сохранить FAQ")
       toast.error("Не удалось сохранить FAQ")
     } finally {
       setSavingItemId(null)
@@ -321,7 +318,6 @@ export function AffiliateFaqEditor() {
                 toast.success("FAQ добавлен")
                 void load()
               } catch {
-                alert("Не удалось добавить FAQ")
                 toast.error("Не удалось добавить FAQ")
               } finally {
                 setCreating(false)

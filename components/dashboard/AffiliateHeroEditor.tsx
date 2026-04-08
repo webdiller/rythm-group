@@ -55,13 +55,11 @@ export function AffiliateHeroEditor() {
         body: JSON.stringify(hero),
       })
       if (!res.ok) {
-        alert("Не удалось сохранить Affiliate Hero")
         toast.error("Не удалось сохранить Affiliate Hero")
         return
       }
       toast.success("Affiliate Hero сохранён")
     } catch {
-      alert("Не удалось сохранить Affiliate Hero")
       toast.error("Не удалось сохранить Affiliate Hero")
     } finally {
       setSaving(false)

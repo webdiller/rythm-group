@@ -178,11 +178,9 @@ export function PartnersEditor() {
         setEditingPartner(null)
         loadData()
       } else {
-        alert("Не удалось сохранить кейс")
         toast.error("Не удалось сохранить кейс")
       }
     } catch (error) {
-      alert("Не удалось сохранить кейс")
       toast.error("Не удалось сохранить кейс")
     } finally {
       setSavingPartner(false)
@@ -201,11 +199,9 @@ export function PartnersEditor() {
         toast.success("Кейс удалён")
         loadData()
       } else {
-        alert("Не удалось удалить кейс")
         toast.error("Не удалось удалить кейс")
       }
     } catch (error) {
-      alert("Не удалось удалить кейс")
       toast.error("Не удалось удалить кейс")
     }
   }
@@ -245,11 +241,9 @@ export function PartnersEditor() {
         setEditingCategory(null)
         loadData()
       } else {
-        alert("Не удалось сохранить категорию")
         toast.error("Не удалось сохранить категорию")
       }
     } catch (error) {
-      alert("Не удалось сохранить категорию")
       toast.error("Не удалось сохранить категорию")
     } finally {
       setSavingCategory(false)
@@ -271,8 +265,8 @@ export function PartnersEditor() {
           }),
         ),
       )
+      toast.success("Порядок категорий сохранен")
     } catch {
-      alert("Не удалось сохранить порядок категорий")
       toast.error("Не удалось сохранить порядок категорий")
     }
   }
@@ -326,8 +320,8 @@ export function PartnersEditor() {
           }),
         ),
       )
+      toast.success("Порядок кейсов сохранен")
     } catch {
-      alert("Не удалось сохранить порядок кейсов")
       toast.error("Не удалось сохранить порядок кейсов")
     }
   }
@@ -412,11 +406,9 @@ export function PartnersEditor() {
         toast.success("Категория удалена")
         loadData()
       } else {
-        alert("Не удалось удалить категорию")
         toast.error("Не удалось удалить категорию")
       }
     } catch (error) {
-      alert("Не удалось удалить категорию")
       toast.error("Не удалось удалить категорию")
     }
   }
@@ -1189,7 +1181,6 @@ function PartnerForm({
                     setLogoVersion((v) => v + 1)
                     toast.success("Логотип обновлён")
                   } else {
-                    alert("Не удалось загрузить логотип")
                     toast.error("Не удалось загрузить логотип")
                   }
                   e.target.value = ""
@@ -1218,7 +1209,6 @@ function PartnerForm({
                       setLogoVersion((v) => v + 1)
                       toast.success("Логотип удалён")
                     } else {
-                      alert("Не удалось удалить логотип")
                       toast.error("Не удалось удалить логотип")
                     }
                   }}

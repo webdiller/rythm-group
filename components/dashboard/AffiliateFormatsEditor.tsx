@@ -249,14 +249,12 @@ export function AffiliateFormatsEditor() {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
       if (!res.ok) {
-        alert("Не удалось удалить формат")
         toast.error("Не удалось удалить формат")
         return
       }
       toast.success("Формат удалён")
       void load()
     } catch {
-      alert("Не удалось удалить формат")
       toast.error("Не удалось удалить формат")
     } finally {
       setDeletingItemId(null)
@@ -269,7 +267,6 @@ export function AffiliateFormatsEditor() {
       await saveOne(item)
       toast.success("Формат сохранён")
     } catch {
-      alert("Не удалось сохранить формат")
       toast.error("Не удалось сохранить формат")
     } finally {
       setSavingItemId(null)
@@ -321,7 +318,6 @@ export function AffiliateFormatsEditor() {
                 toast.success("Формат добавлен")
                 void load()
               } catch {
-                alert("Не удалось добавить формат")
                 toast.error("Не удалось добавить формат")
               } finally {
                 setCreating(false)

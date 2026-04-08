@@ -100,14 +100,12 @@ export function BlogPostsEditor() {
         headers: { Authorization: `Bearer ${token ?? ""}` },
       })
       if (!res.ok) {
-        alert("Не удалось удалить запись блога")
         toast.error("Не удалось удалить")
         return
       }
       toast.success("Запись скрыта")
       void loadPosts()
     } catch {
-      alert("Ошибка сети при удалении записи блога")
       toast.error("Ошибка сети")
     } finally {
       setProcessingPostId(null)
@@ -131,14 +129,12 @@ export function BlogPostsEditor() {
         cache: "no-store",
       })
       if (!res.ok) {
-        alert("Не удалось снять запись с публикации")
         toast.error("Не удалось снять с публикации")
         return
       }
       toast.success("Снято с публикации")
       void loadPosts()
     } catch {
-      alert("Ошибка сети при изменении статуса записи")
       toast.error("Ошибка сети")
     } finally {
       setProcessingPostId(null)
