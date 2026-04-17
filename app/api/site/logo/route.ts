@@ -19,7 +19,10 @@ export async function GET() {
       status: 200,
       headers: {
         "Content-Type": "image/webp",
-        "Cache-Control": "public, max-age=86400, immutable",
+        // Логотип меняется из админки по тому же URL — отключаем агрессивный кэш.
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     })
   }
@@ -32,11 +35,20 @@ export async function GET() {
       status: 200,
       headers: {
         "Content-Type": "image/jpeg",
-        "Cache-Control": "public, max-age=86400, immutable",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     })
   } catch {
-    return new NextResponse(null, { status: 404 })
+    return new NextResponse(null, {
+      status: 404,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    })
   }
 }
 
