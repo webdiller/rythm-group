@@ -25,10 +25,26 @@ export function Hero({ animationEnabled = true }: HeroProps) {
   const { t } = useLocale()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    const theme = resolvedTheme === "light" ? "light" : "dark"
+    const src = `/api/site/backgrounds/hero?theme=${theme}`
+    setHeroImageLoaded(false)
+
+    const img = new Image()
+    img.src = src
+    img.onload = () => setHeroImageLoaded(true)
+    img.onerror = () => {
+      // Если фон недоступен, не держим тёмную подложку бесконечно.
+      setHeroImageLoaded(true)
+    }
+  }, [mounted, resolvedTheme])
 
   const isLight = mounted && resolvedTheme === "light"
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
@@ -44,6 +60,9 @@ export function Hero({ animationEnabled = true }: HeroProps) {
           <div
             className="absolute inset-0 hidden bg-cover bg-center dark:block"
             style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
+          />
+          <div
+            className={`absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
           />
         </div>
         <div className="absolute inset-x-0 top-0 h-full w-full pt-16 lg:pt-18">

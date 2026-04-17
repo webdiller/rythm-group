@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import { useLocale } from "@/lib/locale-context"
 import { StaggerItem } from "@/components/ui/stagger-item"
 
@@ -24,6 +26,9 @@ type AffiliateHeroProps = {
 
 export function AffiliateHero({ data, enableAffiliateCooperationFormats }: AffiliateHeroProps) {
   const { locale, t } = useLocale()
+  const { resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  const [heroImageLoaded, setHeroImageLoaded] = useState(false)
   const a = t.affiliate.hero
   const contactHref = "#contact"
   const moreHref = "/affiliate#affiliate-formats"
@@ -41,6 +46,25 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
       : data.cta_secondary_ru
     : a.ctaSecondary
 
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    const theme = resolvedTheme === "light" ? "light" : "dark"
+    const src = `/api/site/backgrounds/hero?scope=affiliate&theme=${theme}`
+    setHeroImageLoaded(false)
+
+    const img = new Image()
+    img.src = src
+    img.onload = () => setHeroImageLoaded(true)
+    img.onerror = () => {
+      // Не держим экран затемнённым, если изображение не загрузилось.
+      setHeroImageLoaded(true)
+    }
+  }, [mounted, resolvedTheme])
+
   return (
     <div className="relative">
       <section className="relative flex min-h-[min(100vh,920px)] items-center justify-center overflow-hidden px-6 pt-24 pb-14 md:pt-28 md:pb-16">
@@ -52,6 +76,9 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
           <div
             className="absolute inset-0 hidden bg-cover bg-center dark:block"
             style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=dark')" }}
+          />
+          <div
+            className={`absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
           />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl text-center">
