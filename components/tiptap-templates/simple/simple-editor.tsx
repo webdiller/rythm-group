@@ -63,8 +63,10 @@ export type SimpleEditorProps = {
 }
 
 export function SimpleEditor({ value, onChange, placeholder = "Начните ввод…", className }: SimpleEditorProps) {
+  const [imageUploading, setImageUploading] = useState(false)
   const [videoUploading, setVideoUploading] = useState(false)
   const [posterUploading, setPosterUploading] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
   const posterInputRef = useRef<HTMLInputElement>(null)
   const editor = useEditor(
@@ -115,6 +117,15 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
             "[&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground",
             "[&_a]:text-primary",
           ),
+        },
+        handlePaste: (_view, event) => {
+          const files = event.clipboardData?.files
+          if (!files?.length) return false
+          const imageFile = Array.from(files).find((f) => f.type.startsWith("image/"))
+          if (!imageFile) return false
+          event.preventDefault()
+          void uploadInlineImageFile(imageFile)
+          return true
         },
       },
       onUpdate: ({ editor: ed }) => {
@@ -256,6 +267,39 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
     }
   }
 
+  const uploadInlineImageFile = async (file: File | null) => {
+    if (!file) return
+    setImageUploading(true)
+    const token = getToken()
+    const fd = new FormData()
+    fd.append("file", file)
+    try {
+      const res = await fetch("/api/content/blog/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(err.error ?? "Не удалось загрузить изображение")
+        return
+      }
+      const json = (await res.json()) as { data?: { url?: string } }
+      const url = json.data?.url
+      if (!url) {
+        toast.error("Не удалось получить URL изображения")
+        return
+      }
+      editor.chain().focus().setImage({ src: url }).run()
+      toast.success("Изображение добавлено")
+    } catch {
+      toast.error("Ошибка загрузки изображения")
+    } finally {
+      setImageUploading(false)
+      if (imageInputRef.current) imageInputRef.current.value = ""
+    }
+  }
+
   const uploadPosterFile = async (file: File | null) => {
     if (!file) return
     setPosterUploading(true)
@@ -301,8 +345,10 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   // }
 
   const selectedVideo = getSelectedVideoAttrs()
-  const mediaUploading = videoUploading || posterUploading
-  const mediaUploadingLabel = videoUploading
+  const mediaUploading = imageUploading || videoUploading || posterUploading
+  const mediaUploadingLabel = imageUploading
+    ? "Загрузка изображения..."
+    : videoUploading
     ? "Загрузка видео..."
     : posterUploading
       ? "Загрузка постера..."
@@ -311,6 +357,15 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
   return (
     <div className={cn("rounded-lg border border-border bg-card overflow-hidden", className)}>
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-muted/40 px-1 py-1">
+        <input
+          ref={imageInputRef}
+          type="file"
+          className="sr-only"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          aria-hidden
+          tabIndex={-1}
+          onChange={(e) => void uploadInlineImageFile(e.target.files?.[0] ?? null)}
+        />
         <input
           ref={videoInputRef}
           type="file"
@@ -480,6 +535,17 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
         <Separator orientation="vertical" className="mx-0.5 h-6" />
         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={setLink} title="Ссылка">
           <Link2 className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          title="Загрузить изображение"
+          disabled={mediaUploading}
+          onClick={() => imageInputRef.current?.click()}
+        >
+          {imageUploading ? <div className="relative w-4 h-4"><Loader2 className="size-4 inset-0 absolute animate-spin" /></div> : <ImageIcon className="h-4 w-4" />}
         </Button>
         <Button
           type="button"

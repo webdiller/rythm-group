@@ -426,7 +426,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
             <Label>Тело статьи (RU)</Label>
             <SimpleEditor value={body_html_ru} onChange={setBodyHtmlRu} placeholder="Текст на русском…" />
             <p className="text-xs text-muted-foreground">
-              В редакторе можно добавить одно видео (URL или загрузка mp4/webm до 100MB) и постер.
+              В редакторе можно добавить изображения (кнопка загрузки или вставка из буфера), а также видео (URL или загрузка mp4/webm до 100MB) и постер.
             </p>
           </div>
 
