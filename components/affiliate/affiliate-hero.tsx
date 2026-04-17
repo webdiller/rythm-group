@@ -95,7 +95,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
             style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=dark')" }}
           />
           <div
-            className={`absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
+            className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
           />
         </div>
         <div

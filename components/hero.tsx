@@ -79,7 +79,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
             style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
           />
           <div
-            className={`absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
+            className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
           />
         </div>
         <div className="absolute inset-x-0 top-0 h-full w-full pt-16 lg:pt-18">
