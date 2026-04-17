@@ -112,6 +112,7 @@ export function SimpleEditor({ value, onChange, placeholder = "Начните в
             "[&_li[data-type=taskItem]_label]:inline-flex [&_li[data-type=taskItem]_label]:cursor-pointer [&_li[data-type=taskItem]_label]:items-start [&_li[data-type=taskItem]_label]:gap-2",
             "[&_li[data-type=taskItem]_input]:mt-0.5 [&_li[data-type=taskItem]_input]:size-4 [&_li[data-type=taskItem]_input]:shrink-0 [&_li[data-type=taskItem]_input]:accent-primary",
             "[&_li[data-type=taskItem]_>div]:min-w-0 [&_li[data-type=taskItem]_>div]:flex-1",
+            "[&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/50 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground",
             "[&_a]:text-primary",
           ),
         },
