@@ -64,7 +64,7 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
                 aria-label="Rythm Group Home"
               >
                 <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
-                  <div className="overflow-hidden rounded-full bg-primary">
+                  <div className="overflow-hidden rounded-full">
                     <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
                   </div>
                   {logoText ? <span>{logoText}</span> : null}

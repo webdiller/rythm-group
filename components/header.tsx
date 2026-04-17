@@ -68,7 +68,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
           aria-label="Rythm Group Home"
         >
           <span className="text-lg font-bold tracking-tight flex items-center gap-1 sm:gap-2 text-foreground">
-            <div className="rounded-full overflow-hidden bg-primary">
+            <div className="rounded-full overflow-hidden">
               <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
             </div>
             {logoText?.trim() ? (
