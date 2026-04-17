@@ -28,6 +28,8 @@ import { Switch } from "@/components/ui/switch"
 import { GripVertical } from "lucide-react"
 import { toast } from "sonner"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
+import { useLocale } from "@/lib/locale-context"
+import { fallbackTranslations } from "@/lib/i18n"
 
 function SortableNavList({ items, children }: { items: HeaderNavItemId[]; children: ReactNode }) {
   return (
@@ -38,7 +40,15 @@ function SortableNavList({ items, children }: { items: HeaderNavItemId[]; childr
   )
 }
 
-function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) {
+function SortableNavItem({
+  id,
+  labelRu,
+  labelEn,
+}: {
+  id: HeaderNavItemId
+  labelRu: string
+  labelEn: string
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   return (
     <li
@@ -46,7 +56,11 @@ function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) 
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1 }}
       className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2"
     >
-      <span className="text-sm">{label}</span>
+      <span className="flex flex-col">
+        <span className="text-sm">{labelRu}</span>
+        <span className="text-xs text-muted-foreground">{labelEn}</span>
+        <span className="text-xs text-muted-foreground">{id}</span>
+      </span>
       <button
         type="button"
         className="inline-flex cursor-grab touch-none rounded-md p-1.5 text-muted-foreground hover:bg-muted active:cursor-grabbing"
@@ -61,6 +75,20 @@ function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) 
 }
 
 export function SiteSettingsEditor() {
+  const { t } = useLocale()
+  const [headerNavLabels, setHeaderNavLabels] = useState<
+    Record<HeaderNavItemId, { ru: string; en: string }>
+  >({
+    about: { ru: fallbackTranslations.ru.nav.about, en: fallbackTranslations.en.nav.about },
+    channels: { ru: fallbackTranslations.ru.nav.channels, en: fallbackTranslations.en.nav.channels },
+    cases: { ru: fallbackTranslations.ru.nav.cases, en: fallbackTranslations.en.nav.cases },
+    affiliate: { ru: fallbackTranslations.ru.nav.affiliate, en: fallbackTranslations.en.nav.affiliate },
+    blog: {
+      ru: fallbackTranslations.ru.nav.blog ?? fallbackTranslations.ru.blog.navLabel,
+      en: fallbackTranslations.en.nav.blog ?? fallbackTranslations.en.blog.navLabel,
+    },
+    contacts: { ru: fallbackTranslations.ru.nav.contacts, en: fallbackTranslations.en.nav.contacts },
+  })
   const [hasLogo, setHasLogo] = useState(false)
   const [logoVersion, setLogoVersion] = useState(() => Date.now())
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -140,14 +168,63 @@ export function SiteSettingsEditor() {
     headerNavOrder: HeaderNavItemId[]
   } | null>(null)
 
-  const navLabelById: Record<HeaderNavItemId, string> = {
-    about: "О нас",
-    channels: "Каналы",
-    cases: "Кейсы",
-    affiliate: "Affiliate",
-    blog: "Блог",
-    contacts: "Контакты",
-  }
+  useEffect(() => {
+    const fallback = {
+      about: { ru: fallbackTranslations.ru.nav.about, en: fallbackTranslations.en.nav.about },
+      channels: { ru: fallbackTranslations.ru.nav.channels, en: fallbackTranslations.en.nav.channels },
+      cases: { ru: fallbackTranslations.ru.nav.cases, en: fallbackTranslations.en.nav.cases },
+      affiliate: { ru: fallbackTranslations.ru.nav.affiliate, en: fallbackTranslations.en.nav.affiliate },
+      blog: {
+        ru: fallbackTranslations.ru.nav.blog ?? fallbackTranslations.ru.blog.navLabel,
+        en: fallbackTranslations.en.nav.blog ?? fallbackTranslations.en.blog.navLabel,
+      },
+      contacts: { ru: fallbackTranslations.ru.nav.contacts, en: fallbackTranslations.en.nav.contacts },
+    } satisfies Record<HeaderNavItemId, { ru: string; en: string }>
+
+    const applyRows = (
+      locale: "ru" | "en",
+      rows: Array<{ section: string; key: string; value: string }>,
+      next: Record<HeaderNavItemId, { ru: string; en: string }>,
+    ) => {
+      const set = (id: HeaderNavItemId, value: string) => {
+        if (!value?.trim()) return
+        next[id] = { ...next[id], [locale]: value }
+      }
+      for (const row of rows) {
+        if (row.section === "nav") {
+          if (row.key === "about") set("about", row.value)
+          if (row.key === "channels") set("channels", row.value)
+          if (row.key === "cases") set("cases", row.value)
+          if (row.key === "affiliate") set("affiliate", row.value)
+          if (row.key === "blog") set("blog", row.value)
+          if (row.key === "contacts") set("contacts", row.value)
+        }
+        if (row.section === "blog" && row.key === "navLabel" && !next.blog[locale].trim()) {
+          set("blog", row.value)
+        }
+      }
+    }
+
+    const loadNavLabels = async () => {
+      try {
+        const [ruRes, enRes] = await Promise.all([
+          fetch("/api/content/translations?locale=ru", { cache: "no-store" }),
+          fetch("/api/content/translations?locale=en", { cache: "no-store" }),
+        ])
+        if (!ruRes.ok || !enRes.ok) return
+        const ruJson = (await ruRes.json()) as { data?: Array<{ section: string; key: string; value: string }> }
+        const enJson = (await enRes.json()) as { data?: Array<{ section: string; key: string; value: string }> }
+        const next = { ...fallback }
+        applyRows("ru", ruJson.data ?? [], next)
+        applyRows("en", enJson.data ?? [], next)
+        setHeaderNavLabels(next)
+      } catch {
+        setHeaderNavLabels(fallback)
+      }
+    }
+
+    void loadNavLabels()
+  }, [t.nav.about, t.nav.channels, t.nav.cases, t.nav.affiliate, t.nav.blog, t.nav.contacts, t.blog.navLabel])
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -1574,7 +1651,12 @@ export function SiteSettingsEditor() {
             <SortableNavList items={headerNavOrder}>
               <ul className="space-y-2">
                 {headerNavOrder.map((id) => (
-                  <SortableNavItem key={id} id={id} label={navLabelById[id]} />
+                  <SortableNavItem
+                    key={id}
+                    id={id}
+                    labelRu={headerNavLabels[id].ru}
+                    labelEn={headerNavLabels[id].en}
+                  />
                 ))}
               </ul>
             </SortableNavList>
