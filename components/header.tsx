@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import type { MouseEvent } from "react"
 import { useLocale } from "@/lib/locale-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { resolveNavHref } from "@/lib/nav-hrefs"
@@ -34,6 +35,26 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
+  const canForceAnchorScroll = sectionHrefPrefix === ""
+
+  const handleAnchorClick = (rawHref: string, onDone?: () => void) => {
+    return (event: MouseEvent<HTMLAnchorElement>) => {
+      if (onDone) onDone()
+      if (!canForceAnchorScroll) return
+      if (!rawHref.startsWith("#")) return
+
+      const id = rawHref.slice(1)
+      if (!id) return
+      const el = document.getElementById(id)
+      if (!el) return
+
+      event.preventDefault()
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+      if (window.location.hash !== rawHref) {
+        window.history.replaceState(null, "", rawHref)
+      }
+    }
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background backdrop-blur-xl">
@@ -58,6 +79,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
             <Link
               key={item.label + item.href}
               href={resolveNavHref(item.href, sectionHrefPrefix)}
+              onClick={handleAnchorClick(item.href)}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {item.label}
@@ -79,6 +101,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
 
           <Link
             href={contactHref}
+            onClick={handleAnchorClick("#contact")}
             className="hidden rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 sm:inline-flex"
           >
             {t.nav.order}
@@ -102,7 +125,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
               <Link
                 key={item.label + item.href}
                 href={resolveNavHref(item.href, sectionHrefPrefix)}
-                onClick={() => setMobileOpen(false)}
+                onClick={handleAnchorClick(item.href, () => setMobileOpen(false))}
                 className="rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 {item.label}
@@ -110,7 +133,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
             ))}
             <Link
               href={contactHref}
-              onClick={() => setMobileOpen(false)}
+              onClick={handleAnchorClick("#contact", () => setMobileOpen(false))}
               className="mt-2 rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
             >
               {t.nav.order}
