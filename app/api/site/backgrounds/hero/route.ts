@@ -8,16 +8,19 @@ export const runtime = "nodejs"
 
 const HERO_BG_DIR = path.join(process.cwd(), "public", "backgrounds")
 
-function getHeroPath(theme?: string | null) {
-  if (theme === "light") return path.join(HERO_BG_DIR, "hero-light.webp")
-  if (theme === "dark") return path.join(HERO_BG_DIR, "hero-dark.webp")
+function getHeroPath(theme?: string | null, scope?: string | null) {
+  const isAffiliate = scope === "affiliate"
+  if (theme === "light") return path.join(HERO_BG_DIR, isAffiliate ? "hero-affiliate-light.webp" : "hero-light.webp")
+  if (theme === "dark") return path.join(HERO_BG_DIR, isAffiliate ? "hero-affiliate-dark.webp" : "hero-dark.webp")
+  if (isAffiliate) return path.join(HERO_BG_DIR, "hero-affiliate.webp")
   return path.join(HERO_BG_DIR, "hero.webp")
 }
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const theme = searchParams.get("theme")
-  const targetPath = getHeroPath(theme)
+  const scope = searchParams.get("scope")
+  const targetPath = getHeroPath(theme, scope)
 
   try {
     const fileBuffer = await fs.readFile(targetPath)
@@ -25,12 +28,22 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "image/webp",
-        "Cache-Control": "public, max-age=86400, immutable",
+        // Фон может меняться из админки по тому же URL — требуем ре-валидацию, без immutable.
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     })
   } catch {
     // Если файла нет (в том числе после сброса), просто не используем картинку
-    return new NextResponse(null, { status: 404 })
+    return new NextResponse(null, {
+      status: 404,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    })
   }
 }
 
@@ -40,6 +53,7 @@ export async function POST(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const theme = searchParams.get("theme")
+    const scope = searchParams.get("scope")
 
     const formData = await request.formData()
     const file = formData.get("file")
@@ -85,7 +99,7 @@ export async function POST(request: NextRequest) {
       .toBuffer()
 
     await fs.mkdir(HERO_BG_DIR, { recursive: true })
-    await fs.writeFile(getHeroPath(theme), optimizedBuffer)
+    await fs.writeFile(getHeroPath(theme, scope), optimizedBuffer)
 
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
@@ -106,7 +120,8 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const theme = searchParams.get("theme")
-    const targetPath = getHeroPath(theme)
+    const scope = searchParams.get("scope")
+    const targetPath = getHeroPath(theme, scope)
 
     try {
       await fs.unlink(targetPath)

@@ -93,6 +93,22 @@ export function SiteSettingsEditor() {
   const [globalBackgroundDarkVersion, setGlobalBackgroundDarkVersion] = useState(0)
   const [uploadingGlobalBackgroundDark, setUploadingGlobalBackgroundDark] = useState(false)
   const [deletingGlobalBackgroundDark, setDeletingGlobalBackgroundDark] = useState(false)
+  const [hasAffiliateHeroBackgroundLight, setHasAffiliateHeroBackgroundLight] = useState(false)
+  const [affiliateHeroBackgroundLightVersion, setAffiliateHeroBackgroundLightVersion] = useState(0)
+  const [uploadingAffiliateHeroBackgroundLight, setUploadingAffiliateHeroBackgroundLight] = useState(false)
+  const [deletingAffiliateHeroBackgroundLight, setDeletingAffiliateHeroBackgroundLight] = useState(false)
+  const [hasAffiliateHeroBackgroundDark, setHasAffiliateHeroBackgroundDark] = useState(false)
+  const [affiliateHeroBackgroundDarkVersion, setAffiliateHeroBackgroundDarkVersion] = useState(0)
+  const [uploadingAffiliateHeroBackgroundDark, setUploadingAffiliateHeroBackgroundDark] = useState(false)
+  const [deletingAffiliateHeroBackgroundDark, setDeletingAffiliateHeroBackgroundDark] = useState(false)
+  const [hasAffiliateGlobalBackgroundLight, setHasAffiliateGlobalBackgroundLight] = useState(false)
+  const [affiliateGlobalBackgroundLightVersion, setAffiliateGlobalBackgroundLightVersion] = useState(0)
+  const [uploadingAffiliateGlobalBackgroundLight, setUploadingAffiliateGlobalBackgroundLight] = useState(false)
+  const [deletingAffiliateGlobalBackgroundLight, setDeletingAffiliateGlobalBackgroundLight] = useState(false)
+  const [hasAffiliateGlobalBackgroundDark, setHasAffiliateGlobalBackgroundDark] = useState(false)
+  const [affiliateGlobalBackgroundDarkVersion, setAffiliateGlobalBackgroundDarkVersion] = useState(0)
+  const [uploadingAffiliateGlobalBackgroundDark, setUploadingAffiliateGlobalBackgroundDark] = useState(false)
+  const [deletingAffiliateGlobalBackgroundDark, setDeletingAffiliateGlobalBackgroundDark] = useState(false)
   const [heroAnimationEnabled, setHeroAnimationEnabled] = useState(true)
   const [partnersDisplayMode, setPartnersDisplayMode] = useState<"name" | "logo" | "logoAndName">(
     "logoAndName",
@@ -165,7 +181,18 @@ export function SiteSettingsEditor() {
   useEffect(() => {
     const checkBackgrounds = async () => {
       try {
-        const [heroRes, heroLightRes, heroDarkRes, globalRes, globalLightRes, globalDarkRes] =
+        const [
+          heroRes,
+          heroLightRes,
+          heroDarkRes,
+          globalRes,
+          globalLightRes,
+          globalDarkRes,
+          affiliateHeroLightRes,
+          affiliateHeroDarkRes,
+          affiliateGlobalLightRes,
+          affiliateGlobalDarkRes,
+        ] =
           await Promise.all([
             fetch("/api/site/backgrounds/hero", { cache: "no-store" }),
             fetch("/api/site/backgrounds/hero?theme=light", { cache: "no-store" }),
@@ -173,6 +200,10 @@ export function SiteSettingsEditor() {
             fetch("/api/site/backgrounds/global", { cache: "no-store" }),
             fetch("/api/site/backgrounds/global?theme=light", { cache: "no-store" }),
             fetch("/api/site/backgrounds/global?theme=dark", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/hero?scope=affiliate&theme=light", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/hero?scope=affiliate&theme=dark", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/global?scope=affiliate&theme=light", { cache: "no-store" }),
+            fetch("/api/site/backgrounds/global?scope=affiliate&theme=dark", { cache: "no-store" }),
           ])
 
         setHasHeroBackground(heroRes.ok)
@@ -181,6 +212,10 @@ export function SiteSettingsEditor() {
         setHasGlobalBackground(globalRes.ok)
         setHasGlobalBackgroundLight(globalLightRes.ok)
         setHasGlobalBackgroundDark(globalDarkRes.ok)
+        setHasAffiliateHeroBackgroundLight(affiliateHeroLightRes.ok)
+        setHasAffiliateHeroBackgroundDark(affiliateHeroDarkRes.ok)
+        setHasAffiliateGlobalBackgroundLight(affiliateGlobalLightRes.ok)
+        setHasAffiliateGlobalBackgroundDark(affiliateGlobalDarkRes.ok)
       } catch {
         setHasHeroBackground(false)
         setHasHeroBackgroundLight(false)
@@ -188,6 +223,10 @@ export function SiteSettingsEditor() {
         setHasGlobalBackground(false)
         setHasGlobalBackgroundLight(false)
         setHasGlobalBackgroundDark(false)
+        setHasAffiliateHeroBackgroundLight(false)
+        setHasAffiliateHeroBackgroundDark(false)
+        setHasAffiliateGlobalBackgroundLight(false)
+        setHasAffiliateGlobalBackgroundDark(false)
       }
     }
 
@@ -482,7 +521,11 @@ export function SiteSettingsEditor() {
     }
   }
 
-  const handleUploadHeroBackgroundWithTheme = async (file: File, theme: "light" | "dark") => {
+  const handleUploadHeroBackgroundWithTheme = async (
+    file: File,
+    theme: "light" | "dark",
+    scope: "landing" | "affiliate" = "landing",
+  ) => {
     const maxSizeBytes = 5 * 1024 * 1024
     if (file.size > maxSizeBytes) {
       toast.error("Файл не должен превышать 5 МБ")
@@ -490,7 +533,13 @@ export function SiteSettingsEditor() {
     }
 
     const setUploadingFn =
-      theme === "light" ? setUploadingHeroBackgroundLight : setUploadingHeroBackgroundDark
+      scope === "affiliate"
+        ? theme === "light"
+          ? setUploadingAffiliateHeroBackgroundLight
+          : setUploadingAffiliateHeroBackgroundDark
+        : theme === "light"
+          ? setUploadingHeroBackgroundLight
+          : setUploadingHeroBackgroundDark
 
     setUploadingFn(true)
     try {
@@ -498,7 +547,8 @@ export function SiteSettingsEditor() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}`, {
+      const scopeQuery = scope === "affiliate" ? "&scope=affiliate" : ""
+      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}${scopeQuery}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData,
@@ -511,14 +561,26 @@ export function SiteSettingsEditor() {
       }
 
       if (theme === "light") {
-        setHasHeroBackgroundLight(true)
-        setHeroBackgroundLightVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateHeroBackgroundLight(true)
+          setAffiliateHeroBackgroundLightVersion((v) => v + 1)
+        } else {
+          setHasHeroBackgroundLight(true)
+          setHeroBackgroundLightVersion((v) => v + 1)
+        }
       } else {
-        setHasHeroBackgroundDark(true)
-        setHeroBackgroundDarkVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateHeroBackgroundDark(true)
+          setAffiliateHeroBackgroundDarkVersion((v) => v + 1)
+        } else {
+          setHasHeroBackgroundDark(true)
+          setHeroBackgroundDarkVersion((v) => v + 1)
+        }
       }
       toast.success(
-        theme === "light" ? "Фон hero для светлой темы обновлён" : "Фон hero для тёмной темы обновлён",
+        `${scope === "affiliate" ? "Фон hero (/affiliate)" : "Фон hero"} ${
+          theme === "light" ? "для светлой темы обновлён" : "для тёмной темы обновлён"
+        }`,
       )
     } catch {
       notifyMutationError("Не удалось загрузить фон для hero")
@@ -551,14 +613,24 @@ export function SiteSettingsEditor() {
     }
   }
 
-  const handleDeleteHeroBackgroundWithTheme = async (theme: "light" | "dark") => {
+  const handleDeleteHeroBackgroundWithTheme = async (
+    theme: "light" | "dark",
+    scope: "landing" | "affiliate" = "landing",
+  ) => {
     const setDeletingFn =
-      theme === "light" ? setDeletingHeroBackgroundLight : setDeletingHeroBackgroundDark
+      scope === "affiliate"
+        ? theme === "light"
+          ? setDeletingAffiliateHeroBackgroundLight
+          : setDeletingAffiliateHeroBackgroundDark
+        : theme === "light"
+          ? setDeletingHeroBackgroundLight
+          : setDeletingHeroBackgroundDark
 
     setDeletingFn(true)
     try {
       const token = getToken()
-      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}`, {
+      const scopeQuery = scope === "affiliate" ? "&scope=affiliate" : ""
+      const res = await fetch(`/api/site/backgrounds/hero?theme=${theme}${scopeQuery}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -569,14 +641,26 @@ export function SiteSettingsEditor() {
       }
 
       if (theme === "light") {
-        setHasHeroBackgroundLight(false)
-        setHeroBackgroundLightVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateHeroBackgroundLight(false)
+          setAffiliateHeroBackgroundLightVersion((v) => v + 1)
+        } else {
+          setHasHeroBackgroundLight(false)
+          setHeroBackgroundLightVersion((v) => v + 1)
+        }
       } else {
-        setHasHeroBackgroundDark(false)
-        setHeroBackgroundDarkVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateHeroBackgroundDark(false)
+          setAffiliateHeroBackgroundDarkVersion((v) => v + 1)
+        } else {
+          setHasHeroBackgroundDark(false)
+          setHeroBackgroundDarkVersion((v) => v + 1)
+        }
       }
       toast.success(
-        theme === "light" ? "Фон hero для светлой темы сброшен" : "Фон hero для тёмной темы сброшен",
+        `${scope === "affiliate" ? "Фон hero (/affiliate)" : "Фон hero"} ${
+          theme === "light" ? "для светлой темы сброшен" : "для тёмной темы сброшен"
+        }`,
       )
     } catch {
       notifyMutationError("Не удалось удалить фон для hero")
@@ -620,7 +704,11 @@ export function SiteSettingsEditor() {
     }
   }
 
-  const handleUploadGlobalBackgroundWithTheme = async (file: File, theme: "light" | "dark") => {
+  const handleUploadGlobalBackgroundWithTheme = async (
+    file: File,
+    theme: "light" | "dark",
+    scope: "landing" | "affiliate" = "landing",
+  ) => {
     const maxSizeBytes = 5 * 1024 * 1024
     if (file.size > maxSizeBytes) {
       toast.error("Файл не должен превышать 5 МБ")
@@ -628,7 +716,13 @@ export function SiteSettingsEditor() {
     }
 
     const setUploadingFn =
-      theme === "light" ? setUploadingGlobalBackgroundLight : setUploadingGlobalBackgroundDark
+      scope === "affiliate"
+        ? theme === "light"
+          ? setUploadingAffiliateGlobalBackgroundLight
+          : setUploadingAffiliateGlobalBackgroundDark
+        : theme === "light"
+          ? setUploadingGlobalBackgroundLight
+          : setUploadingGlobalBackgroundDark
 
     setUploadingFn(true)
     try {
@@ -636,7 +730,8 @@ export function SiteSettingsEditor() {
       const formData = new FormData()
       formData.append("file", file)
 
-      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}`, {
+      const scopeQuery = scope === "affiliate" ? "&scope=affiliate" : ""
+      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}${scopeQuery}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData,
@@ -649,16 +744,26 @@ export function SiteSettingsEditor() {
       }
 
       if (theme === "light") {
-        setHasGlobalBackgroundLight(true)
-        setGlobalBackgroundLightVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateGlobalBackgroundLight(true)
+          setAffiliateGlobalBackgroundLightVersion((v) => v + 1)
+        } else {
+          setHasGlobalBackgroundLight(true)
+          setGlobalBackgroundLightVersion((v) => v + 1)
+        }
       } else {
-        setHasGlobalBackgroundDark(true)
-        setGlobalBackgroundDarkVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateGlobalBackgroundDark(true)
+          setAffiliateGlobalBackgroundDarkVersion((v) => v + 1)
+        } else {
+          setHasGlobalBackgroundDark(true)
+          setGlobalBackgroundDarkVersion((v) => v + 1)
+        }
       }
       toast.success(
-        theme === "light"
-          ? "Общий фон для светлой темы обновлён"
-          : "Общий фон для тёмной темы обновлён",
+        `${scope === "affiliate" ? "Общий фон (/affiliate)" : "Общий фон"} ${
+          theme === "light" ? "для светлой темы обновлён" : "для тёмной темы обновлён"
+        }`,
       )
     } catch {
       notifyMutationError("Не удалось загрузить общий фон")
@@ -691,14 +796,24 @@ export function SiteSettingsEditor() {
     }
   }
 
-  const handleDeleteGlobalBackgroundWithTheme = async (theme: "light" | "dark") => {
+  const handleDeleteGlobalBackgroundWithTheme = async (
+    theme: "light" | "dark",
+    scope: "landing" | "affiliate" = "landing",
+  ) => {
     const setDeletingFn =
-      theme === "light" ? setDeletingGlobalBackgroundLight : setDeletingGlobalBackgroundDark
+      scope === "affiliate"
+        ? theme === "light"
+          ? setDeletingAffiliateGlobalBackgroundLight
+          : setDeletingAffiliateGlobalBackgroundDark
+        : theme === "light"
+          ? setDeletingGlobalBackgroundLight
+          : setDeletingGlobalBackgroundDark
 
     setDeletingFn(true)
     try {
       const token = getToken()
-      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}`, {
+      const scopeQuery = scope === "affiliate" ? "&scope=affiliate" : ""
+      const res = await fetch(`/api/site/backgrounds/global?theme=${theme}${scopeQuery}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       })
@@ -709,16 +824,26 @@ export function SiteSettingsEditor() {
       }
 
       if (theme === "light") {
-        setHasGlobalBackgroundLight(false)
-        setGlobalBackgroundLightVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateGlobalBackgroundLight(false)
+          setAffiliateGlobalBackgroundLightVersion((v) => v + 1)
+        } else {
+          setHasGlobalBackgroundLight(false)
+          setGlobalBackgroundLightVersion((v) => v + 1)
+        }
       } else {
-        setHasGlobalBackgroundDark(false)
-        setGlobalBackgroundDarkVersion((v) => v + 1)
+        if (scope === "affiliate") {
+          setHasAffiliateGlobalBackgroundDark(false)
+          setAffiliateGlobalBackgroundDarkVersion((v) => v + 1)
+        } else {
+          setHasGlobalBackgroundDark(false)
+          setGlobalBackgroundDarkVersion((v) => v + 1)
+        }
       }
       toast.success(
-        theme === "light"
-          ? "Общий фон для светлой темы сброшен"
-          : "Общий фон для тёмной темы сброшен",
+        `${scope === "affiliate" ? "Общий фон (/affiliate)" : "Общий фон"} ${
+          theme === "light" ? "для светлой темы сброшен" : "для тёмной темы сброшен"
+        }`,
       )
     } catch {
       notifyMutationError("Не удалось удалить общий фон")
@@ -1116,6 +1241,196 @@ export function SiteSettingsEditor() {
                 }}
               >
                 Сбросить общий фон (тёмная тема)
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Фоны страницы /affiliate</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-xs text-muted-foreground">
+            Отдельные фоновые изображения для страницы Affiliate. Если не загружены, используется визуальный фон по умолчанию.
+          </p>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Hero /affiliate для светлой темы (16:9)</Label>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasAffiliateHeroBackgroundLight ? (
+                  <img
+                    key={affiliateHeroBackgroundLightVersion}
+                    src={`/api/site/backgrounds/hero?scope=affiliate&theme=light&ts=${affiliateHeroBackgroundLightVersion}`}
+                    alt="Affiliate hero background preview (light theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasAffiliateHeroBackgroundLight(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">Не загружен</span>
+                )}
+              </div>
+            </div>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUploadHeroBackgroundWithTheme(file, "light", "affiliate")
+                  e.target.value = ""
+                }
+              }}
+              disabled={uploadingAffiliateHeroBackgroundLight}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasAffiliateHeroBackgroundLight || deletingAffiliateHeroBackgroundLight}
+                onClick={() => {
+                  void handleDeleteHeroBackgroundWithTheme("light", "affiliate")
+                }}
+              >
+                Сбросить Hero /affiliate (светлая тема)
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Hero /affiliate для тёмной темы (16:9)</Label>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasAffiliateHeroBackgroundDark ? (
+                  <img
+                    key={affiliateHeroBackgroundDarkVersion}
+                    src={`/api/site/backgrounds/hero?scope=affiliate&theme=dark&ts=${affiliateHeroBackgroundDarkVersion}`}
+                    alt="Affiliate hero background preview (dark theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasAffiliateHeroBackgroundDark(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">Не загружен</span>
+                )}
+              </div>
+            </div>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUploadHeroBackgroundWithTheme(file, "dark", "affiliate")
+                  e.target.value = ""
+                }
+              }}
+              disabled={uploadingAffiliateHeroBackgroundDark}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasAffiliateHeroBackgroundDark || deletingAffiliateHeroBackgroundDark}
+                onClick={() => {
+                  void handleDeleteHeroBackgroundWithTheme("dark", "affiliate")
+                }}
+              >
+                Сбросить Hero /affiliate (тёмная тема)
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Общий фон /affiliate для светлой темы (9:16)</Label>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasAffiliateGlobalBackgroundLight ? (
+                  <img
+                    key={affiliateGlobalBackgroundLightVersion}
+                    src={`/api/site/backgrounds/global?scope=affiliate&theme=light&ts=${affiliateGlobalBackgroundLightVersion}`}
+                    alt="Affiliate global background preview (light theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasAffiliateGlobalBackgroundLight(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">Не загружен</span>
+                )}
+              </div>
+            </div>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUploadGlobalBackgroundWithTheme(file, "light", "affiliate")
+                  e.target.value = ""
+                }
+              }}
+              disabled={uploadingAffiliateGlobalBackgroundLight}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasAffiliateGlobalBackgroundLight || deletingAffiliateGlobalBackgroundLight}
+                onClick={() => {
+                  void handleDeleteGlobalBackgroundWithTheme("light", "affiliate")
+                }}
+              >
+                Сбросить общий фон /affiliate (светлая тема)
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label>Общий фон /affiliate для тёмной темы (9:16)</Label>
+              </div>
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded border border-border bg-muted">
+                {hasAffiliateGlobalBackgroundDark ? (
+                  <img
+                    key={affiliateGlobalBackgroundDarkVersion}
+                    src={`/api/site/backgrounds/global?scope=affiliate&theme=dark&ts=${affiliateGlobalBackgroundDarkVersion}`}
+                    alt="Affiliate global background preview (dark theme)"
+                    className="h-full w-full object-cover"
+                    onError={() => setHasAffiliateGlobalBackgroundDark(false)}
+                  />
+                ) : (
+                  <span className="px-2 text-center text-[10px] text-muted-foreground">Не загружен</span>
+                )}
+              </div>
+            </div>
+            <Input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUploadGlobalBackgroundWithTheme(file, "dark", "affiliate")
+                  e.target.value = ""
+                }
+              }}
+              disabled={uploadingAffiliateGlobalBackgroundDark}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!hasAffiliateGlobalBackgroundDark || deletingAffiliateGlobalBackgroundDark}
+                onClick={() => {
+                  void handleDeleteGlobalBackgroundWithTheme("dark", "affiliate")
+                }}
+              >
+                Сбросить общий фон /affiliate (тёмная тема)
               </Button>
             </div>
           </div>

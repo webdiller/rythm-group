@@ -20,8 +20,8 @@ async function getAffiliateShellMeta(): Promise<{
   const baseUrl = getSiteBaseUrl()
   const [settingsRes, globalLightBgRes, globalDarkBgRes] = await Promise.all([
     fetch(`${baseUrl}/api/site/settings`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=light`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/site/backgrounds/global?scope=affiliate&theme=light`, { cache: "no-store" }),
+    fetch(`${baseUrl}/api/site/backgrounds/global?scope=affiliate&theme=dark`, { cache: "no-store" }),
   ])
 
   let siteSettings: SiteSettings | null = null
@@ -56,11 +56,11 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
       <div className="absolute inset-0 z-0" aria-hidden="true">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
-          style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=light')" }}
+          style={{ backgroundImage: "url('/api/site/backgrounds/global?scope=affiliate&theme=light')" }}
         />
         <div
           className="absolute inset-0 hidden bg-cover bg-center bg-fixed dark:block"
-          style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=dark')" }}
+          style={{ backgroundImage: "url('/api/site/backgrounds/global?scope=affiliate&theme=dark')" }}
         />
       </div>
       {!hasCustomGlobalBackgroundForBothThemes && (

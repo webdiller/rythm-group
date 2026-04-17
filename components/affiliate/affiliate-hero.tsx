@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
-import { resolveNavHref } from "@/lib/nav-hrefs"
 import { StaggerItem } from "@/components/ui/stagger-item"
 
 type AffiliateHeroData = {
@@ -26,7 +25,7 @@ type AffiliateHeroProps = {
 export function AffiliateHero({ data, enableAffiliateCooperationFormats }: AffiliateHeroProps) {
   const { locale, t } = useLocale()
   const a = t.affiliate.hero
-  const contactHref = resolveNavHref("#contact", "/")
+  const contactHref = "#contact"
   const moreHref = "/affiliate#affiliate-formats"
   const badge = data ? (locale === "en" ? data.badge_en : data.badge_ru) : a.badge
   const title = data ? (locale === "en" ? data.title_en : data.title_ru) : a.title
@@ -48,11 +47,11 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
         <div className="absolute inset-0 z-0" aria-hidden="true">
           <div
             className="absolute inset-0 bg-cover bg-center dark:hidden"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=light')" }}
+            style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=light')" }}
           />
           <div
             className="absolute inset-0 hidden bg-cover bg-center dark:block"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
+            style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=dark')" }}
           />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl text-center">
