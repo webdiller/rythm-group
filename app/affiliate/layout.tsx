@@ -77,7 +77,11 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
       )}
 
       <div className="relative z-20">
-        <Header sectionHrefPrefix="/" navOrder={headerNavOrder} />
+        <Header
+          sectionHrefPrefix="/"
+          navOrder={headerNavOrder}
+          logoText={siteSettings?.logo_text ?? null}
+        />
         <main>
           {children}
         </main>

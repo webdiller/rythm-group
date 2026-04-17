@@ -167,6 +167,8 @@ export function runSeed(
     db.insert(tableSiteSettings)
       .values({
         favicon: null,
+        logo: null,
+        logo_text: null,
         privacyPolicyUrl: null,
         dataProcessingPolicyUrl: null,
         headerNavOrder: JSON.stringify(DEFAULT_HEADER_NAV_ORDER),

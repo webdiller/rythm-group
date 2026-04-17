@@ -74,7 +74,11 @@ export default async function BlogLayout({ children }: Readonly<{ children: Reac
           )}
 
           <div className="relative z-20">
-            <Header sectionHrefPrefix="/" navOrder={headerNavOrder} />
+            <Header
+              sectionHrefPrefix="/"
+              navOrder={headerNavOrder}
+              logoText={siteSettings?.logo_text ?? null}
+            />
             <main className="mx-auto pt-24 max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
               {children}
             </main>

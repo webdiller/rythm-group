@@ -4,9 +4,9 @@ import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { resolveNavHref } from "@/lib/nav-hrefs"
-import imgLogo from "@/public/logo.jpg"
 
 export type SiteSettings = {
+  logo_text?: string | null
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
   headerNavOrder?: string | null
@@ -50,6 +50,7 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
 
   const privacyUrl = siteSettings?.privacyPolicyUrl ?? null
   const dataPolicyUrl = siteSettings?.dataProcessingPolicyUrl ?? null
+  const logoText = siteSettings?.logo_text?.trim() ?? ""
 
   return (
     <footer className="border-t border-border px-6 py-10">
@@ -64,11 +65,9 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
               >
                 <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
                   <div className="overflow-hidden rounded-full bg-primary">
-                    <img src={imgLogo.src} width={imgLogo.width} height={imgLogo.height} alt="Rythm Group" className="h-8 w-8" />
+                    <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
                   </div>
-                  <span>
-                    Rythm<span className="text-primary">Group</span>
-                  </span>
+                  {logoText ? <span>{logoText}</span> : null}
                 </div>
               </Link>
               <span className="mt-2 block text-xs text-muted-foreground">{t.footer.description}</span>

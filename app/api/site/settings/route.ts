@@ -11,6 +11,7 @@ type PartnersDisplayMode = "name" | "logo" | "logoAndName"
 type ContactLayout = "formFirst" | "contactsFirst"
 
 type SiteSettingsPayload = {
+  logo_text?: string | null
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
@@ -51,6 +52,7 @@ export async function PUT(request: NextRequest) {
     const currentDisplayMode =
       (existing?.partnersDisplayMode as PartnersDisplayMode | null | undefined) ??
       "logoAndName"
+    const currentLogoText = existing?.logo_text ?? null
     const currentContactLayout =
       (existing?.contactLayout as ContactLayout | null | undefined) ?? "formFirst"
     const currentContactFormHidden = existing?.contactFormHidden ?? false
@@ -75,6 +77,12 @@ export async function PUT(request: NextRequest) {
     })()
 
     const updateValues = {
+      logo_text:
+        body.logo_text === undefined
+          ? currentLogoText
+          : body.logo_text
+            ? body.logo_text.trim()
+            : null,
       privacyPolicyUrl: body.privacyPolicyUrl ?? null,
       dataProcessingPolicyUrl: body.dataProcessingPolicyUrl ?? null,
       heroAnimationEnabled:
@@ -134,6 +142,8 @@ export async function PUT(request: NextRequest) {
       .insert(tableSiteSettings)
       .values({
         favicon: null,
+        logo: null,
+        logo_text: updateValues.logo_text ?? null,
         privacyPolicyUrl: updateValues.privacyPolicyUrl ?? null,
         dataProcessingPolicyUrl: updateValues.dataProcessingPolicyUrl ?? null,
         headerNavOrder: updateValues.headerNavOrder ?? JSON.stringify(DEFAULT_HEADER_NAV_ORDER),

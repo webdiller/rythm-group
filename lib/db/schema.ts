@@ -141,6 +141,10 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   // Base64-encoded PNG (32x32) favicon override
   favicon: text("favicon"),
+  // Base64-encoded WebP logo override (header/footer)
+  logo: text("logo"),
+  // Optional text near logo in header/footer
+  logo_text: text("logo_text"),
   privacyPolicyUrl: text("privacy_policy_url"),
   dataProcessingPolicyUrl: text("data_processing_policy_url"),
   // JSON-encoded array of header section ids

@@ -61,6 +61,10 @@ function SortableNavItem({ id, label }: { id: HeaderNavItemId; label: string }) 
 }
 
 export function SiteSettingsEditor() {
+  const [hasLogo, setHasLogo] = useState(false)
+  const [logoVersion, setLogoVersion] = useState(() => Date.now())
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [deletingLogo, setDeletingLogo] = useState(false)
   const [hasFavicon, setHasFavicon] = useState(false)
   const [faviconVersion, setFaviconVersion] = useState(() => Date.now())
   const [uploading, setUploading] = useState(false)
@@ -100,11 +104,13 @@ export function SiteSettingsEditor() {
   const [blogShowDates, setBlogShowDates] = useState(true)
   const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
   const [headerNavOrder, setHeaderNavOrder] = useState<HeaderNavItemId[]>([...DEFAULT_HEADER_NAV_ORDER])
+  const [logoText, setLogoText] = useState("")
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
   const [dataProcessingPolicyUrl, setDataProcessingPolicyUrl] = useState("")
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
   const [initialSettings, setInitialSettings] = useState<{
+    logoText: string
     heroAnimationEnabled: boolean
     privacyPolicyUrl: string
     dataProcessingPolicyUrl: string
@@ -141,6 +147,13 @@ export function SiteSettingsEditor() {
     if (oldIndex < 0 || newIndex < 0) return
     setHeaderNavOrder(arrayMove(headerNavOrder, oldIndex, newIndex))
   }
+
+  useEffect(() => {
+    const logo = new Image()
+    logo.src = `/api/site/logo?ts=${Date.now()}`
+    logo.onload = () => setHasLogo(true)
+    logo.onerror = () => setHasLogo(false)
+  }, [])
 
   useEffect(() => {
     const img = new Image()
@@ -190,6 +203,8 @@ export function SiteSettingsEditor() {
 
         const json = (await res.json()) as {
           data?: {
+            logo_text?: string | null
+            logo?: string | null
             heroAnimationEnabled?: boolean | null
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
@@ -205,6 +220,8 @@ export function SiteSettingsEditor() {
         }
 
         const data = json.data ?? null
+        setHasLogo(Boolean(data?.logo))
+        const logoTextValue = data?.logo_text ?? ""
         const heroAnimation = data?.heroAnimationEnabled ?? true
         const privacy = data?.privacyPolicyUrl ?? ""
         const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
@@ -224,11 +241,13 @@ export function SiteSettingsEditor() {
           }
         })()
 
+        setLogoText(logoTextValue)
         setHeroAnimationEnabled(heroAnimation)
         setPrivacyPolicyUrl(privacy)
         setDataProcessingPolicyUrl(dataPolicy)
         setInitialSettings({
           heroAnimationEnabled: heroAnimation,
+          logoText: logoTextValue,
           privacyPolicyUrl: privacy,
           dataProcessingPolicyUrl: dataPolicy,
           partnersDisplayMode: partnersMode,
@@ -292,6 +311,7 @@ export function SiteSettingsEditor() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
+          logo_text: logoText.trim() || null,
           heroAnimationEnabled,
           privacyPolicyUrl: privacyPolicyUrl || null,
           dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
@@ -313,6 +333,7 @@ export function SiteSettingsEditor() {
 
       toast.success("Настройки сайта обновлены")
       setInitialSettings({
+        logoText: logoText.trim(),
         heroAnimationEnabled,
         privacyPolicyUrl,
         dataProcessingPolicyUrl,
@@ -329,6 +350,64 @@ export function SiteSettingsEditor() {
       notifyMutationError("Не удалось сохранить настройки сайта")
     } finally {
       setSavingSettings(false)
+    }
+  }
+
+  const handleUploadLogo = async (file: File) => {
+    const maxSizeBytes = 5 * 1024 * 1024
+    if (file.size > maxSizeBytes) {
+      toast.error("Файл не должен превышать 5 МБ")
+      return
+    }
+
+    setUploadingLogo(true)
+    try {
+      const token = getToken()
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch("/api/site/logo", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: formData,
+      })
+
+      if (!res.ok) {
+        notifyMutationError("Не удалось загрузить логотип")
+        return
+      }
+
+      setHasLogo(true)
+      setLogoVersion(Date.now())
+      toast.success("Логотип обновлён")
+    } catch {
+      notifyMutationError("Не удалось загрузить логотип")
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  const handleDeleteLogo = async () => {
+    setDeletingLogo(true)
+    try {
+      const token = getToken()
+      const res = await fetch("/api/site/logo", {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      })
+
+      if (!res.ok) {
+        notifyMutationError("Не удалось удалить логотип")
+        return
+      }
+
+      setHasLogo(false)
+      setLogoVersion(Date.now())
+      toast.success("Логотип сброшен до значения по умолчанию")
+    } catch {
+      notifyMutationError("Не удалось удалить логотип")
+    } finally {
+      setDeletingLogo(false)
     }
   }
 
@@ -677,6 +756,85 @@ export function SiteSettingsEditor() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Настройки сайта</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle>Логотип</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Текущий логотип</Label>
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted border border-border">
+                <img
+                  key={logoVersion}
+                  src={`/api/site/logo?ts=${logoVersion}`}
+                  alt="Logo preview"
+                  className="h-full w-full object-cover"
+                  onLoad={() => setHasLogo(true)}
+                  onError={() => setHasLogo(false)}
+                />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {hasLogo ? "Кастомный логотип загружен" : "Используется логотип по умолчанию"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Загружается PNG/JPG/WebP до 5 МБ. Используется в `Header` и `Footer`.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="logo_text">Текст рядом с логотипом</Label>
+            <Input
+              id="logo_text"
+              type="text"
+              value={logoText}
+              onChange={(e) => setLogoText(e.target.value)}
+              placeholder="Например: Rythm Group"
+            />
+            <p className="text-xs text-muted-foreground">
+              Если оставить пустым, текст рядом с логотипом в `Header` и `Footer` не отображается.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Загрузить новый логотип</Label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  void handleUploadLogo(file)
+                  e.target.value = ""
+                }
+              }}
+              disabled={uploadingLogo}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!initialSettings) return
+                setLogoText(initialSettings.logoText)
+              }}
+              disabled={!initialSettings || loadingSettings || savingSettings}
+            >
+              Отменить текст
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!hasLogo || deletingLogo}
+              onClick={() => {
+                void handleDeleteLogo()
+              }}
+            >
+              Сбросить до дефолтного
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Фавикон</CardTitle>
@@ -1145,6 +1303,7 @@ export function SiteSettingsEditor() {
               variant="outline"
               onClick={() => {
                 if (!initialSettings) return
+                setLogoText(initialSettings.logoText)
                 setPrivacyPolicyUrl(initialSettings.privacyPolicyUrl)
                 setDataProcessingPolicyUrl(initialSettings.dataProcessingPolicyUrl)
               }}

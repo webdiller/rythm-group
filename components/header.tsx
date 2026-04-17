@@ -6,7 +6,6 @@ import { useLocale } from "@/lib/locale-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { resolveNavHref } from "@/lib/nav-hrefs"
 import { Menu, X } from "lucide-react"
-import imgLogo from "@/public/logo.jpg"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 
 type HeaderProps = {
@@ -14,9 +13,11 @@ type HeaderProps = {
   sectionHrefPrefix?: "" | "/"
   /** Порядок пунктов меню, вычисленный на сервере. */
   navOrder?: HeaderNavItemId[]
+  /** Текст рядом с логотипом. Если пусто, скрывается. */
+  logoText?: string | null
 }
 
-export function Header({ sectionHrefPrefix = "", navOrder }: HeaderProps) {
+export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderProps) {
   const { locale, setLocale, t } = useLocale()
   const [mobileOpen, setMobileOpen] = useState(false)
   const resolvedNavOrder = normalizeHeaderNavOrder(navOrder ?? DEFAULT_HEADER_NAV_ORDER)
@@ -44,9 +45,11 @@ export function Header({ sectionHrefPrefix = "", navOrder }: HeaderProps) {
         >
           <span className="text-lg font-bold tracking-tight flex items-center gap-1 sm:gap-2 text-foreground">
             <div className="rounded-full overflow-hidden bg-primary">
-              <img src={imgLogo.src} width={imgLogo.width} height={imgLogo.height} alt="Rythm Group" className="h-8 w-8" />
+              <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
             </div>
-            <span className="text-xs sm:text-sm md:text-base">Rythm<span className="text-primary">Group</span></span>
+            {logoText?.trim() ? (
+              <span className="text-xs sm:text-sm md:text-base">{logoText}</span>
+            ) : null}
           </span>
         </Link>
 
