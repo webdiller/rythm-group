@@ -163,8 +163,15 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     const prevHtmlOverflow = htmlEl.style.overflow
     const prevBodyOverflow = bodyEl.style.overflow
     const prevBodyTouchAction = bodyEl.style.touchAction
+    const prevBodyPaddingRight = bodyEl.style.paddingRight
 
     if (shouldLock) {
+      // Компенсируем исчезновение системного скроллбара, чтобы не было сдвига контента.
+      const scrollbarWidth = Math.max(0, window.innerWidth - htmlEl.clientWidth)
+      if (scrollbarWidth > 0) {
+        bodyEl.style.paddingRight = `${scrollbarWidth}px`
+      }
+      htmlEl.style.setProperty("--route-scrollbar-comp", `${scrollbarWidth}px`)
       htmlEl.style.overflow = "hidden"
       bodyEl.style.overflow = "hidden"
       bodyEl.style.touchAction = "none"
@@ -174,6 +181,8 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
       htmlEl.style.overflow = prevHtmlOverflow
       bodyEl.style.overflow = prevBodyOverflow
       bodyEl.style.touchAction = prevBodyTouchAction
+      bodyEl.style.paddingRight = prevBodyPaddingRight
+      htmlEl.style.removeProperty("--route-scrollbar-comp")
     }
   }, [phase])
 

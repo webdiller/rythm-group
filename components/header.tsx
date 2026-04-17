@@ -57,7 +57,10 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background backdrop-blur-xl">
+    <header
+      className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background backdrop-blur-xl"
+      style={{ right: "var(--route-scrollbar-comp, 0px)" }}
+    >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-2 py-4 sm:px-4">
         <Link
           href={homeHref === "#" ? "/" : homeHref}
