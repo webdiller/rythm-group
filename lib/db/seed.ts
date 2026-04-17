@@ -14,6 +14,7 @@ import {
   tableAffiliateHero,
   tableAffiliateFormats,
   tableAffiliateFaq,
+  tableAboutCards,
 } from "./schema"
 import { fallbackTranslations } from "@/lib/i18n"
 import { channelCategories, partnerLogos } from "@/lib/data"
@@ -235,6 +236,41 @@ export function runSeed(
         answer_en: "Depends on the cooperation format.",
         hidden: false,
         order_index: 0,
+      },
+    ]).run()
+  }
+
+  const existingAboutCards = db.select().from(tableAboutCards).limit(1).all()
+  if (existingAboutCards.length === 0) {
+    const ruAbout = fallbackTranslations.ru.about
+    const enAbout = fallbackTranslations.en.about
+    db.insert(tableAboutCards).values([
+      {
+        icon: "Target",
+        title_ru: ruAbout.mission.title,
+        title_en: enAbout.mission.title,
+        text_ru: ruAbout.mission.text,
+        text_en: enAbout.mission.text,
+        hidden: false,
+        order_index: 0,
+      },
+      {
+        icon: "Users",
+        title_ru: ruAbout.team.title,
+        title_en: enAbout.team.title,
+        text_ru: ruAbout.team.text,
+        text_en: enAbout.team.text,
+        hidden: false,
+        order_index: 1,
+      },
+      {
+        icon: "Crosshair",
+        title_ru: ruAbout.audience.title,
+        title_en: enAbout.audience.title,
+        text_ru: ruAbout.audience.text,
+        text_en: enAbout.audience.text,
+        hidden: false,
+        order_index: 2,
       },
     ]).run()
   }

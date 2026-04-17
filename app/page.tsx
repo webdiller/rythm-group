@@ -9,6 +9,7 @@ import { Footer, type SiteSettings } from "@/components/footer"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { LandingBlogSection } from "@/components/landing-blog-section"
 import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
+import type { AboutCardListItem } from "@/lib/schemas/about-cards"
 import { getBlogCategoriesSorted, getBlogShowDatesEnabled, getPublishedPosts } from "@/lib/blog/queries"
 import type { BlogCategory, BlogPost } from "@/lib/blog/types"
 import { getSiteBaseUrl } from "@/lib/site-url"
@@ -24,6 +25,7 @@ async function getHomeData(): Promise<{
   blogCategories: BlogCategory[]
   blogShowDates: boolean
   headerNavOrder: HeaderNavItemId[]
+  aboutCards: AboutCardListItem[]
 }> {
   const baseUrl = getSiteBaseUrl()
 
@@ -35,6 +37,7 @@ async function getHomeData(): Promise<{
     settingsRes,
     globalLightBgRes,
     globalDarkBgRes,
+    aboutCardsRes,
   ] = await Promise.all([
     fetch(`${baseUrl}/api/content/channel-categories`, {
       cache: "no-store",
@@ -55,6 +58,9 @@ async function getHomeData(): Promise<{
       cache: "no-store",
     }),
     fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, {
+      cache: "no-store",
+    }),
+    fetch(`${baseUrl}/api/content/about-cards`, {
       cache: "no-store",
     }),
   ])
@@ -102,6 +108,12 @@ async function getHomeData(): Promise<{
   const blogCategories = getBlogCategoriesSorted()
   const blogShowDates = getBlogShowDatesEnabled()
 
+  let aboutCards: AboutCardListItem[] = []
+  if (aboutCardsRes.ok) {
+    const aboutCardsJson = (await aboutCardsRes.json()) as { data?: AboutCardListItem[] }
+    aboutCards = aboutCardsJson.data ?? []
+  }
+
   return {
     channelCategories,
     channels,
@@ -113,6 +125,7 @@ async function getHomeData(): Promise<{
     blogCategories,
     blogShowDates,
     headerNavOrder,
+    aboutCards,
   }
 }
 
@@ -128,6 +141,7 @@ export default async function Home() {
     blogCategories,
     blogShowDates,
     headerNavOrder,
+    aboutCards,
   } = await getHomeData()
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
@@ -167,7 +181,7 @@ export default async function Home() {
             <Header navOrder={headerNavOrder} />
             <main>
               <Hero animationEnabled={animationsEnabled} />
-              <About animationsEnabled={animationsEnabled} />
+              <About animationsEnabled={animationsEnabled} cards={aboutCards} />
               <Channels
                 categories={channelCategories}
                 channels={channels}

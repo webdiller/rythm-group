@@ -1,30 +1,67 @@
 "use client"
 
+import { useMemo } from "react"
 import { useLocale } from "@/lib/locale-context"
-import { Target, Users, Crosshair } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
+import { getAboutCardIcon } from "@/lib/about-card-icons"
+import type { AboutCardListItem } from "@/lib/schemas/about-cards"
 
-export function About({ animationsEnabled = true }: { animationsEnabled?: boolean }) {
-  const { t } = useLocale()
+type DisplayCard = {
+  key: string
+  id?: number
+  iconName: string
+  hasCustomIcon: boolean
+  title: string
+  text: string
+}
 
-  const cards = [
-    {
-      icon: Target,
-      title: t.about.mission.title,
-      text: t.about.mission.text,
-    },
-    {
-      icon: Users,
-      title: t.about.team.title,
-      text: t.about.team.text,
-    },
-    {
-      icon: Crosshair,
-      title: t.about.audience.title,
-      text: t.about.audience.text,
-    },
-  ]
+export function About({
+  animationsEnabled = true,
+  cards,
+}: {
+  animationsEnabled?: boolean
+  /** Карточки из CMS; если пусто — fallback из переводов `t.about.*` */
+  cards?: AboutCardListItem[] | null
+}) {
+  const { t, locale } = useLocale()
+
+  const displayCards: DisplayCard[] = useMemo(() => {
+    const fromDb = (cards ?? []).filter((c) => !c.hidden)
+    if (fromDb.length > 0) {
+      return fromDb.map((c) => ({
+        key: String(c.id),
+        id: c.id,
+        iconName: c.icon,
+        hasCustomIcon: c.has_custom_icon,
+        title: locale === "en" ? c.title_en : c.title_ru,
+        text: locale === "en" ? c.text_en : c.text_ru,
+      }))
+    }
+    return [
+      {
+        key: "mission",
+        iconName: "Target",
+        hasCustomIcon: false,
+        title: t.about.mission.title,
+        text: t.about.mission.text,
+      },
+      {
+        key: "team",
+        iconName: "Users",
+        hasCustomIcon: false,
+        title: t.about.team.title,
+        text: t.about.team.text,
+      },
+      {
+        key: "audience",
+        iconName: "Crosshair",
+        hasCustomIcon: false,
+        title: t.about.audience.title,
+        text: t.about.audience.text,
+      },
+    ]
+  }, [cards, locale, t.about])
 
   return (
     <section id="about" className="relative px-6 py-12 md:py-16">
@@ -40,24 +77,40 @@ export function About({ animationsEnabled = true }: { animationsEnabled?: boolea
           </div>
         </ScrollReveal>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {cards.map((card, index) => (
-            <ScrollStagger
-              className="h-full [&>div]:h-full"
-              key={card.title}
-              index={index}
-              delayStep={120}
-              disabled={!animationsEnabled}
-            >
-              <div className="group rounded-xl h-full border border-border bg-card p-8 transition-all hover:border-primary/30 glow-border">
-                <div className="mb-5 flex mx-auto h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
-                  <card.icon className="h-6 w-6" />
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {displayCards.map((card, index) => {
+            const Icon = getAboutCardIcon(card.iconName)
+            return (
+              <ScrollStagger
+                className="h-full [&>div]:h-full"
+                key={card.key}
+                index={index}
+                delayStep={120}
+                disabled={!animationsEnabled}
+              >
+                <div className="group rounded-xl h-full border border-border bg-card p-8 transition-all hover:border-primary/30 glow-border">
+                  <div className="mb-5 flex mx-auto h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                    {card.hasCustomIcon && card.id != null ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- динамический URL из CMS
+                      <img
+                        src={`/api/content/about-cards/${card.id}/icon`}
+                        alt=""
+                        className="h-6 w-6 object-contain"
+                        width={24}
+                        height={24}
+                      />
+                    ) : (
+                      <Icon className="h-6 w-6" />
+                    )}
+                  </div>
+                  <h3 className="mb-3 text-lg sm:text-xl lg:text-2xl text-center font-semibold text-card-foreground">
+                    {card.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{card.text}</p>
                 </div>
-                <h3 className="mb-3 text-lg sm:text-xl lg:text-2xl text-center font-semibold text-card-foreground">{card.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{card.text}</p>
-              </div>
-            </ScrollStagger>
-          ))}
+              </ScrollStagger>
+            )
+          })}
         </div>
       </div>
     </section>

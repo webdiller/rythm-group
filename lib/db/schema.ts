@@ -220,6 +220,25 @@ export const tableAffiliateFaq = sqliteTable("affiliate_faq", {
 export const relationsAffiliateFaq = relations(tableAffiliateFaq, () => ({}))
 
 // ---------------------------------------------------------------------------
+// about_cards (landing «О нас»)
+// ---------------------------------------------------------------------------
+export const tableAboutCards = sqliteTable("about_cards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Имя иконки из whitelist (Lucide), например Target; если задан icon_image, показывается он */
+  icon: text("icon").notNull(),
+  /** WebP base64; при наличии отображается вместо Lucide */
+  icon_image: text("icon_image"),
+  title_ru: text("title_ru").notNull(),
+  title_en: text("title_en").notNull(),
+  text_ru: text("text_ru").notNull(),
+  text_en: text("text_en").notNull(),
+  hidden: integer("hidden", { mode: "boolean" }).default(false),
+  order_index: integer("order_index").default(0),
+})
+
+export const relationsAboutCards = relations(tableAboutCards, () => ({}))
+
+// ---------------------------------------------------------------------------
 // affiliate_partner_views (unique views by IP)
 // ---------------------------------------------------------------------------
 export const tableAffiliatePartnerViews = sqliteTable(

@@ -14,6 +14,7 @@ import {
   tableAffiliateFormats,
   tableAffiliateFaq,
   tableAffiliatePartnerViews,
+  tableAboutCards,
 } from "./db/schema"
 
 export const allZodSchemas = {
@@ -81,6 +82,11 @@ export const allZodSchemas = {
     select: createSelectSchema(tableAffiliatePartnerViews),
     insert: createInsertSchema(tableAffiliatePartnerViews),
     update: createUpdateSchema(tableAffiliatePartnerViews),
+  },
+  tableAboutCards: {
+    select: createSelectSchema(tableAboutCards),
+    insert: createInsertSchema(tableAboutCards),
+    update: createUpdateSchema(tableAboutCards),
   },
 }
 

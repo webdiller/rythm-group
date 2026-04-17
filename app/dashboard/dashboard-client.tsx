@@ -13,11 +13,13 @@ import { AffiliateHeroEditor } from "@/components/dashboard/AffiliateHeroEditor"
 import { AffiliateFormatsEditor } from "@/components/dashboard/AffiliateFormatsEditor"
 import { AffiliateFaqEditor } from "@/components/dashboard/AffiliateFaqEditor"
 import { AffiliateSectionsEditor } from "@/components/dashboard/AffiliateSectionsEditor"
+import { AboutCardsEditor } from "@/components/dashboard/AboutCardsEditor"
 
 const VALID_TABS = new Set<DashboardTabId>([
   "translations",
   "channels",
   "partners",
+  "about-cards",
   "blog",
   "contacts",
   "settings",
@@ -100,6 +102,8 @@ function DashboardInner() {
         return <ChannelsEditor />
       case "partners":
         return <PartnersEditor />
+      case "about-cards":
+        return <AboutCardsEditor />
       case "blog":
         return <BlogEditor />
       case "contacts":
