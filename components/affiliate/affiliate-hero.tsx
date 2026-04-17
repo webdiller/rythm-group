@@ -29,6 +29,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [heroImageLoaded, setHeroImageLoaded] = useState(false)
+  const [heroContentVisible, setHeroContentVisible] = useState(false)
   const a = t.affiliate.hero
   const contactHref = "#contact"
   const moreHref = "/affiliate#affiliate-formats"
@@ -55,6 +56,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
     const theme = resolvedTheme === "light" ? "light" : "dark"
     const src = `/api/site/backgrounds/hero?scope=affiliate&theme=${theme}`
     setHeroImageLoaded(false)
+    setHeroContentVisible(false)
 
     const img = new Image()
     img.src = src
@@ -64,6 +66,21 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
       setHeroImageLoaded(true)
     }
   }, [mounted, resolvedTheme])
+
+  useEffect(() => {
+    if (!mounted) return
+    // Прогреваем dark-версию заранее, чтобы переключение темы было плавнее.
+    const darkImg = new Image()
+    darkImg.src = "/api/site/backgrounds/hero?scope=affiliate&theme=dark"
+  }, [mounted])
+
+  useEffect(() => {
+    if (!heroImageLoaded) return
+    const timer = window.setTimeout(() => {
+      setHeroContentVisible(true)
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [heroImageLoaded])
 
   return (
     <div className="relative">
@@ -81,7 +98,9 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
             className={`absolute inset-0 bg-[#0A0A0F] transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
           />
         </div>
-        <div className="relative z-10 mx-auto max-w-7xl text-center">
+        <div
+          className={`relative z-10 mx-auto max-w-7xl text-center transition-opacity duration-300 ${heroContentVisible ? "opacity-100" : "opacity-0"}`}
+        >
           <StaggerItem
             index={0}
             delayStart={100}

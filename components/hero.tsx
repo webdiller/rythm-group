@@ -26,6 +26,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [heroImageLoaded, setHeroImageLoaded] = useState(false)
+  const [heroContentVisible, setHeroContentVisible] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -36,6 +37,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
     const theme = resolvedTheme === "light" ? "light" : "dark"
     const src = `/api/site/backgrounds/hero?theme=${theme}`
     setHeroImageLoaded(false)
+    setHeroContentVisible(false)
 
     const img = new Image()
     img.src = src
@@ -45,6 +47,21 @@ export function Hero({ animationEnabled = true }: HeroProps) {
       setHeroImageLoaded(true)
     }
   }, [mounted, resolvedTheme])
+
+  useEffect(() => {
+    if (!mounted) return
+    // Прогреваем dark-версию заранее, чтобы при переключении темы не ждать загрузки.
+    const darkImg = new Image()
+    darkImg.src = "/api/site/backgrounds/hero?theme=dark"
+  }, [mounted])
+
+  useEffect(() => {
+    if (!heroImageLoaded) return
+    const timer = window.setTimeout(() => {
+      setHeroContentVisible(true)
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [heroImageLoaded])
 
   const isLight = mounted && resolvedTheme === "light"
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
@@ -84,7 +101,9 @@ export function Hero({ animationEnabled = true }: HeroProps) {
             />
           )}
         </div>
-        <div className="relative z-10 mx-auto max-w-5xl text-center">
+        <div
+          className={`relative z-10 mx-auto max-w-5xl text-center transition-opacity duration-300 ${heroContentVisible ? "opacity-100" : "opacity-0"}`}
+        >
           {animationEnabled ? (
             <StaggerItem
               index={0}
