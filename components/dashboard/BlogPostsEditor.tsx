@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
@@ -32,6 +33,7 @@ type AdminPost = {
   status: "draft" | "published"
   published_at: number
   category_slug?: string
+  updated_at?: string
 }
 
 export function BlogPostsEditor() {
@@ -40,7 +42,7 @@ export function BlogPostsEditor() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [processingPostId, setProcessingPostId] = useState<number | null>(null)
-  const [processingAction, setProcessingAction] = useState<"delete" | "unpublish" | null>(null)
+  const [processingAction, setProcessingAction] = useState<"delete" | "toggleStatus" | null>(null)
   const [filterCategoryId, setFilterCategoryId] = useState<string>("all")
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
@@ -113,10 +115,11 @@ export function BlogPostsEditor() {
     }
   }
 
-  const handleUnpublish = async (id: number) => {
+  const handleToggleStatus = async (id: number, isPublished: boolean) => {
     if (processingPostId != null) return
     setProcessingPostId(id)
-    setProcessingAction("unpublish")
+    setProcessingAction("toggleStatus")
+    const nextStatus: "draft" | "published" = isPublished ? "draft" : "published"
     const token = getToken()
     try {
       const res = await fetch(`/api/content/blog/posts/${id}`, {
@@ -125,15 +128,24 @@ export function BlogPostsEditor() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token ?? ""}`,
         },
-        body: JSON.stringify({ status: "draft" }),
+        body: JSON.stringify({ status: nextStatus }),
         cache: "no-store",
       })
       if (!res.ok) {
-        toast.error("Не удалось снять с публикации")
+        toast.error(
+          nextStatus === "published" ? "Не удалось опубликовать" : "Не удалось снять с публикации",
+        )
         return
       }
-      toast.success("Снято с публикации")
-      void loadPosts()
+      const json = (await res.json()) as { data?: AdminPost }
+      if (json.data) {
+        setPosts((prev) => prev.map((post) => (post.id === id ? { ...post, ...json.data } : post)))
+      } else {
+        setPosts((prev) =>
+          prev.map((post) => (post.id === id ? { ...post, status: nextStatus } : post)),
+        )
+      }
+      toast.success(nextStatus === "published" ? "Опубликовано" : "Снято с публикации")
     } catch {
       toast.error("Ошибка сети")
     } finally {
@@ -206,7 +218,7 @@ export function BlogPostsEditor() {
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="pb-2 pr-3">Заголовок (RU)</th>
                   <th className="pb-2 pr-3">Категория</th>
-                  <th className="pb-2 pr-3">Статус</th>
+                  <th className="w-[180px] pb-2 pr-3">Публикация</th>
                   <th className="pb-2 pr-3">Опубликовано</th>
                   <th className="pb-2"> </th>
                 </tr>
@@ -216,7 +228,25 @@ export function BlogPostsEditor() {
                   <tr key={p.id} className="border-b border-border/60">
                     <td className="max-w-[220px] py-2 pr-3 truncate font-medium">{p.title_ru}</td>
                     <td className="py-2 pr-3">{catLabel(p.category_id)}</td>
-                    <td className="py-2 pr-3">{p.status === "published" ? "Опубликовано" : "Черновик"}</td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={p.status === "published"}
+                          onCheckedChange={() => void handleToggleStatus(p.id, p.status === "published")}
+                          disabled={processingPostId != null}
+                          aria-label={
+                            p.status === "published" ? "Снять запись с публикации" : "Опубликовать запись"
+                          }
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {processingPostId === p.id && processingAction === "toggleStatus"
+                            ? "Сохранение..."
+                            : p.status === "published"
+                              ? "Опубликовано"
+                              : "Черновик"}
+                        </span>
+                      </div>
+                    </td>
                     <td className="py-2 pr-3 text-muted-foreground">{fmtTime(p.published_at)}</td>
                     <td className="py-2">
                       <div className="flex flex-wrap gap-1">
@@ -228,16 +258,6 @@ export function BlogPostsEditor() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        {p.status === "published" ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => void handleUnpublish(p.id)}
-                            disabled={processingPostId === p.id}
-                          >
-                            {processingPostId === p.id && processingAction === "unpublish" ? "Снятие..." : "Снять"}
-                          </Button>
-                        ) : null}
                         <Button
                           variant="ghost"
                           size="icon"
