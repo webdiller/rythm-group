@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useLocale } from "@/lib/locale-context"
 
 type PageRouteTransitionProviderProps = {
   children: ReactNode
@@ -12,7 +11,7 @@ type TransitionPhase = "idle" | "covering" | "navigating" | "revealing"
 
 const COVER_DELAY_MS = 400
 const POST_SCROLL_SETTLE_MS = 120
-const HIDE_DELAY_MS = 620
+const HIDE_DELAY_MS = 420
 
 function normalizePathname(pathname: string): string {
   if (!pathname) return "/"
@@ -20,23 +19,21 @@ function normalizePathname(pathname: string): string {
   return pathname
 }
 
-function isAnimatedDestination(pathname: string): boolean {
-  return pathname === "/affiliate" || pathname === "/blog"
+function isAnimatedSection(pathname: string): boolean {
+  return pathname === "/" || pathname === "/affiliate" || pathname === "/blog"
 }
 
 function isAnimatedTransition(fromPathname: string, toPathname: string): boolean {
-  return fromPathname === "/" && isAnimatedDestination(toPathname)
+  return isAnimatedSection(fromPathname) && isAnimatedSection(toPathname) && fromPathname !== toPathname
 }
 
 export function PageRouteTransitionProvider({ children }: PageRouteTransitionProviderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const normalizedPathname = useMemo(() => normalizePathname(pathname ?? "/"), [pathname])
-  const { t } = useLocale()
 
   const [phase, setPhase] = useState<TransitionPhase>("idle")
   const [targetPathname, setTargetPathname] = useState<string | null>(null)
-  const [targetLabel, setTargetLabel] = useState("")
 
   useEffect(() => {
     if (phase === "idle") return
@@ -103,7 +100,6 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
       }
 
       setTargetPathname(nextPathname)
-      setTargetLabel(nextPathname === "/blog" ? (t.nav.blog ?? t.blog.navLabel) : t.nav.affiliate)
       setPhase("covering")
 
       window.setTimeout(() => {
@@ -114,7 +110,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
 
     document.addEventListener("click", onClickCapture, true)
     return () => document.removeEventListener("click", onClickCapture, true)
-  }, [phase, normalizedPathname, router, t.blog.navLabel, t.nav.affiliate, t.nav.blog])
+  }, [phase, normalizedPathname, router])
 
   useEffect(() => {
     if (phase !== "navigating") return
@@ -155,7 +151,6 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     const hideTimer = window.setTimeout(() => {
       setPhase("idle")
       setTargetPathname(null)
-      setTargetLabel("")
     }, HIDE_DELAY_MS)
 
     return () => window.clearTimeout(hideTimer)
@@ -190,7 +185,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     <>
       {children}
       <div
-        className={`route-transition-overlay ${overlayVisible ? "is-visible" : ""} ${overlayCovering ? "is-covering" : ""} ${overlayRevealing ? "is-revealing" : ""}`}
+        className={`route-fade-transition-overlay ${overlayVisible ? "is-visible" : ""} ${overlayCovering ? "is-covering" : ""} ${overlayRevealing ? "is-revealing" : ""}`}
         aria-hidden={!overlayVisible}
       >
       </div>
