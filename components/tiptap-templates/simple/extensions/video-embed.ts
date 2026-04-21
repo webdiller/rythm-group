@@ -1,4 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core"
+import { ReactNodeViewRenderer } from "@tiptap/react"
+import { VideoEmbedNodeView } from "@/components/tiptap-templates/simple/extensions/video-embed-node-view"
 
 export type VideoEmbedAttrs = {
   src: string
@@ -89,5 +91,9 @@ export const VideoEmbed = Node.create({
           return chain().deleteSelection().run()
         },
     }
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(VideoEmbedNodeView)
   },
 })
