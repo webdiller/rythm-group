@@ -81,6 +81,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   const [body_html_ru, setBodyHtmlRu] = useState(emptyBody)
   const [body_html_en, setBodyHtmlEn] = useState(emptyBody)
   const [cover_image_url, setCoverImageUrl] = useState("")
+  const [coverDraftFile, setCoverDraftFile] = useState<File | null>(null)
+  const [coverDraftPreviewUrl, setCoverDraftPreviewUrl] = useState("")
   const [coverUploading, setCoverUploading] = useState(false)
   const coverFileInputRef = useRef<HTMLInputElement>(null)
   const [coverEditorOpen, setCoverEditorOpen] = useState(false)
@@ -206,10 +208,16 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     return true
   }
 
-  const uploadCover = async (file: File | null) => {
-    if (!file) return
-    const previousUrl = cover_image_url.trim()
-    setCoverUploading(true)
+  const clearCoverDraft = () => {
+    setCoverDraftFile(null)
+    if (coverDraftPreviewUrl) {
+      URL.revokeObjectURL(coverDraftPreviewUrl)
+    }
+    setCoverDraftPreviewUrl("")
+  }
+
+  const uploadCoverAndGetUrl = async (file: File | null): Promise<string | null> => {
+    if (!file) return null
     const token = getToken()
     const fd = new FormData()
     fd.append("file", file)
@@ -222,26 +230,16 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { error?: string }
         toast.error(err.error ?? "Загрузка не удалась")
-        return
+        return null
       }
       const json = (await res.json()) as { data?: { url?: string } }
       const url = json.data?.url
-      if (url) {
-        if (
-          !isEdit &&
-          previousUrl &&
-          previousUrl !== url &&
-          isLocalBlogUploadUrl(previousUrl)
-        ) {
-          await deleteLocalBlogUploadFile(previousUrl)
-        }
-        setCoverImageUrl(url)
-        toast.success("Файл загружен")
-      }
+      if (!url) return null
+      return url
     } catch {
       toast.error("Ошибка загрузки")
+      return null
     } finally {
-      setCoverUploading(false)
       resetCoverFileInput()
     }
   }
@@ -271,6 +269,30 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     setCoverEditorWidth(Math.min(Math.max(loadedImage.naturalWidth, 320), 2400))
     setCoverEditorHeight(Math.min(Math.max(loadedImage.naturalHeight, 180), 2400))
     setCoverEditorOpen(true)
+  }
+
+  const reopenCoverEditorFromCurrentImage = async () => {
+    const src = coverDraftPreviewUrl || cover_image_url.trim()
+    if (!src) return
+    try {
+      const res = await fetch(src)
+      if (!res.ok) {
+        toast.error("Не удалось открыть текущее изображение для редактирования")
+        return
+      }
+      const blob = await res.blob()
+      const ext = blob.type.includes("png")
+        ? "png"
+        : blob.type.includes("gif")
+          ? "gif"
+          : blob.type.includes("webp")
+            ? "webp"
+            : "jpg"
+      const file = new File([blob], `cover-edit.${ext}`, { type: blob.type || "image/jpeg" })
+      await openCoverEditor(file)
+    } catch {
+      toast.error("Ошибка при открытии изображения")
+    }
   }
 
   const closeCoverEditor = () => {
@@ -331,8 +353,12 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         return
       }
       const file = new File([blob], "cover.webp", { type: "image/webp" })
-      await uploadCover(file)
+      if (coverDraftPreviewUrl) URL.revokeObjectURL(coverDraftPreviewUrl)
+      const draftPreviewUrl = URL.createObjectURL(file)
+      setCoverDraftFile(file)
+      setCoverDraftPreviewUrl(draftPreviewUrl)
       closeCoverEditor()
+      toast.success("Локальная версия обложки обновлена")
     } finally {
       setCoverEditorApplying(false)
     }
@@ -380,6 +406,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   }
 
   const clearCover = async () => {
+    clearCoverDraft()
     const u = cover_image_url.trim()
     if (!isEdit && u && isLocalBlogUploadUrl(u)) {
       const ok = await deleteLocalBlogUploadFile(u)
@@ -393,8 +420,14 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     coverFileInputRef.current?.click()
   }
 
+  const handleCoverUrlChange = (nextUrl: string) => {
+    clearCoverDraft()
+    setCoverImageUrl(nextUrl)
+  }
+
   const trimmedCoverUrl = cover_image_url.trim()
-  const hasCoverPreview = trimmedCoverUrl.length > 0
+  const coverPreviewSrc = coverDraftPreviewUrl || trimmedCoverUrl
+  const hasCoverPreview = coverPreviewSrc.length > 0
 
   const save = async () => {
     if (!category_id) {
@@ -402,6 +435,26 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       return
     }
     const token = getToken()
+    setSaving(true)
+    let finalCoverUrl: string | null = cover_image_url.trim() === "" ? null : cover_image_url.trim()
+    if (coverDraftFile) {
+      setCoverUploading(true)
+      const uploadedCoverUrl = await uploadCoverAndGetUrl(coverDraftFile)
+      setCoverUploading(false)
+      if (!uploadedCoverUrl) {
+        setSaving(false)
+        return
+      }
+      if (
+        !isEdit &&
+        finalCoverUrl &&
+        finalCoverUrl !== uploadedCoverUrl &&
+        isLocalBlogUploadUrl(finalCoverUrl)
+      ) {
+        await deleteLocalBlogUploadFile(finalCoverUrl)
+      }
+      finalCoverUrl = uploadedCoverUrl
+    }
     const payload = {
       category_id,
       slug,
@@ -411,11 +464,10 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       excerpt_en,
       body_html_ru,
       body_html_en,
-      cover_image_url: cover_image_url === "" ? null : cover_image_url,
+      cover_image_url: finalCoverUrl,
       status,
       published_at: datetimeLocalToUnix(publishedAtLocal),
     }
-    setSaving(true)
     try {
       if (isEdit && postId != null) {
         const res = await fetch(`/api/content/blog/posts/${postId}`, {
@@ -448,6 +500,10 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         }
         toast.success("Запись создана")
       }
+      if (coverDraftFile) {
+        clearCoverDraft()
+      }
+      setCoverImageUrl(finalCoverUrl ?? "")
       router.push("/dashboard?tab=blog")
     } catch {
       toast.error("Ошибка сети")
@@ -592,7 +648,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
             <Label>Обложка (URL или загрузка ≤10 МБ)</Label>
             <Input
               value={cover_image_url}
-              onChange={(e) => setCoverImageUrl(e.target.value)}
+              onChange={(e) => handleCoverUrlChange(e.target.value)}
               placeholder="https://... или /uploads/blog/..."
             />
             <input
@@ -608,8 +664,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                 <div className="relative inline-flex max-w-full overflow-hidden rounded-lg border border-border bg-muted/30">
                   <img
-                    key={trimmedCoverUrl}
-                    src={trimmedCoverUrl}
+                    key={coverPreviewSrc}
+                    src={coverPreviewSrc}
                     alt="Превью обложки"
                     className={`max-h-40 w-auto max-w-full object-contain object-top-left ${coverUploading ? "opacity-40" : ""}`}
                   />
@@ -620,6 +676,16 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={coverUploading}
+                    onClick={() => void reopenCoverEditorFromCurrentImage()}
+                  >
+                    Редактировать
+                  </Button>
                   <Button
                     type="button"
                     variant="outline"
@@ -751,7 +817,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
                   Отмена
                 </Button>
                 <Button type="button" onClick={() => void applyCoverEditor()} disabled={coverEditorApplying}>
-                  {coverEditorApplying ? "Применение..." : "Применить и загрузить"}
+                  {coverEditorApplying ? "Применение..." : "Применить локально"}
                 </Button>
               </DialogFooter>
             </DialogContent>
