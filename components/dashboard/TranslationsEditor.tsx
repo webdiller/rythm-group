@@ -188,7 +188,6 @@ export function TranslationsEditor() {
       blog: [
         "title",
         "subtitle",
-        "navLabel",
         "breadcrumbHome",
         "allCategories",
         "readMore",
