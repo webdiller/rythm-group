@@ -31,7 +31,7 @@ export function BlogListingHeader({ category }: BlogListingHeaderProps) {
   if (category) {
     const title = locale === "en" ? category.name_en : category.name_ru
     return (
-      <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
+      <header id="top" className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
         <StaggerItem
           index={0}
           delayStart={120}
@@ -61,7 +61,7 @@ export function BlogListingHeader({ category }: BlogListingHeaderProps) {
   }
 
   return (
-    <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
+    <header id="top" className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
       <StaggerItem
         index={0}
         delayStart={120}

@@ -27,8 +27,8 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
     about: { label: t.nav.about, href: "#about" },
     channels: { label: t.nav.channels, href: "#channels" },
     cases: { label: t.nav.cases, href: "#cases" },
-    affiliate: { label: t.nav.affiliate, href: "/affiliate" },
-    blog: { label: t.nav.blog ?? t.blog.navLabel, href: "/blog" },
+    affiliate: { label: t.nav.affiliate, href: "/affiliate#top" },
+    blog: { label: t.nav.blog ?? t.blog.navLabel, href: "/blog#top" },
     contacts: { label: t.nav.contacts, href: "#contact" },
   }
   const navItems = resolvedNavOrder.map((id) => navById[id])
@@ -37,21 +37,37 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
   const canForceAnchorScroll = sectionHrefPrefix === ""
 
-  const handleAnchorClick = (rawHref: string, onDone?: () => void) => {
+  const handleNavClick = (rawHref: string, onDone?: () => void) => {
     return (event: MouseEvent<HTMLAnchorElement>) => {
       if (onDone) onDone()
-      if (!canForceAnchorScroll) return
-      if (!rawHref.startsWith("#")) return
+      const resolvedHref = resolveNavHref(rawHref, sectionHrefPrefix)
+      const isAnchorLink = rawHref.startsWith("#")
 
-      const id = rawHref.slice(1)
-      if (!id) return
-      const el = document.getElementById(id)
-      if (!el) return
+      if (isAnchorLink && canForceAnchorScroll) {
+        const id = rawHref.slice(1)
+        if (!id) return
+        const el = document.getElementById(id)
+        if (!el) return
 
-      event.preventDefault()
-      el.scrollIntoView({ behavior: "smooth", block: "start" })
-      if (window.location.hash !== rawHref) {
-        window.history.replaceState(null, "", rawHref)
+        event.preventDefault()
+        el.scrollIntoView({ behavior: "smooth", block: "start" })
+        if (window.location.hash !== rawHref) {
+          window.history.replaceState(null, "", rawHref)
+        }
+        return
+      }
+
+      if (isAnchorLink) return
+
+      const targetUrl = new URL(resolvedHref, window.location.origin)
+      const isSameRoute =
+        targetUrl.pathname === window.location.pathname &&
+        targetUrl.search === window.location.search &&
+        targetUrl.hash === window.location.hash
+
+      if (isSameRoute) {
+        event.preventDefault()
+        window.location.assign(targetUrl.toString())
       }
     }
   }
@@ -82,7 +98,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
             <Link
               key={item.label + item.href}
               href={resolveNavHref(item.href, sectionHrefPrefix)}
-              onClick={handleAnchorClick(item.href)}
+              onClick={handleNavClick(item.href)}
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {item.label}
@@ -104,7 +120,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
 
           <Link
             href={contactHref}
-            onClick={handleAnchorClick("#contact")}
+            onClick={handleNavClick("#contact")}
             className="hidden rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 sm:inline-flex"
           >
             {t.nav.order}
@@ -128,7 +144,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
               <Link
                 key={item.label + item.href}
                 href={resolveNavHref(item.href, sectionHrefPrefix)}
-                onClick={handleAnchorClick(item.href, () => setMobileOpen(false))}
+                onClick={handleNavClick(item.href, () => setMobileOpen(false))}
                 className="rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 {item.label}
@@ -136,7 +152,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderPro
             ))}
             <Link
               href={contactHref}
-              onClick={handleAnchorClick("#contact", () => setMobileOpen(false))}
+              onClick={handleNavClick("#contact", () => setMobileOpen(false))}
               className="mt-2 rounded-lg bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
             >
               {t.nav.order}

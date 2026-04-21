@@ -84,7 +84,10 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
 
   return (
     <div className="relative">
-      <section className="relative flex min-h-[min(100vh,920px)] items-center justify-center overflow-hidden px-6 pt-24 pb-14 md:pt-28 md:pb-16">
+      <section
+        id="top"
+        className="relative flex min-h-[min(100vh,920px)] items-center justify-center overflow-hidden px-6 pt-24 pb-14 md:pt-28 md:pb-16"
+      >
         <div className="absolute inset-0 z-0" aria-hidden="true">
           <div
             className="absolute inset-0 bg-cover bg-center dark:hidden"
