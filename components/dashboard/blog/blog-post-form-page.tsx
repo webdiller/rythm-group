@@ -4,8 +4,17 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -74,6 +83,17 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   const [cover_image_url, setCoverImageUrl] = useState("")
   const [coverUploading, setCoverUploading] = useState(false)
   const coverFileInputRef = useRef<HTMLInputElement>(null)
+  const [coverEditorOpen, setCoverEditorOpen] = useState(false)
+  const [coverEditorImageUrl, setCoverEditorImageUrl] = useState("")
+  const [coverEditorImageEl, setCoverEditorImageEl] = useState<HTMLImageElement | null>(null)
+  const [coverEditorScale, setCoverEditorScale] = useState(1)
+  const [coverEditorWidth, setCoverEditorWidth] = useState(1200)
+  const [coverEditorHeight, setCoverEditorHeight] = useState(630)
+  const [coverEditorPanX, setCoverEditorPanX] = useState(0)
+  const [coverEditorPanY, setCoverEditorPanY] = useState(0)
+  const [coverEditorDragging, setCoverEditorDragging] = useState(false)
+  const [coverEditorApplying, setCoverEditorApplying] = useState(false)
+  const coverEditorDragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
   const [status, setStatus] = useState<"draft" | "published">("draft")
   const [publishedAtLocal, setPublishedAtLocal] = useState(() =>
     unixToDatetimeLocal(Math.floor(Date.now() / 1000)),
@@ -224,6 +244,139 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       setCoverUploading(false)
       resetCoverFileInput()
     }
+  }
+
+  const openCoverEditor = async (file: File | null) => {
+    if (!file) return
+    const objectUrl = URL.createObjectURL(file)
+    const img = new Image()
+    const loadedImage = await new Promise<HTMLImageElement | null>((resolve) => {
+      img.onload = () => resolve(img)
+      img.onerror = () => resolve(null)
+      img.src = objectUrl
+    })
+
+    if (!loadedImage) {
+      URL.revokeObjectURL(objectUrl)
+      toast.error("Не удалось открыть изображение")
+      resetCoverFileInput()
+      return
+    }
+
+    setCoverEditorImageEl(loadedImage)
+    setCoverEditorImageUrl(objectUrl)
+    setCoverEditorScale(1)
+    setCoverEditorPanX(0)
+    setCoverEditorPanY(0)
+    setCoverEditorWidth(Math.min(Math.max(loadedImage.naturalWidth, 320), 2400))
+    setCoverEditorHeight(Math.min(Math.max(loadedImage.naturalHeight, 180), 2400))
+    setCoverEditorOpen(true)
+  }
+
+  const closeCoverEditor = () => {
+    setCoverEditorOpen(false)
+    if (coverEditorImageUrl) {
+      URL.revokeObjectURL(coverEditorImageUrl)
+    }
+    setCoverEditorImageUrl("")
+    setCoverEditorImageEl(null)
+    setCoverEditorScale(1)
+    setCoverEditorPanX(0)
+    setCoverEditorPanY(0)
+    setCoverEditorDragging(false)
+    coverEditorDragStartRef.current = null
+    setCoverEditorApplying(false)
+    resetCoverFileInput()
+  }
+
+  const applyCoverEditor = async () => {
+    if (!coverEditorImageEl) return
+    const width = Math.max(100, Math.min(2400, Math.round(coverEditorWidth)))
+    const height = Math.max(100, Math.min(2400, Math.round(coverEditorHeight)))
+    const sourceW = coverEditorImageEl.naturalWidth
+    const sourceH = coverEditorImageEl.naturalHeight
+    if (sourceW <= 0 || sourceH <= 0) {
+      toast.error("Некорректный размер исходного изображения")
+      return
+    }
+
+    setCoverEditorApplying(true)
+    try {
+      const targetAspect = width / height
+      const sourceAspect = sourceW / sourceH
+      const baseCropW = sourceAspect > targetAspect ? sourceH * targetAspect : sourceW
+      const baseCropH = sourceAspect > targetAspect ? sourceH : sourceW / targetAspect
+      const zoom = Math.max(1, Math.min(3, coverEditorScale))
+      const cropW = baseCropW / zoom
+      const cropH = baseCropH / zoom
+      const maxOffsetX = Math.max(0, (baseCropW - cropW) / 2)
+      const maxOffsetY = Math.max(0, (baseCropH - cropH) / 2)
+      const sx = (sourceW - cropW) / 2 + coverEditorPanX * maxOffsetX
+      const sy = (sourceH - cropH) / 2 + coverEditorPanY * maxOffsetY
+
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext("2d")
+      if (!ctx) {
+        toast.error("Не удалось обработать изображение")
+        return
+      }
+      ctx.drawImage(coverEditorImageEl, sx, sy, cropW, cropH, 0, 0, width, height)
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((value) => resolve(value), "image/webp", 0.92)
+      })
+      if (!blob) {
+        toast.error("Не удалось сформировать итоговый файл")
+        return
+      }
+      const file = new File([blob], "cover.webp", { type: "image/webp" })
+      await uploadCover(file)
+      closeCoverEditor()
+    } finally {
+      setCoverEditorApplying(false)
+    }
+  }
+
+  const clampPan = (value: number) => Math.max(-1, Math.min(1, value))
+
+  const handleCoverPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (coverEditorScale <= 1) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setCoverEditorDragging(true)
+    coverEditorDragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      panX: coverEditorPanX,
+      panY: coverEditorPanY,
+    }
+  }
+
+  const handleCoverPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!coverEditorDragging || !coverEditorDragStartRef.current) return
+    const dragStart = coverEditorDragStartRef.current
+    const container = event.currentTarget.getBoundingClientRect()
+    if (container.width <= 0 || container.height <= 0) return
+    const maxDxPx = (container.width * (coverEditorScale - 1)) / 2
+    const maxDyPx = (container.height * (coverEditorScale - 1)) / 2
+    const nextPanX =
+      maxDxPx > 0
+        ? clampPan(dragStart.panX + (event.clientX - dragStart.x) / maxDxPx)
+        : 0
+    const nextPanY =
+      maxDyPx > 0
+        ? clampPan(dragStart.panY + (event.clientY - dragStart.y) / maxDyPx)
+        : 0
+    setCoverEditorPanX(nextPanX)
+    setCoverEditorPanY(nextPanY)
+  }
+
+  const handleCoverPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setCoverEditorDragging(false)
+    coverEditorDragStartRef.current = null
   }
 
   const clearCover = async () => {
@@ -449,7 +602,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
               accept="image/jpeg,image/png,image/webp,image/gif"
               aria-hidden
               tabIndex={-1}
-              onChange={(e) => void uploadCover(e.target.files?.[0] ?? null)}
+              onChange={(e) => void openCoverEditor(e.target.files?.[0] ?? null)}
             />
             {hasCoverPreview ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -505,6 +658,104 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
               </Button>
             )}
           </div>
+
+          <Dialog open={coverEditorOpen} onOpenChange={(open) => (!open ? closeCoverEditor() : setCoverEditorOpen(true))}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Редактор обложки</DialogTitle>
+                <DialogDescription>
+                  Настройте масштаб и итоговый размер изображения перед загрузкой.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="cover-width">Ширина, px</Label>
+                    <Input
+                      id="cover-width"
+                      type="number"
+                      min={100}
+                      max={2400}
+                      value={coverEditorWidth}
+                      onChange={(e) => setCoverEditorWidth(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cover-height">Высота, px</Label>
+                    <Input
+                      id="cover-height"
+                      type="number"
+                      min={100}
+                      max={2400}
+                      value={coverEditorHeight}
+                      onChange={(e) => setCoverEditorHeight(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <Label>Масштаб</Label>
+                    <span className="text-muted-foreground">{coverEditorScale.toFixed(2)}x</span>
+                  </div>
+                  <Slider
+                    min={1}
+                    max={3}
+                    step={0.01}
+                    value={[coverEditorScale]}
+                    onValueChange={(value) => {
+                      const next = value[0] ?? 1
+                      setCoverEditorScale(next)
+                      if (next <= 1) {
+                        setCoverEditorPanX(0)
+                        setCoverEditorPanY(0)
+                      }
+                    }}
+                  />
+                </div>
+
+                {coverEditorImageUrl ? (
+                  <div
+                    className="relative mx-auto overflow-hidden rounded-md border bg-muted/30"
+                    style={{
+                      width: "100%",
+                      maxWidth: "560px",
+                      aspectRatio: `${Math.max(100, coverEditorWidth)} / ${Math.max(100, coverEditorHeight)}`,
+                    }}
+                    onPointerDown={handleCoverPointerDown}
+                    onPointerMove={handleCoverPointerMove}
+                    onPointerUp={handleCoverPointerUp}
+                    onPointerCancel={handleCoverPointerUp}
+                  >
+                    <img
+                      src={coverEditorImageUrl}
+                      alt="Предпросмотр перед загрузкой"
+                      className={`h-full w-full object-cover ${coverEditorScale > 1 ? "select-none" : ""}`}
+                      draggable={false}
+                      style={{
+                        transform: `translate(${coverEditorPanX * ((coverEditorScale - 1) * 50)}%, ${coverEditorPanY * ((coverEditorScale - 1) * 50)}%) scale(${coverEditorScale})`,
+                        cursor: coverEditorScale > 1 ? (coverEditorDragging ? "grabbing" : "grab") : "default",
+                        touchAction: "none",
+                      }}
+                    />
+                  </div>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  При масштабе больше 1x можно перетаскивать изображение мышью, чтобы выбрать нужную область.
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeCoverEditor} disabled={coverEditorApplying}>
+                  Отмена
+                </Button>
+                <Button type="button" onClick={() => void applyCoverEditor()} disabled={coverEditorApplying}>
+                  {coverEditorApplying ? "Применение..." : "Применить и загрузить"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <div className="grid gap-2 sm:max-w-md">
             <Label htmlFor="bps-published-at">Дата и время публикации (локальное время браузера)</Label>
