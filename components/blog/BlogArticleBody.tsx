@@ -43,11 +43,37 @@ export function BlogArticleBody({ html, className }: BlogArticleBodyProps) {
     replace(domNode) {
       if (domNode.type !== "tag") return undefined
       const el = domNode as Element
-      if (el.name !== "video") return undefined
-      const src = el.attribs?.src
-      if (!src) return undefined
-      const poster = el.attribs?.poster
-      return <BlogInlineVideo src={src} poster={poster} />
+      if (el.name === "video") {
+        const src = el.attribs?.src
+        if (!src) return undefined
+        const poster = el.attribs?.poster
+        return <BlogInlineVideo src={src} poster={poster} />
+      }
+      if (el.name === "img") {
+        const src = el.attribs?.src
+        if (!src) return undefined
+        const alt = el.attribs?.alt ?? ""
+        const widthRaw = Number(el.attribs?.["data-image-width"] ?? 100)
+        const width = Number.isFinite(widthRaw) ? Math.max(20, Math.min(100, widthRaw)) : 100
+        const alignAttr = el.attribs?.["data-image-align"]
+        const align = alignAttr === "left" || alignAttr === "right" ? alignAttr : "center"
+        return (
+          <img
+            src={src}
+            alt={alt}
+            className="my-4 h-auto rounded-lg border border-border"
+            style={{
+              width: `${width}%`,
+              display: "block",
+              marginLeft: align === "left" ? "0" : "auto",
+              marginRight: align === "right" ? "0" : "auto",
+            }}
+            loading="lazy"
+            decoding="async"
+          />
+        )
+      }
+      return undefined
     },
   }
 

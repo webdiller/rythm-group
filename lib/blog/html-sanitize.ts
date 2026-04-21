@@ -19,7 +19,7 @@ const ALLOWED_TAGS = sanitizeHtml.defaults.allowedTags.concat([
 const ALLOWED_ATTRIBUTES: sanitizeHtml.IOptions["allowedAttributes"] = {
   ...sanitizeHtml.defaults.allowedAttributes,
   a: ["href", "name", "target", "rel"],
-  img: ["src", "alt", "title", "width", "height", "loading"],
+  img: ["src", "alt", "title", "width", "height", "loading", "class", "data-image-align", "data-image-width"],
   video: [
     "src",
     "poster",

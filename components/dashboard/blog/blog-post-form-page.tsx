@@ -244,6 +244,67 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
     }
   }
 
+  const uploadBlogImageFileAndGetUrl = async (file: File): Promise<string | null> => {
+    const token = getToken()
+    const fd = new FormData()
+    fd.append("file", file)
+    try {
+      const res = await fetch("/api/content/blog/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        body: fd,
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { error?: string }
+        toast.error(err.error ?? "Не удалось загрузить изображение из текста")
+        return null
+      }
+      const json = (await res.json()) as { data?: { url?: string } }
+      return json.data?.url ?? null
+    } catch {
+      toast.error("Ошибка загрузки изображения из текста")
+      return null
+    }
+  }
+
+  const uploadInlineBlobImages = async (html: string): Promise<string | null> => {
+    const blobSrcRegex = /src=(["'])(blob:[^"']+)\1/g
+    const blobSources = Array.from(html.matchAll(blobSrcRegex)).map((match) => match[2])
+    const uniqueSources = Array.from(new Set(blobSources))
+    if (uniqueSources.length === 0) return html
+
+    const replacements = new Map<string, string>()
+    for (const blobSrc of uniqueSources) {
+      try {
+        const blobResponse = await fetch(blobSrc)
+        if (!blobResponse.ok) {
+          toast.error("Не удалось прочитать локальное изображение из редактора")
+          return null
+        }
+        const blob = await blobResponse.blob()
+        const ext = blob.type.includes("png")
+          ? "png"
+          : blob.type.includes("gif")
+            ? "gif"
+            : blob.type.includes("webp")
+              ? "webp"
+              : "jpg"
+        const file = new File([blob], `inline-${Date.now()}.${ext}`, { type: blob.type || "image/jpeg" })
+        const uploadedUrl = await uploadBlogImageFileAndGetUrl(file)
+        if (!uploadedUrl) return null
+        replacements.set(blobSrc, uploadedUrl)
+      } catch {
+        toast.error("Ошибка обработки локального изображения")
+        return null
+      }
+    }
+
+    return html.replace(blobSrcRegex, (full, quote, src) => {
+      const nextSrc = replacements.get(String(src))
+      return nextSrc ? `src=${quote}${nextSrc}${quote}` : full
+    })
+  }
+
   const openCoverEditor = async (file: File | null) => {
     if (!file) return
     const objectUrl = URL.createObjectURL(file)
@@ -455,6 +516,17 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       }
       finalCoverUrl = uploadedCoverUrl
     }
+    const nextBodyRu = await uploadInlineBlobImages(body_html_ru)
+    if (nextBodyRu == null) {
+      setSaving(false)
+      return
+    }
+    const nextBodyEn = await uploadInlineBlobImages(body_html_en)
+    if (nextBodyEn == null) {
+      setSaving(false)
+      return
+    }
+
     const payload = {
       category_id,
       slug,
@@ -462,8 +534,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
       title_en,
       excerpt_ru,
       excerpt_en,
-      body_html_ru,
-      body_html_en,
+      body_html_ru: nextBodyRu,
+      body_html_en: nextBodyEn,
       cover_image_url: finalCoverUrl,
       status,
       published_at: datetimeLocalToUnix(publishedAtLocal),
