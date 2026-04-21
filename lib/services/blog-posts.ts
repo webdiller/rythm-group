@@ -14,6 +14,24 @@ function isoNow(): string {
   return new Date().toISOString()
 }
 
+function extractVideoPosterUrlsFromHtml(html: string): Set<string> {
+  const result = new Set<string>()
+  const posterAttrRegex = /\b(?:poster|data-video-poster)\s*=\s*["']([^"']+)["']/gi
+  let match: RegExpExecArray | null = null
+
+  while (true) {
+    match = posterAttrRegex.exec(html)
+    if (!match) break
+    const rawUrl = match[1]
+    if (!rawUrl) continue
+    const normalized = rawUrl.trim()
+    if (!normalized) continue
+    result.add(normalized)
+  }
+
+  return result
+}
+
 type ListFilters = {
   categoryId?: number
   status?: "draft" | "published"
@@ -180,6 +198,16 @@ export class ServiceBlogPosts {
 
     const safeRu = body.body_html_ru !== undefined ? sanitizeBlogHtml(body.body_html_ru) : undefined
     const safeEn = body.body_html_en !== undefined ? sanitizeBlogHtml(body.body_html_en) : undefined
+    const oldPosterUrls = new Set<string>([
+      ...extractVideoPosterUrlsFromHtml(existing.body_html_ru),
+      ...extractVideoPosterUrlsFromHtml(existing.body_html_en),
+    ])
+    const nextBodyRu = safeRu ?? existing.body_html_ru
+    const nextBodyEn = safeEn ?? existing.body_html_en
+    const nextPosterUrls = new Set<string>([
+      ...extractVideoPosterUrlsFromHtml(nextBodyRu),
+      ...extractVideoPosterUrlsFromHtml(nextBodyEn),
+    ])
 
     const [updated] = db
       .update(tableBlogPosts)
@@ -201,6 +229,17 @@ export class ServiceBlogPosts {
       .returning()
       .all()
     if (!updated) throw new Error("NOT_FOUND")
+
+    const posterUrlsToDelete: string[] = []
+    for (const oldPosterUrl of oldPosterUrls) {
+      if (nextPosterUrls.has(oldPosterUrl)) continue
+      if (!isLocalBlogUploadUrl(oldPosterUrl)) continue
+      posterUrlsToDelete.push(oldPosterUrl)
+    }
+    for (const posterUrl of posterUrlsToDelete) {
+      await deleteBlogUploadFileByPublicUrl(posterUrl)
+    }
+
     const withSlug = this.getByIdForAdmin(id)
     return { data: withSlug ?? updated, meta: null }
   }
