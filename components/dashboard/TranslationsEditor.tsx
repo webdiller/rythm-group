@@ -196,8 +196,6 @@ export function TranslationsEditor() {
         "dateLabel",
       ],
       affiliate: [
-        "pageTitle",
-        "pageDescription",
         "formats.title",
         "formats.subtitle",
         "cases.title",
