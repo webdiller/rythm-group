@@ -173,14 +173,12 @@ export function ContactForm({
 
         if (links.length === 0) {
           const fallback: DirectContactLink[] = []
-          const tRu = fallbackTranslations.ru.contact
-          const tEn = fallbackTranslations.en.contact
           if (row.telegram_url) {
             fallback.push({
               id: "telegram-fallback",
               type: "telegram",
-              label_ru: tRu.telegram,
-              label_en: tEn.telegram,
+              label_ru: "",
+              label_en: "",
               url: row.telegram_url,
               description_ru: row.telegram_username ?? undefined,
               description_en: row.telegram_username ?? undefined,
@@ -192,8 +190,8 @@ export function ContactForm({
               fallback.push({
                 id: "email-fallback",
                 type: "email",
-                label_ru: tRu.emailUs,
-                label_en: tEn.emailUs,
+                label_ru: "",
+                label_en: "",
                 url: `mailto:${firstEmail}`,
                 description_ru: row.email,
                 description_en: row.email,
