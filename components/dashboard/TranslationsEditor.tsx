@@ -179,10 +179,6 @@ export function TranslationsEditor() {
         "or",
         "telegram",
         "emailUs",
-        "miniStats.fastResponseValue",
-        "miniStats.fastResponseLabel",
-        "miniStats.supportValue",
-        "miniStats.supportLabel",
       ],
       footer: ["rights", "description", "ctaTitle", "privacy", "dataPolicy"],
       blog: [
