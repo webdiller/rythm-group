@@ -218,7 +218,6 @@ export function TranslationsEditor() {
         "casePage.socialProof",
         "casePage.timeline",
         "casePage.steamStats",
-        "casePage.reactions",
         "casePage.views",
       ],
     }
