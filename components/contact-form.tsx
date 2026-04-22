@@ -449,9 +449,14 @@ export function ContactForm({
                       const isInstagram = link.type === "instagram"
 
                       const label =
-                        locale === "ru"
-                          ? (link.label_ru || link.label_en || "")
-                          : (link.label_en || link.label_ru || "")
+                        isTelegram || isEmail
+                          ? ((locale === "ru"
+                              ? (link.label_ru || link.label_en || "")
+                              : (link.label_en || link.label_ru || "")).trim() ||
+                            (isTelegram ? t.contact.telegram : t.contact.emailUs))
+                          : locale === "ru"
+                            ? (link.label_ru || link.label_en || "")
+                            : (link.label_en || link.label_ru || "")
                       const description =
                         locale === "ru"
                           ? (link.description_ru || link.description_en || "")
