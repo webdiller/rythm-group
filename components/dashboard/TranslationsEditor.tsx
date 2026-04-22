@@ -162,7 +162,7 @@ export function TranslationsEditor() {
     const keysMap: Record<string, string[]> = {
       hero: ["title", "subtitle", "badge", "cta", "scroll"],
       nav: ["about", "channels", "cases", "affiliate", "blog", "contacts", "order"],
-      about: ["title", "subtitle", "mission.title", "mission.text", "team.title", "team.text", "audience.title", "audience.text"],
+      about: ["title", "subtitle"],
       stats: ["title", "subtitle", "items"],
       channels: ["title", "subtitle", "subscribers", "reach"],
       cases: ["title", "subtitle", "empty"],
@@ -210,14 +210,9 @@ export function TranslationsEditor() {
         "steam.openSteam",
         "faq.title",
         "faq.subtitle",
-        "miniBlog.title",
-        "miniBlog.subtitle",
-        "miniBlog.goToBlog",
+
         "casePage.back",
         "casePage.aboutGame",
-        "casePage.socialProof",
-        "casePage.timeline",
-        "casePage.steamStats",
         "casePage.views",
       ],
     }
