@@ -141,7 +141,7 @@ function SortableFaqCard({
       </div>
       <div className="md:col-span-2 flex justify-end gap-2">
         <Button variant="outline" onClick={() => void onDelete(item.id)} disabled={isSaving || isDeleting}>
-          {isDeleting ? "Удаление..." : "Удалить 1"}
+          {isDeleting ? "Удаление..." : "Удалить"}
         </Button>
         <Button onClick={() => void onSave(item)} disabled={isSaving || isDeleting}>
           {isSaving ? "Сохранение..." : "Сохранить"}
