@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { BlogPostView } from "@/components/blog/BlogPostView"
 import { getBlogShowDatesEnabled, getCategoryBySlug, getPostBySlugs } from "@/lib/blog/queries"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 export const dynamic = "force-dynamic"
 
@@ -37,6 +38,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BlogPostPage({ params }: PageProps) {
   const { category: catSlug, post: postSlug } = await params
+  const { pageBlogEnabled } = getPageVisibilityFlags()
+  if (!pageBlogEnabled) notFound()
+
   const post = getPostBySlugs(catSlug, postSlug)
   const category = getCategoryBySlug(catSlug)
   if (!post || !category) notFound()

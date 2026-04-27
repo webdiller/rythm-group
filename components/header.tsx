@@ -16,12 +16,18 @@ type HeaderProps = {
   navOrder?: HeaderNavItemId[]
   /** Текст рядом с логотипом. Если пусто, скрывается. */
   logoText?: string | null
+  /** Показывать ли пункт меню "Блог". По умолчанию true. */
+  pageBlogEnabled?: boolean
+  /** Показывать ли пункт меню "Affiliate". По умолчанию true. */
+  pageAffiliateEnabled?: boolean
 }
 
-export function Header({ sectionHrefPrefix = "", navOrder, logoText }: HeaderProps) {
+export function Header({ sectionHrefPrefix = "", navOrder, logoText, pageBlogEnabled = true, pageAffiliateEnabled = true }: HeaderProps) {
   const { locale, setLocale, t } = useLocale()
   const [mobileOpen, setMobileOpen] = useState(false)
   const resolvedNavOrder = normalizeHeaderNavOrder(navOrder ?? DEFAULT_HEADER_NAV_ORDER)
+    .filter((id) => !(id === "blog" && !pageBlogEnabled))
+    .filter((id) => !(id === "affiliate" && !pageAffiliateEnabled))
 
   const navById: Record<HeaderNavItemId, { label: string; href: string }> = {
     about: { label: t.nav.about, href: "#about" },

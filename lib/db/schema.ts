@@ -170,6 +170,10 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   affiliate_show_steam: integer("affiliate_show_steam", { mode: "boolean" }).default(true),
   affiliate_show_faq: integer("affiliate_show_faq", { mode: "boolean" }).default(true),
   affiliate_show_contacts: integer("affiliate_show_contacts", { mode: "boolean" }).default(true),
+  /** Страница /blog: включена ли страница блога */
+  page_blog_enabled: integer("page_blog_enabled", { mode: "boolean" }).default(true),
+  /** Страница /affiliate: включена ли страница партнёрства */
+  page_affiliate_enabled: integer("page_affiliate_enabled", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

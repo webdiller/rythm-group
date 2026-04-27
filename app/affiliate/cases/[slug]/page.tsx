@@ -9,6 +9,7 @@ import {
 } from "@/lib/affiliate/cases-ui"
 import type { Metadata } from "next"
 import { getSiteBaseUrl } from "@/lib/site-url"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 type PageProps = { params: Promise<{ slug: string }> }
 
@@ -47,6 +48,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function AffiliateCasePage({ params }: PageProps) {
+  const { pageAffiliateEnabled } = getPageVisibilityFlags()
+  if (!pageAffiliateEnabled) notFound()
+
   const { slug } = await params
   const { categories, partners } = await getAffiliateCaseData()
   const caseId = parseAffiliateCaseIdFromSlug(slug)

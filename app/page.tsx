@@ -178,7 +178,12 @@ export default async function Home() {
           )}
 
           <div className="relative z-20">
-            <Header navOrder={headerNavOrder} logoText={siteSettings?.logo_text ?? null} />
+            <Header
+              navOrder={headerNavOrder}
+              logoText={siteSettings?.logo_text ?? null}
+              pageBlogEnabled={siteSettings?.page_blog_enabled ?? true}
+              pageAffiliateEnabled={siteSettings?.page_affiliate_enabled ?? true}
+            />
             <main>
               <Hero animationEnabled={animationsEnabled} />
               <About animationsEnabled={animationsEnabled} cards={aboutCards} />

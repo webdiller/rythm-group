@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
+import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
 import { getSiteBaseUrl } from "@/lib/site-url"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 export const metadata: Metadata = {
   title: "Блог | Rythm Group",
@@ -46,6 +48,9 @@ async function getBlogShellMeta(): Promise<{
 }
 
 export default async function BlogLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { pageBlogEnabled } = getPageVisibilityFlags()
+  if (!pageBlogEnabled) notFound()
+
   const { siteSettings, hasCustomGlobalBackgroundForBothThemes, headerNavOrder } = await getBlogShellMeta()
 
   return (

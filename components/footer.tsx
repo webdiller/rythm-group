@@ -14,14 +14,20 @@ export type SiteSettings = {
   partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
   contactLayout?: "formFirst" | "contactsFirst" | null
   contactFormHidden?: boolean | null
+  page_blog_enabled?: boolean | null
+  page_affiliate_enabled?: boolean | null
 }
 
 type FooterProps = {
   siteSettings?: SiteSettings | null
   sectionHrefPrefix?: "" | "/"
+  /** Direct prop override — falls back to siteSettings.page_blog_enabled. Default true. */
+  pageBlogEnabled?: boolean
+  /** Direct prop override — falls back to siteSettings.page_affiliate_enabled. Default true. */
+  pageAffiliateEnabled?: boolean
 }
 
-export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
+export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, pageAffiliateEnabled }: FooterProps) {
   const { t } = useLocale()
 
   const navItemById: Record<HeaderNavItemId, { label: string; href: string }> = {
@@ -43,7 +49,13 @@ export function Footer({ siteSettings, sectionHrefPrefix = "" }: FooterProps) {
     }
   })()
 
-  const navItems = navOrder.map((id) => navItemById[id])
+  const blogEnabled = pageBlogEnabled ?? (siteSettings?.page_blog_enabled !== false)
+  const affiliateEnabled = pageAffiliateEnabled ?? (siteSettings?.page_affiliate_enabled !== false)
+
+  const navItems = navOrder
+    .filter((id) => !(id === "blog" && !blogEnabled))
+    .filter((id) => !(id === "affiliate" && !affiliateEnabled))
+    .map((id) => navItemById[id])
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)

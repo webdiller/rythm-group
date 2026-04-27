@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -147,6 +147,8 @@ export function SiteSettingsEditor() {
   const [affiliateContactFormHidden, setAffiliateContactFormHidden] = useState(false)
   const [blogShowDates, setBlogShowDates] = useState(true)
   const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
+  const [pageBlogEnabled, setPageBlogEnabled] = useState(true)
+  const [pageAffiliateEnabled, setPageAffiliateEnabled] = useState(true)
   const [headerNavOrder, setHeaderNavOrder] = useState<HeaderNavItemId[]>([...DEFAULT_HEADER_NAV_ORDER])
   const [logoText, setLogoText] = useState("")
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
@@ -165,6 +167,8 @@ export function SiteSettingsEditor() {
     affiliateContactFormHidden: boolean
     blogShowDates: boolean
     affiliateShowBlogBlock: boolean
+    pageBlogEnabled: boolean
+    pageAffiliateEnabled: boolean
     headerNavOrder: HeaderNavItemId[]
   } | null>(null)
 
@@ -331,6 +335,8 @@ export function SiteSettingsEditor() {
             affiliate_contact_form_hidden?: boolean | null
             blog_show_dates?: boolean | null
             affiliate_show_blog_block?: boolean | null
+            page_blog_enabled?: boolean | null
+            page_affiliate_enabled?: boolean | null
             headerNavOrder?: string | null
           } | null
         }
@@ -348,6 +354,8 @@ export function SiteSettingsEditor() {
         const affiliateFormHidden = data?.affiliate_contact_form_hidden ?? false
         const blogDates = data?.blog_show_dates ?? true
         const affBlog = data?.affiliate_show_blog_block ?? true
+        const pageBlog = data?.page_blog_enabled ?? true
+        const pageAffiliate = data?.page_affiliate_enabled ?? true
         const parsedHeaderNavOrder = (() => {
           try {
             if (!data?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
@@ -373,6 +381,8 @@ export function SiteSettingsEditor() {
           affiliateContactFormHidden: affiliateFormHidden,
           blogShowDates: blogDates,
           affiliateShowBlogBlock: affBlog,
+          pageBlogEnabled: pageBlog,
+          pageAffiliateEnabled: pageAffiliate,
           headerNavOrder: parsedHeaderNavOrder,
         })
         setPartnersDisplayMode(partnersMode)
@@ -382,6 +392,8 @@ export function SiteSettingsEditor() {
         setAffiliateContactFormHidden(affiliateFormHidden)
         setBlogShowDates(blogDates)
         setAffiliateShowBlogBlock(affBlog)
+        setPageBlogEnabled(pageBlog)
+        setPageAffiliateEnabled(pageAffiliate)
         setHeaderNavOrder(parsedHeaderNavOrder)
       } catch {
         // ignore, settings are optional
@@ -438,6 +450,8 @@ export function SiteSettingsEditor() {
           affiliate_contact_form_hidden: affiliateContactFormHidden,
           blog_show_dates: blogShowDates,
           affiliate_show_blog_block: affiliateShowBlogBlock,
+          page_blog_enabled: pageBlogEnabled,
+          page_affiliate_enabled: pageAffiliateEnabled,
           headerNavOrder,
         }),
       })
@@ -460,6 +474,8 @@ export function SiteSettingsEditor() {
         affiliateContactFormHidden,
         blogShowDates,
         affiliateShowBlogBlock,
+        pageBlogEnabled,
+        pageAffiliateEnabled,
         headerNavOrder,
       })
     } catch {
@@ -1661,6 +1677,40 @@ export function SiteSettingsEditor() {
               </ul>
             </SortableNavList>
           </DndContext>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Видимость страниц</CardTitle>
+          <CardDescription>Главная страница (/) всегда доступна и не может быть отключена.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="page_blog_enabled">Страница /blog</Label>
+              <p className="text-xs text-muted-foreground">
+                При отключении страница вернёт 404 и исчезнет из навигации.
+              </p>
+            </div>
+            <Switch
+              id="page_blog_enabled"
+              checked={pageBlogEnabled}
+              onCheckedChange={setPageBlogEnabled}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="page_affiliate_enabled">Страница /affiliate</Label>
+              <p className="text-xs text-muted-foreground">
+                При отключении страница вернёт 404 и исчезнет из навигации.
+              </p>
+            </div>
+            <Switch
+              id="page_affiliate_enabled"
+              checked={pageAffiliateEnabled}
+              onCheckedChange={setPageAffiliateEnabled}
+            />
+          </div>
         </CardContent>
       </Card>
       <Card>

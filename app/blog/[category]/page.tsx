@@ -8,6 +8,7 @@ import {
   getCategoryBySlug,
   getPostsByCategorySlug,
 } from "@/lib/blog/queries"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 export const dynamic = "force-dynamic"
 
@@ -27,6 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BlogCategoryPage({ params }: PageProps) {
   const { category: slug } = await params
+  const { pageBlogEnabled } = getPageVisibilityFlags()
+  if (!pageBlogEnabled) notFound()
+
   const category = getCategoryBySlug(slug)
   if (!category) notFound()
 

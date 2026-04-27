@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
+import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
 import { getSiteBaseUrl } from "@/lib/site-url"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 export const dynamic = "force-dynamic"
 
@@ -47,6 +49,9 @@ async function getAffiliateShellMeta(): Promise<{
 }
 
 export default async function AffiliateLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { pageAffiliateEnabled, pageBlogEnabled } = getPageVisibilityFlags()
+  if (!pageAffiliateEnabled) notFound()
+
   const { siteSettings, hasCustomGlobalBackgroundForBothThemes, headerNavOrder } =
     await getAffiliateShellMeta()
 
@@ -80,11 +85,13 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
           sectionHrefPrefix="/"
           navOrder={headerNavOrder}
           logoText={siteSettings?.logo_text ?? null}
+          pageBlogEnabled={pageBlogEnabled}
+          pageAffiliateEnabled={pageAffiliateEnabled}
         />
         <main>
           {children}
         </main>
-        <Footer siteSettings={siteSettings} sectionHrefPrefix="/" />
+        <Footer siteSettings={siteSettings} sectionHrefPrefix="/" pageBlogEnabled={pageBlogEnabled} pageAffiliateEnabled={pageAffiliateEnabled} />
       </div>
     </div>
   )

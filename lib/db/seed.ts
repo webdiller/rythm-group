@@ -186,6 +186,8 @@ export function runSeed(
         affiliate_show_steam: true,
         affiliate_show_faq: true,
         affiliate_show_contacts: true,
+        page_blog_enabled: true,
+        page_affiliate_enabled: true,
       })
       .run()
   }

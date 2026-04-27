@@ -6,6 +6,8 @@ import { AffiliateFaq } from "@/components/affiliate/affiliate-faq"
 import { ContactForm } from "@/components/contact-form"
 import type { Partner, PartnerCategory } from "@/components/cases"
 import { getSiteBaseUrl } from "@/lib/site-url"
+import { notFound } from "next/navigation"
+import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 
 type AffiliateSettings = {
   affiliate_show_hero?: boolean | null
@@ -88,6 +90,9 @@ async function getAffiliateData(): Promise<{
 }
 
 export default async function AffiliatePage() {
+  const { pageAffiliateEnabled } = getPageVisibilityFlags()
+  if (!pageAffiliateEnabled) notFound()
+
   const { partnerCategories, partners, settings, hero, formats, faq } = await getAffiliateData()
   const animationsEnabled = settings.heroAnimationEnabled ?? true
   const contactLayout = settings.affiliate_contact_layout ?? "formFirst"
