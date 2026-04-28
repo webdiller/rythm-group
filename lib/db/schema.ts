@@ -174,6 +174,8 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   page_blog_enabled: integer("page_blog_enabled", { mode: "boolean" }).default(true),
   /** Страница /affiliate: включена ли страница партнёрства */
   page_affiliate_enabled: integer("page_affiliate_enabled", { mode: "boolean" }).default(true),
+  /** Режим обслуживания: если false, сайт показывает страницу заглушку */
+  site_published: integer("site_published", { mode: "boolean" }).default(true),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

@@ -16,4 +16,9 @@ export function runMigrations(sqlite: Database.Database): void {
       "ALTER TABLE site_settings ADD COLUMN page_affiliate_enabled INTEGER NOT NULL DEFAULT 1"
     )
   }
+  if (!names.has("site_published")) {
+    sqlite.exec(
+      "ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1"
+    )
+  }
 }

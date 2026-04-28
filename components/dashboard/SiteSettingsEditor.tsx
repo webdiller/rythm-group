@@ -149,6 +149,7 @@ export function SiteSettingsEditor() {
   const [affiliateShowBlogBlock, setAffiliateShowBlogBlock] = useState(true)
   const [pageBlogEnabled, setPageBlogEnabled] = useState(true)
   const [pageAffiliateEnabled, setPageAffiliateEnabled] = useState(true)
+  const [sitePublished, setSitePublished] = useState(true)
   const [headerNavOrder, setHeaderNavOrder] = useState<HeaderNavItemId[]>([...DEFAULT_HEADER_NAV_ORDER])
   const [logoText, setLogoText] = useState("")
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState("")
@@ -169,6 +170,7 @@ export function SiteSettingsEditor() {
     affiliateShowBlogBlock: boolean
     pageBlogEnabled: boolean
     pageAffiliateEnabled: boolean
+    sitePublished: boolean
     headerNavOrder: HeaderNavItemId[]
   } | null>(null)
 
@@ -337,6 +339,7 @@ export function SiteSettingsEditor() {
             affiliate_show_blog_block?: boolean | null
             page_blog_enabled?: boolean | null
             page_affiliate_enabled?: boolean | null
+            site_published?: boolean | null
             headerNavOrder?: string | null
           } | null
         }
@@ -356,6 +359,7 @@ export function SiteSettingsEditor() {
         const affBlog = data?.affiliate_show_blog_block ?? true
         const pageBlog = data?.page_blog_enabled ?? true
         const pageAffiliate = data?.page_affiliate_enabled ?? true
+        const sitePublishedValue = data?.site_published ?? true
         const parsedHeaderNavOrder = (() => {
           try {
             if (!data?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
@@ -383,6 +387,7 @@ export function SiteSettingsEditor() {
           affiliateShowBlogBlock: affBlog,
           pageBlogEnabled: pageBlog,
           pageAffiliateEnabled: pageAffiliate,
+          sitePublished: sitePublishedValue,
           headerNavOrder: parsedHeaderNavOrder,
         })
         setPartnersDisplayMode(partnersMode)
@@ -394,6 +399,7 @@ export function SiteSettingsEditor() {
         setAffiliateShowBlogBlock(affBlog)
         setPageBlogEnabled(pageBlog)
         setPageAffiliateEnabled(pageAffiliate)
+        setSitePublished(sitePublishedValue)
         setHeaderNavOrder(parsedHeaderNavOrder)
       } catch {
         // ignore, settings are optional
@@ -452,6 +458,7 @@ export function SiteSettingsEditor() {
           affiliate_show_blog_block: affiliateShowBlogBlock,
           page_blog_enabled: pageBlogEnabled,
           page_affiliate_enabled: pageAffiliateEnabled,
+          site_published: sitePublished,
           headerNavOrder,
         }),
       })
@@ -476,6 +483,7 @@ export function SiteSettingsEditor() {
         affiliateShowBlogBlock,
         pageBlogEnabled,
         pageAffiliateEnabled,
+        sitePublished,
         headerNavOrder,
       })
     } catch {
@@ -1685,6 +1693,20 @@ export function SiteSettingsEditor() {
           <CardDescription>Главная страница (/) всегда доступна и не может быть отключена.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="site_published">Сайт опубликован</Label>
+              <p className="text-xs text-muted-foreground">
+                {sitePublished ? "Сайт доступен для посетителей." : "Сайт в режиме обслуживания — публичные страницы недоступны."}
+              </p>
+            </div>
+            <Switch
+              id="site_published"
+              checked={sitePublished}
+              onCheckedChange={setSitePublished}
+            />
+          </div>
+          <div className="border-t border-border/60 pt-4" />
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
               <Label htmlFor="page_blog_enabled">Страница /blog</Label>

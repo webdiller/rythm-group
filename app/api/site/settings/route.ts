@@ -31,6 +31,7 @@ type SiteSettingsPayload = {
   headerNavOrder?: string[] | null
   page_blog_enabled?: boolean | null
   page_affiliate_enabled?: boolean | null
+  site_published?: boolean | null
 }
 
 export async function GET() {
@@ -71,6 +72,7 @@ export async function PUT(request: NextRequest) {
     const currentAffiliateContacts = existing?.affiliate_show_contacts ?? true
     const currentPageBlogEnabled = existing?.page_blog_enabled ?? true
     const currentPageAffiliateEnabled = existing?.page_affiliate_enabled ?? true
+    const currentSitePublished = existing?.site_published ?? true
     const currentHeaderNavOrder = (() => {
       try {
         if (!existing?.headerNavOrder) return [...DEFAULT_HEADER_NAV_ORDER]
@@ -132,6 +134,10 @@ export async function PUT(request: NextRequest) {
         typeof body.page_affiliate_enabled === "boolean"
           ? body.page_affiliate_enabled
           : currentPageAffiliateEnabled,
+      site_published:
+        typeof body.site_published === "boolean"
+          ? body.site_published
+          : currentSitePublished,
       headerNavOrder: JSON.stringify(
         Array.isArray(body.headerNavOrder)
           ? normalizeHeaderNavOrder(body.headerNavOrder)
@@ -175,6 +181,7 @@ export async function PUT(request: NextRequest) {
         affiliate_show_contacts: updateValues.affiliate_show_contacts ?? true,
         page_blog_enabled: updateValues.page_blog_enabled ?? true,
         page_affiliate_enabled: updateValues.page_affiliate_enabled ?? true,
+        site_published: updateValues.site_published ?? true,
       })
       .returning()
       .all()

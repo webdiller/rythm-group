@@ -188,6 +188,7 @@ export function runSeed(
         affiliate_show_contacts: true,
         page_blog_enabled: true,
         page_affiliate_enabled: true,
+        site_published: true,
       })
       .run()
   }
