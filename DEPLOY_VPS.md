@@ -116,18 +116,29 @@ npm install
 Создайте файл `.env` в корне проекта (ориентируясь на `.env.example`):
 
 ```env
-JWT_SECRET=сложный_секретный_ключ
+# Секрет для подписи JWT-токенов авторизации дашборда
+# Сгенерируйте случайную строку: openssl rand -base64 32
+JWT_SECRET=замените-на-случайную-строку-минимум-32-символа
+
+# Путь к SQLite-базе данных
+# Оставьте как есть — папка data/ создастся автоматически
 DB_PATH=./data/cms.db
-ADMIN_USERS=admin:сильный_пароль
 
-SMTP_HOST="smtp.example.ru"
-SMTP_PORT=465
-SMTP_USER="example@example.ru"
-SMTP_PASS="пароль_от_smtp"
-SMTP_FROM="example@example.ru"
+# Логин и пароль для первого входа в /dashboard
+# Формат: логин:пароль (можно несколько через запятую: admin:pass1,editor:pass2)
+ADMIN_USERS=admin:ваш-пароль
 
-NEXT_PUBLIC_SITE_URL="https://example.com"
-NODE_ENV=production
+# SMTP для отправки заявок с контактной формы
+SMTP_HOST=smtp.yandex.ru        # или smtp.gmail.com и т.д.
+SMTP_PORT=465                    # 465 для SSL, 587 для TLS
+SMTP_USER=ваш@email.ru
+SMTP_PASS=пароль-приложения
+SMTP_FROM=ваш@email.ru
+
+# Публичный URL сайта — ОБЯЗАТЕЛЬНО для production
+# Используется для серверных fetch к собственным API
+# Укажите ваш домен или IP с портом
+NEXT_PUBLIC_SITE_URL=https://ваш-домен.ru
 ```
 
 Создайте директорию под SQLite, если используете путь по умолчанию:
