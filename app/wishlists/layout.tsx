@@ -9,7 +9,7 @@ import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Affiliate — Rythm Group",
+  title: "Вишлисты — Rythm Group",
   description: "Партнерская программа Rythm Group: форматы сотрудничества, кейсы и контакты.",
 }
 

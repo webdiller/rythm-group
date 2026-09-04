@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
     }
 
     const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
       auth: {
-        user,
-        pass,
+        user: "api",
+        pass: process.env.SEQUENZY_API_KEY,
       },
     })
 

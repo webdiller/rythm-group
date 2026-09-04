@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import type { AffiliateCaseDetailUi } from "@/lib/affiliate/cases-ui"
+import { WISHLISTS_BASE_PATH } from "@/lib/wishlists-path"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AppBreadcrumbs } from "@/components/AppBreadcrumbs"
 import { Eye, Heart, CalendarDays, Tag } from "lucide-react"
@@ -58,13 +59,13 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
       <AppBreadcrumbs
         items={[
           { label: locale === "en" ? "Home" : "Главная", href: "/" },
-          { label: "Affiliate", href: "/affiliate" },
+          { label: locale === "en" ? "Wishlists" : "Вишлисты", href: WISHLISTS_BASE_PATH },
           { label: title },
         ]}
       />
 
       <Link
-        href="/affiliate"
+        href={WISHLISTS_BASE_PATH}
         className="inline-flex text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         ← {cp.back}

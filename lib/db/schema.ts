@@ -129,7 +129,7 @@ export const tableContacts = sqliteTable("contacts", {
   // JSON-encoded array of direct contact links (social networks, etc.)
   direct_contacts: text("direct_contacts"),
   // JSON-encoded config for mini stats in contact section
-  mini_stats: text("mini_stats"),
+  mini_stats: text("mini_stats")
 })
 
 export const relationsContacts = relations(tableContacts, () => ({}))

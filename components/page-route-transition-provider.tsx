@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { usePathname, useRouter } from "next/navigation"
+import { scrollToHashWhenReady } from "@/lib/anchor-nav"
+import { WISHLISTS_BASE_PATH } from "@/lib/wishlists-path"
 
 type PageRouteTransitionProviderProps = {
   children: ReactNode
@@ -20,7 +22,7 @@ function normalizePathname(pathname: string): string {
 }
 
 function isAnimatedSection(pathname: string): boolean {
-  return pathname === "/" || pathname === "/affiliate" || pathname === "/blog"
+  return pathname === "/" || pathname === WISHLISTS_BASE_PATH || pathname === "/blog"
 }
 
 function isAnimatedTransition(fromPathname: string, toPathname: string): boolean {
@@ -34,6 +36,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
 
   const [phase, setPhase] = useState<TransitionPhase>("idle")
   const [targetPathname, setTargetPathname] = useState<string | null>(null)
+  const [pendingHash, setPendingHash] = useState<string | null>(null)
 
   useEffect(() => {
     if (phase === "idle") return
@@ -99,6 +102,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
         }
       }
 
+      setPendingHash(url.hash || null)
       setTargetPathname(nextPathname)
       setPhase("covering")
 
@@ -117,33 +121,27 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     if (!targetPathname) return
     if (normalizedPathname !== targetPathname) return
 
-    let frameId = 0
+    let cancelScroll: (() => void) | undefined
     let revealTimer = 0
-    let attempts = 0
-    const MAX_ATTEMPTS = 60
 
-    const ensureTopAndReveal = () => {
-      attempts += 1
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" })
-      const atTop = Math.abs(window.scrollY) <= 1
-
-      if (atTop || attempts >= MAX_ATTEMPTS) {
-        revealTimer = window.setTimeout(() => {
-          setPhase("revealing")
-        }, POST_SCROLL_SETTLE_MS)
-        return
-      }
-
-      frameId = window.requestAnimationFrame(ensureTopAndReveal)
+    const finishReveal = () => {
+      revealTimer = window.setTimeout(() => {
+        setPhase("revealing")
+      }, POST_SCROLL_SETTLE_MS)
     }
 
-    frameId = window.requestAnimationFrame(ensureTopAndReveal)
+    if (pendingHash) {
+      cancelScroll = scrollToHashWhenReady(pendingHash, "auto", finishReveal)
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" })
+      finishReveal()
+    }
 
     return () => {
-      window.cancelAnimationFrame(frameId)
+      cancelScroll?.()
       window.clearTimeout(revealTimer)
     }
-  }, [phase, normalizedPathname, targetPathname])
+  }, [phase, normalizedPathname, targetPathname, pendingHash])
 
   useEffect(() => {
     if (phase !== "revealing") return
@@ -151,6 +149,7 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     const hideTimer = window.setTimeout(() => {
       setPhase("idle")
       setTargetPathname(null)
+      setPendingHash(null)
     }, HIDE_DELAY_MS)
 
     return () => window.clearTimeout(hideTimer)
@@ -166,7 +165,6 @@ export function PageRouteTransitionProvider({ children }: PageRouteTransitionPro
     const prevBodyPaddingRight = bodyEl.style.paddingRight
 
     if (shouldLock) {
-      // Компенсируем исчезновение системного скроллбара, чтобы не было сдвига контента.
       const scrollbarWidth = Math.max(0, window.innerWidth - htmlEl.clientWidth)
       if (scrollbarWidth > 0) {
         bodyEl.style.paddingRight = `${scrollbarWidth}px`

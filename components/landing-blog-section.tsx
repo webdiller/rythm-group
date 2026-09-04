@@ -27,7 +27,6 @@ export function LandingBlogSection({
   const { t } = useLocale()
 
   if (posts.length === 0) return null
-
   return (
     <section id="blog" className="relative px-6 py-12 md:py-16">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">

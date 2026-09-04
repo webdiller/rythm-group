@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
 import { fallbackTranslations } from "@/lib/i18n"
+import { getContactFormMessage, mapContactApiError } from "@/lib/contact-form-messages"
 import { Send, MessageCircle, Mail, Instagram, Globe } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
@@ -263,7 +264,7 @@ export function ContactForm({
       if (!response.ok) {
         const json = (await response.json().catch(() => null)) as { error?: string } | null
         setStatus("error")
-        setErrorMessage(json?.error ?? "Не удалось отправить сообщение. Попробуйте ещё раз.")
+        setErrorMessage(mapContactApiError(json?.error, locale))
         return
       }
 
@@ -275,15 +276,12 @@ export function ContactForm({
         budget: "",
         message: "",
       })
-    } catch (error) {
+      window.setTimeout(() => {
+        setStatus("idle")
+      }, 4000)
+    } catch {
       setStatus("error")
-      setErrorMessage("Не удалось отправить сообщение. Попробуйте ещё раз.")
-    } finally {
-      if (status !== "error") {
-        setTimeout(() => {
-          setStatus("idle")
-        }, 4000)
-      }
+      setErrorMessage(getContactFormMessage(locale, "network"))
     }
   }
 
@@ -407,11 +405,11 @@ export function ContactForm({
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <Send className="h-4 w-4" />
-              {status === "loading" ? (locale === "ru" ? "Отправка..." : "Sending...") : t.contact.submit}
+              {status === "loading" ? getContactFormMessage(locale, "sending") : t.contact.submit}
             </button>
             {status === "success" && (
               <p className="text-xs text-emerald-500">
-                {locale === "ru" ? "Сообщение успешно отправлено." : "Message sent successfully."}
+                {getContactFormMessage(locale, "success")}
               </p>
             )}
             {status === "error" && errorMessage && (

@@ -2,8 +2,10 @@
 
 import Link from "next/link"
 import { useLocale } from "@/lib/locale-context"
+import { createAnchorClickHandler } from "@/lib/anchor-nav"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { resolveNavHref } from "@/lib/nav-hrefs"
+import { WISHLISTS_BASE_PATH } from "@/lib/wishlists-path"
 
 export type SiteSettings = {
   logo_text?: string | null
@@ -34,7 +36,7 @@ export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, 
     about: { label: t.nav.about, href: "#about" },
     channels: { label: t.nav.channels, href: "#channels" },
     cases: { label: t.nav.cases, href: "#cases" },
-    affiliate: { label: t.nav.affiliate, href: "/affiliate" },
+    affiliate: { label: t.nav.affiliate, href: WISHLISTS_BASE_PATH },
     blog: { label: t.nav.blog ?? t.blog.navLabel, href: "/blog" },
     contacts: { label: t.nav.contacts, href: "#contact" },
   }
@@ -59,6 +61,8 @@ export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, 
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
+  const handleNavClick = (rawHref: string) =>
+    createAnchorClickHandler({ rawHref, sectionHrefPrefix })
 
   const privacyUrl = siteSettings?.privacyPolicyUrl ?? null
   const dataPolicyUrl = siteSettings?.dataProcessingPolicyUrl ?? null
@@ -91,6 +95,7 @@ export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, 
               <Link
                 key={item.label + item.href}
                 href={resolveNavHref(item.href, sectionHrefPrefix)}
+                onClick={handleNavClick(item.href)}
                 className="transition-colors hover:text-foreground"
               >
                 {item.label}
@@ -98,15 +103,17 @@ export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, 
             ))}
           </nav>
 
-          <div className="max-w-sm space-y-3 md:text-left md:order-1">
+            {/* TODO: Remove it if no need */}
+          {/*<div className="max-w-sm space-y-3 md:text-left md:order-1">
             <p className="text-sm font-medium text-foreground">{t.footer.ctaTitle}</p>
-            <Link
+             <Link
               href={contactHref}
+              onClick={handleNavClick("#contact")}
               className="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
             >
               {t.nav.order}
             </Link>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col gap-3 border-t border-border/60 pt-4 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">

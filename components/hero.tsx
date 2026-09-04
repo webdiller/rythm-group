@@ -1,12 +1,13 @@
 "use client"
 
+import Link from "next/link"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
+import { createAnchorClickHandler } from "@/lib/anchor-nav"
 import { ArrowDown } from "lucide-react"
 import { StaggerItem } from "@/components/ui/stagger-item"
 import LightRays from "@/components/LightRays"
-import Link from "next/link"
 
 const LIGHT_RAYS_DARK = {
   raysColor: "#ffffff",
@@ -65,6 +66,8 @@ export function Hero({ animationEnabled = true }: HeroProps) {
 
   const isLight = mounted && resolvedTheme === "light"
   const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
+  const handleAnchorClick = createAnchorClickHandler({ rawHref: "#contact", sectionHrefPrefix: "" })
+  const handleChannelsClick = createAnchorClickHandler({ rawHref: "#channels", sectionHrefPrefix: "" })
 
   return (
     <div className="relative">
@@ -179,6 +182,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
               >
                 <Link
                   href="#contact"
+                  onClick={handleAnchorClick}
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
                 >
                   {t.hero.cta}
@@ -187,6 +191,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
             ) : (
               <Link
                 href="#contact"
+                onClick={handleAnchorClick}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
               >
                 {t.hero.cta}
@@ -204,6 +209,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
               >
                 <Link
                   href="#channels"
+                  onClick={handleChannelsClick}
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
                 >
                   {t.hero.scroll}
@@ -213,6 +219,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
             ) : (
               <Link
                 href="#channels"
+                onClick={handleChannelsClick}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
               >
                 {t.hero.scroll}

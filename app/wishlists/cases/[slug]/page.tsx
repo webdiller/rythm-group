@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const c = mapPartnerToAffiliateCaseDetail(partner, categories)
 
   return {
-    title: `${c.title} | Affiliate — Rythm Group`,
+    title: `${c.title} | Wishlists — Rythm Group`,
     description: c.shortDescription_ru,
   }
 }

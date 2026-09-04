@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
 import { buildAffiliateCaseSlug } from "@/lib/affiliate/cases-ui"
+import { wishlistsCasePath } from "@/lib/wishlists-path"
 
 interface PartnerCategory {
   id: number
@@ -138,10 +139,12 @@ export function PartnersEditor() {
         // Для новых кейсов URL детальной страницы формируем после создания, когда появился id.
         if (!editingPartner && partner.target_url === AUTO_CASE_DETAIL_URL && createdOrUpdatedId != null) {
           const token = getToken()
-          const detailUrl = `/affiliate/cases/${buildAffiliateCaseSlug({
-            id: createdOrUpdatedId,
-            name: partner.name ?? "",
-          })}`
+          const detailUrl = wishlistsCasePath(
+            buildAffiliateCaseSlug({
+              id: createdOrUpdatedId,
+              name: partner.name ?? "",
+            }),
+          )
           await fetch("/api/content/partners", {
             method: "PUT",
             headers: {
@@ -922,7 +925,7 @@ function PartnerForm({
   const NO_BLOG_POST_VALUE = "__none__"
   const isEditingExistingPartner = partner?.id != null
   const caseDetailUrl = isEditingExistingPartner
-    ? `/affiliate/cases/${buildAffiliateCaseSlug({ id: partner.id, name: formData.name || partner.name })}`
+    ? wishlistsCasePath(buildAffiliateCaseSlug({ id: partner.id, name: formData.name || partner.name }))
     : ""
 
   return (

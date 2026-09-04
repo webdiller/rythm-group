@@ -2,15 +2,16 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import type { MouseEvent } from "react"
 import { useLocale } from "@/lib/locale-context"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { createAnchorClickHandler } from "@/lib/anchor-nav"
 import { resolveNavHref } from "@/lib/nav-hrefs"
+import { wishlistsSectionHref } from "@/lib/wishlists-path"
 import { Menu, X } from "lucide-react"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 
 type HeaderProps = {
-  /** На подстраницах (`/blog`, `/affiliate`) якоря ведут на главную: `/#section`. */
+  /** На подстраницах (`/blog`, `/wishlists`) якоря ведут на главную: `/#section`. */
   sectionHrefPrefix?: "" | "/"
   /** Порядок пунктов меню, вычисленный на сервере. */
   navOrder?: HeaderNavItemId[]
@@ -33,7 +34,7 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText, pageBlogEna
     about: { label: t.nav.about, href: "#about" },
     channels: { label: t.nav.channels, href: "#channels" },
     cases: { label: t.nav.cases, href: "#cases" },
-    affiliate: { label: t.nav.affiliate, href: "/affiliate#top" },
+    affiliate: { label: t.nav.affiliate, href: wishlistsSectionHref("top") },
     blog: { label: t.nav.blog ?? t.blog.navLabel, href: "/blog#top" },
     contacts: { label: t.nav.contacts, href: "#contact" },
   }
@@ -41,42 +42,9 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText, pageBlogEna
 
   const homeHref = sectionHrefPrefix === "/" ? "/" : "#"
   const contactHref = resolveNavHref("#contact", sectionHrefPrefix)
-  const canForceAnchorScroll = sectionHrefPrefix === ""
 
-  const handleNavClick = (rawHref: string, onDone?: () => void) => {
-    return (event: MouseEvent<HTMLAnchorElement>) => {
-      if (onDone) onDone()
-      const resolvedHref = resolveNavHref(rawHref, sectionHrefPrefix)
-      const isAnchorLink = rawHref.startsWith("#")
-
-      if (isAnchorLink && canForceAnchorScroll) {
-        const id = rawHref.slice(1)
-        if (!id) return
-        const el = document.getElementById(id)
-        if (!el) return
-
-        event.preventDefault()
-        el.scrollIntoView({ behavior: "smooth", block: "start" })
-        if (window.location.hash !== rawHref) {
-          window.history.replaceState(null, "", rawHref)
-        }
-        return
-      }
-
-      if (isAnchorLink) return
-
-      const targetUrl = new URL(resolvedHref, window.location.origin)
-      const isSameRoute =
-        targetUrl.pathname === window.location.pathname &&
-        targetUrl.search === window.location.search &&
-        targetUrl.hash === window.location.hash
-
-      if (isSameRoute) {
-        event.preventDefault()
-        window.location.assign(targetUrl.toString())
-      }
-    }
-  }
+  const handleNavClick = (rawHref: string, onDone?: () => void) =>
+    createAnchorClickHandler({ rawHref, sectionHrefPrefix, onDone })
 
   return (
     <header

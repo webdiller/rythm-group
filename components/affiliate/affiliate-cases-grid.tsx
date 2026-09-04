@@ -7,6 +7,7 @@ import { enUS, ru } from "date-fns/locale"
 import { useLocale } from "@/lib/locale-context"
 import type { Partner, PartnerCategory } from "@/components/cases"
 import { mapPartnerToAffiliateCaseCard } from "@/lib/affiliate/cases-ui"
+import { wishlistsCasePath } from "@/lib/wishlists-path"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight } from "lucide-react"
 
@@ -50,7 +51,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
         : locale === "en"
           ? "No date"
           : "Без даты"
-    const href = partner.target_url || `/affiliate/cases/${ui.slug}`
+    const href = partner.target_url || wishlistsCasePath(ui.slug)
     const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
     const imageSrc = cover || ui.coverImage?.trim() || ""
     const showImage = Boolean(imageSrc) && !brokenImageByPartner[partner.id]

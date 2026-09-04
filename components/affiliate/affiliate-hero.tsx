@@ -4,6 +4,8 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
 import { useLocale } from "@/lib/locale-context"
+import { createAnchorClickHandler } from "@/lib/anchor-nav"
+import { wishlistsSectionHref } from "@/lib/wishlists-path"
 import { StaggerItem } from "@/components/ui/stagger-item"
 
 type AffiliateHeroData = {
@@ -32,7 +34,9 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
   const [heroContentVisible, setHeroContentVisible] = useState(false)
   const a = t.affiliate.hero
   const contactHref = "#contact"
-  const moreHref = "/affiliate#affiliate-formats"
+  const moreHref = wishlistsSectionHref("affiliate-formats")
+  const handleContactClick = createAnchorClickHandler({ rawHref: contactHref, sectionHrefPrefix: "" })
+  const handleMoreClick = createAnchorClickHandler({ rawHref: moreHref, sectionHrefPrefix: "" })
   const badge = data ? (locale === "en" ? data.badge_en : data.badge_ru) : a.badge
   const title = data ? (locale === "en" ? data.title_en : data.title_ru) : a.title
   const subtitle = data ? (locale === "en" ? data.subtitle_en : data.subtitle_ru) : a.subtitle
@@ -155,6 +159,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
             >
               <Link
                 href={contactHref}
+                onClick={handleContactClick}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
               >
                 {ctaPrimary}
@@ -171,6 +176,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
               >
                 <a
                   href={moreHref}
+                  onClick={handleMoreClick}
                   className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 md:px-8 md:py-4 md:text-base"
                 >
                   {ctaSecondary}

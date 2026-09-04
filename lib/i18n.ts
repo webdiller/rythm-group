@@ -23,7 +23,7 @@ export const fallbackTranslations = {
       blog: "Блог",
       contacts: "Контакты",
       order: "Заказать рекламу",
-      affiliate: "Affiliate",
+      affiliate: "Вишлисты",
     },
     hero: {
       title: "Rythm Group",
@@ -145,7 +145,7 @@ export const fallbackTranslations = {
         subtitle: "Оплата, сроки публикаций и условия — кратко по делу.",
       },
       casePage: {
-        back: "К Affiliate",
+        back: "К вишлистам",
         aboutGame: "О игре",
         socialProof: "Публикации и реакции",
         timeline: "Динамика",
@@ -163,7 +163,7 @@ export const fallbackTranslations = {
       blog: "Blog",
       contacts: "Contacts",
       order: "Order Advertising",
-      affiliate: "Affiliate",
+      affiliate: "Wishlists",
     },
     hero: {
       title: "Rythm Group",
@@ -285,7 +285,7 @@ export const fallbackTranslations = {
         subtitle: "Payment, publishing timelines, and terms — short and practical.",
       },
       casePage: {
-        back: "Back to Affiliate",
+        back: "Back to Wishlists",
         aboutGame: "About the game",
         socialProof: "Posts & reactions",
         timeline: "Momentum",

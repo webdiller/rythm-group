@@ -1722,7 +1722,7 @@ export function SiteSettingsEditor() {
           </div>
           <div className="flex items-center justify-between gap-4">
             <div className="space-y-1">
-              <Label htmlFor="page_affiliate_enabled">Страница /affiliate</Label>
+              <Label htmlFor="page_affiliate_enabled">Страница /wishlists</Label>
               <p className="text-xs text-muted-foreground">
                 При отключении страница вернёт 404 и исчезнет из навигации.
               </p>
