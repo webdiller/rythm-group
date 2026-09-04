@@ -21,4 +21,19 @@ export function runMigrations(sqlite: Database.Database): void {
       "ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1"
     )
   }
+  if (!names.has("channels_show_subscribers")) {
+    sqlite.exec(
+      "ALTER TABLE site_settings ADD COLUMN channels_show_subscribers INTEGER NOT NULL DEFAULT 1"
+    )
+  }
+  if (!names.has("channels_show_reach")) {
+    sqlite.exec(
+      "ALTER TABLE site_settings ADD COLUMN channels_show_reach INTEGER NOT NULL DEFAULT 1"
+    )
+  }
+  if (!names.has("channels_card_align")) {
+    sqlite.exec(
+      "ALTER TABLE site_settings ADD COLUMN channels_card_align TEXT NOT NULL DEFAULT 'left'"
+    )
+  }
 }

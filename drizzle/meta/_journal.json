@@ -8,6 +8,13 @@
       "when": 1788413050147,
       "tag": "0000_steep_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788520646011,
+      "tag": "0001_woozy_sunspot",
+      "breakpoints": true
     }
   ]
 }

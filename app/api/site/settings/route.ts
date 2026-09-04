@@ -9,6 +9,7 @@ export const runtime = "nodejs"
 
 type PartnersDisplayMode = "name" | "logo" | "logoAndName"
 type ContactLayout = "formFirst" | "contactsFirst"
+type ChannelsCardAlign = "left" | "center" | "right"
 
 type SiteSettingsPayload = {
   logo_text?: string | null
@@ -16,6 +17,9 @@ type SiteSettingsPayload = {
   dataProcessingPolicyUrl?: string | null
   heroAnimationEnabled?: boolean | null
   partnersDisplayMode?: PartnersDisplayMode | null
+  channels_show_subscribers?: boolean | null
+  channels_show_reach?: boolean | null
+  channels_card_align?: ChannelsCardAlign | null
   contactLayout?: ContactLayout | null
   contactFormHidden?: boolean | null
   affiliate_contact_layout?: ContactLayout | null
@@ -55,6 +59,10 @@ export async function PUT(request: NextRequest) {
     const currentDisplayMode =
       (existing?.partnersDisplayMode as PartnersDisplayMode | null | undefined) ??
       "logoAndName"
+    const currentChannelsShowSubscribers = existing?.channels_show_subscribers ?? true
+    const currentChannelsShowReach = existing?.channels_show_reach ?? true
+    const currentChannelsCardAlign =
+      (existing?.channels_card_align as ChannelsCardAlign | null | undefined) ?? "left"
     const currentLogoText = existing?.logo_text ?? null
     const currentContactLayout =
       (existing?.contactLayout as ContactLayout | null | undefined) ?? "formFirst"
@@ -94,6 +102,20 @@ export async function PUT(request: NextRequest) {
       heroAnimationEnabled:
         typeof body.heroAnimationEnabled === "boolean" ? body.heroAnimationEnabled : true,
       partnersDisplayMode: body.partnersDisplayMode ?? currentDisplayMode,
+      channels_show_subscribers:
+        typeof body.channels_show_subscribers === "boolean"
+          ? body.channels_show_subscribers
+          : currentChannelsShowSubscribers,
+      channels_show_reach:
+        typeof body.channels_show_reach === "boolean"
+          ? body.channels_show_reach
+          : currentChannelsShowReach,
+      channels_card_align:
+        body.channels_card_align === "left" ||
+        body.channels_card_align === "center" ||
+        body.channels_card_align === "right"
+          ? body.channels_card_align
+          : currentChannelsCardAlign,
       contactLayout: body.contactLayout ?? currentContactLayout,
       contactFormHidden:
         typeof body.contactFormHidden === "boolean"
@@ -167,6 +189,9 @@ export async function PUT(request: NextRequest) {
         headerNavOrder: updateValues.headerNavOrder ?? JSON.stringify(DEFAULT_HEADER_NAV_ORDER),
         heroAnimationEnabled: updateValues.heroAnimationEnabled ?? true,
         partnersDisplayMode: updateValues.partnersDisplayMode ?? "logoAndName",
+        channels_show_subscribers: updateValues.channels_show_subscribers ?? true,
+        channels_show_reach: updateValues.channels_show_reach ?? true,
+        channels_card_align: updateValues.channels_card_align ?? "left",
         contactLayout: updateValues.contactLayout ?? "formFirst",
         contactFormHidden: updateValues.contactFormHidden ?? false,
         affiliate_contact_layout: updateValues.affiliate_contact_layout ?? "formFirst",

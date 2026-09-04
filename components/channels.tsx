@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useLocale } from "@/lib/locale-context"
-import { BarChart3, ExternalLink, Users } from "lucide-react"
+import { BarChart3, Users } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 export interface ChannelCategory {
   id: string
@@ -26,13 +27,25 @@ export interface Channel {
   hasAvatar?: boolean
 }
 
+export type ChannelsCardAlign = "left" | "center" | "right"
+
 interface ChannelsProps {
   categories: ChannelCategory[]
   channels: Channel[]
   animationsEnabled?: boolean
+  showSubscribers?: boolean
+  showReach?: boolean
+  cardAlign?: ChannelsCardAlign
 }
 
-export function Channels({ categories, channels, animationsEnabled = true }: ChannelsProps) {
+export function Channels({
+  categories,
+  channels,
+  animationsEnabled = true,
+  showSubscribers = true,
+  showReach = true,
+  cardAlign = "left",
+}: ChannelsProps) {
   const { locale, t } = useLocale()
   const [activeCategory, setActiveCategory] = useState<string | null>(
     categories[0]?.id ?? null,
@@ -52,7 +65,6 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     .sort((a, b) => a.order_index - b.order_index)
 
   useEffect(() => {
-    // Reset "show all" when category changes
     setShowAll(false)
   }, [activeCategoryId])
 
@@ -66,6 +78,24 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
     ? uncategorizedChannels
     : uncategorizedChannels.slice(0, MAX_VISIBLE_UNCATEGORIZED)
   const uncategorizedHiddenCount = Math.max(0, uncategorizedChannels.length - MAX_VISIBLE_UNCATEGORIZED)
+
+  const renderCard = (channel: Channel, index: number) => (
+    <ScrollStagger
+      key={channel.id}
+      index={index}
+      delayStep={80}
+      disabled={!animationsEnabled}
+    >
+      <ChannelCard
+        channel={channel}
+        showSubscribers={showSubscribers}
+        showReach={showReach}
+        cardAlign={cardAlign}
+        subscribersLabel={t.channels.subscribers}
+        reachLabel={t.channels.reach}
+      />
+    </ScrollStagger>
+  )
 
   return (
     <section id="channels" className="relative px-6 py-12 md:py-16">
@@ -81,55 +111,10 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
           </div>
         </ScrollReveal>
 
-        {/* 1. Список без категории — сразу под subtitle */}
         {uncategorizedChannels.length > 0 && (
           <div className="mt-4 mb-10">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleUncategorized.map((channel, index) => (
-                <ScrollStagger
-                  key={channel.id}
-                  index={index}
-                  delayStep={80}
-                  disabled={!animationsEnabled}
-                >
-                  <Link
-                    href={channel.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
-                  >
-                    <div className="flex items-center gap-4">
-                      <ChannelAvatar
-                        channelId={channel.id}
-                        name={channel.name}
-                        hasAvatar={channel.hasAvatar}
-                      />
-                      <div>
-                        <h3 className="text-sm font-semibold text-card-foreground">
-                          {channel.name}
-                        </h3>
-                        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1.5">
-                            <Users className="h-3 w-3" />
-                            <span>
-                              {channel.subscribers} {t.channels.subscribers}
-                            </span>
-                          </div>
-                          {channel.reach && (
-                            <div className="flex items-center gap-1.5">
-                              <BarChart3 className="h-3 w-3" />
-                              <span>
-                                {channel.reach} {t.channels.reach}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                  </Link>
-                </ScrollStagger>
-              ))}
+              {visibleUncategorized.map((channel, index) => renderCard(channel, index))}
             </div>
             {uncategorizedChannels.length > MAX_VISIBLE_UNCATEGORIZED && (
               <div className="mt-8 flex justify-center">
@@ -151,7 +136,6 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
           </div>
         )}
 
-        {/* 2. Категории и списки по категориям — только если есть категории */}
         {categories.length > 0 && (
           <>
             <ScrollReveal disabled={!animationsEnabled}>
@@ -181,51 +165,7 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
             ) : activeChannels.length > 0 ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleChannels.map((channel, index) => (
-                    <ScrollStagger
-                      key={channel.id}
-                      index={index}
-                      delayStep={80}
-                      disabled={!animationsEnabled}
-                    >
-                      <Link
-                        href={channel.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex items-center justify-between rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border"
-                      >
-                        <div className="flex items-center gap-4">
-                          <ChannelAvatar
-                            channelId={channel.id}
-                            name={channel.name}
-                            hasAvatar={channel.hasAvatar}
-                          />
-                          <div>
-                            <h3 className="text-sm font-semibold text-card-foreground">
-                              {channel.name}
-                            </h3>
-                            <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-                              <div className="flex items-center gap-1.5">
-                                <Users className="h-3 w-3" />
-                                <span>
-                                  {channel.subscribers} {t.channels.subscribers}
-                                </span>
-                              </div>
-                              {channel.reach && (
-                                <div className="flex items-center gap-1.5">
-                                  <BarChart3 className="h-3 w-3" />
-                                  <span>
-                                    {channel.reach} {t.channels.reach}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-all group-hover:text-primary group-hover:opacity-100" />
-                      </Link>
-                    </ScrollStagger>
-                  ))}
+                  {visibleChannels.map((channel, index) => renderCard(channel, index))}
                 </div>
                 {activeChannels.length > MAX_VISIBLE_CATEGORY && (
                   <div className="mt-8 flex justify-center">
@@ -249,7 +189,6 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
           </>
         )}
 
-        {/* Пусто: нет ни категорий, ни каналов без категории */}
         {categories.length === 0 && uncategorizedChannels.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             {locale === "ru" ? "Каналы не найдены." : "No channels found."}
@@ -257,6 +196,71 @@ export function Channels({ categories, channels, animationsEnabled = true }: Cha
         )}
       </div>
     </section>
+  )
+}
+
+function ChannelCard({
+  channel,
+  showSubscribers,
+  showReach,
+  cardAlign,
+  subscribersLabel,
+  reachLabel,
+}: {
+  channel: Channel
+  showSubscribers: boolean
+  showReach: boolean
+  cardAlign: ChannelsCardAlign
+  subscribersLabel: string
+  reachLabel: string
+}) {
+  const showMeta =
+    (showSubscribers && Boolean(channel.subscribers)) ||
+    (showReach && Boolean(channel.reach))
+
+  return (
+    <Link
+      href={channel.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        "group rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 glow-border",
+        cardAlign === "center" && "flex flex-col items-center gap-3 text-center",
+        cardAlign === "left" && "flex items-center gap-4",
+        cardAlign === "right" && "flex flex-row-reverse items-center gap-4 text-right",
+      )}
+    >
+      <ChannelAvatar channelId={channel.id} name={channel.name} hasAvatar={channel.hasAvatar} />
+      <div className={cn(cardAlign === "center" && "flex flex-col items-center")}>
+        <h3 className="text-base font-semibold text-card-foreground md:text-lg">{channel.name}</h3>
+        {showMeta ? (
+          <div
+            className={cn(
+              "mt-1.5 flex flex-col gap-1 text-xs text-muted-foreground",
+              cardAlign === "center" && "items-center",
+              cardAlign === "right" && "items-end",
+            )}
+          >
+            {showSubscribers && channel.subscribers ? (
+              <div className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
+                <span>
+                  {channel.subscribers} {subscribersLabel}
+                </span>
+              </div>
+            ) : null}
+            {showReach && channel.reach ? (
+              <div className="flex items-center gap-1.5">
+                <BarChart3 className="h-3.5 w-3.5" />
+                <span>
+                  {channel.reach} {reachLabel}
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </Link>
   )
 }
 
@@ -271,7 +275,7 @@ function ChannelAvatar({
 }) {
   const [hasImage, setHasImage] = useState(hasAvatar ?? true)
   return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 overflow-hidden">
+    <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 md:h-20 md:w-20">
       {hasImage && (
         <img
           src={`/api/content/channels/${channelId}/avatar`}
@@ -280,7 +284,7 @@ function ChannelAvatar({
           onError={() => setHasImage(false)}
         />
       )}
-      {!hasImage && <span className="text-sm font-bold">{name.charAt(0)}</span>}
+      {!hasImage && <span className="text-xl font-bold md:text-2xl">{name.charAt(0)}</span>}
     </div>
   )
 }

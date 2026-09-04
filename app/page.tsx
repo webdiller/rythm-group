@@ -151,6 +151,12 @@ export default async function Home() {
   const partnersDisplayMode =
     (siteSettings?.partnersDisplayMode as "name" | "logo" | "logoAndName" | null) ??
     "logoAndName"
+  const channelsShowSubscribers = siteSettings?.channels_show_subscribers ?? true
+  const channelsShowReach = siteSettings?.channels_show_reach ?? true
+  const channelsCardAlign =
+    siteSettings?.channels_card_align === "center" || siteSettings?.channels_card_align === "right"
+      ? siteSettings.channels_card_align
+      : "left"
 
   return (
     <div className="min-h-screen w-full relative">
@@ -191,6 +197,9 @@ export default async function Home() {
                 categories={channelCategories}
                 channels={channels}
                 animationsEnabled={animationsEnabled}
+                showSubscribers={channelsShowSubscribers}
+                showReach={channelsShowReach}
+                cardAlign={channelsCardAlign}
               />
               <Stats animationsEnabled={animationsEnabled} />
               <Cases

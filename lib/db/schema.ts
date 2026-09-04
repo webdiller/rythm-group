@@ -152,6 +152,12 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   heroAnimationEnabled: integer("hero_animation_enabled", { mode: "boolean" }).default(true),
   // How to display partners on landing: "name", "logo", "logoAndName"
   partnersDisplayMode: text("partners_display_mode"),
+  /** Блок «Наши каналы»: показывать число подписчиков */
+  channels_show_subscribers: integer("channels_show_subscribers", { mode: "boolean" }).default(true),
+  /** Блок «Наши каналы»: показывать охват */
+  channels_show_reach: integer("channels_show_reach", { mode: "boolean" }).default(true),
+  /** Блок «Наши каналы»: выравнивание карточки — left | center | right */
+  channels_card_align: text("channels_card_align").default("left"),
   // How to layout contact section: "formFirst" or "contactsFirst"
   contactLayout: text("contact_layout"),
   // If true, hide email form and show only direct contacts

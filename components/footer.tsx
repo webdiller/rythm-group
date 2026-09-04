@@ -14,6 +14,9 @@ export type SiteSettings = {
   headerNavOrder?: string | null
   heroAnimationEnabled?: boolean | null
   partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
+  channels_show_subscribers?: boolean | null
+  channels_show_reach?: boolean | null
+  channels_card_align?: "left" | "center" | "right" | null
   contactLayout?: "formFirst" | "contactsFirst" | null
   contactFormHidden?: boolean | null
   page_blog_enabled?: boolean | null

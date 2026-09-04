@@ -141,6 +141,9 @@ export function SiteSettingsEditor() {
   const [partnersDisplayMode, setPartnersDisplayMode] = useState<"name" | "logo" | "logoAndName">(
     "logoAndName",
   )
+  const [channelsShowSubscribers, setChannelsShowSubscribers] = useState(true)
+  const [channelsShowReach, setChannelsShowReach] = useState(true)
+  const [channelsCardAlign, setChannelsCardAlign] = useState<"left" | "center" | "right">("left")
   const [contactLayout, setContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
   const [contactFormHidden, setContactFormHidden] = useState(false)
   const [affiliateContactLayout, setAffiliateContactLayout] = useState<"formFirst" | "contactsFirst">("formFirst")
@@ -162,6 +165,9 @@ export function SiteSettingsEditor() {
     privacyPolicyUrl: string
     dataProcessingPolicyUrl: string
     partnersDisplayMode: "name" | "logo" | "logoAndName"
+    channelsShowSubscribers: boolean
+    channelsShowReach: boolean
+    channelsCardAlign: "left" | "center" | "right"
     contactLayout: "formFirst" | "contactsFirst"
     contactFormHidden: boolean
     affiliateContactLayout: "formFirst" | "contactsFirst"
@@ -331,6 +337,9 @@ export function SiteSettingsEditor() {
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
             partnersDisplayMode?: "name" | "logo" | "logoAndName" | null
+            channels_show_subscribers?: boolean | null
+            channels_show_reach?: boolean | null
+            channels_card_align?: "left" | "center" | "right" | null
             contactLayout?: "formFirst" | "contactsFirst" | null
             contactFormHidden?: boolean | null
             affiliate_contact_layout?: "formFirst" | "contactsFirst" | null
@@ -351,6 +360,12 @@ export function SiteSettingsEditor() {
         const privacy = data?.privacyPolicyUrl ?? ""
         const dataPolicy = data?.dataProcessingPolicyUrl ?? ""
         const partnersMode = data?.partnersDisplayMode ?? "logoAndName"
+        const channelsSubscribers = data?.channels_show_subscribers ?? true
+        const channelsReach = data?.channels_show_reach ?? true
+        const channelsAlign =
+          data?.channels_card_align === "center" || data?.channels_card_align === "right"
+            ? data.channels_card_align
+            : "left"
         const layoutMode = data?.contactLayout ?? "formFirst"
         const formHidden = data?.contactFormHidden ?? false
         const affiliateLayoutMode = data?.affiliate_contact_layout ?? "formFirst"
@@ -379,6 +394,9 @@ export function SiteSettingsEditor() {
           privacyPolicyUrl: privacy,
           dataProcessingPolicyUrl: dataPolicy,
           partnersDisplayMode: partnersMode,
+          channelsShowSubscribers: channelsSubscribers,
+          channelsShowReach: channelsReach,
+          channelsCardAlign: channelsAlign,
           contactLayout: layoutMode,
           contactFormHidden: formHidden,
           affiliateContactLayout: affiliateLayoutMode,
@@ -391,6 +409,9 @@ export function SiteSettingsEditor() {
           headerNavOrder: parsedHeaderNavOrder,
         })
         setPartnersDisplayMode(partnersMode)
+        setChannelsShowSubscribers(channelsSubscribers)
+        setChannelsShowReach(channelsReach)
+        setChannelsCardAlign(channelsAlign)
         setContactLayout(layoutMode)
         setContactFormHidden(formHidden)
         setAffiliateContactLayout(affiliateLayoutMode)
@@ -450,6 +471,9 @@ export function SiteSettingsEditor() {
           privacyPolicyUrl: privacyPolicyUrl || null,
           dataProcessingPolicyUrl: dataProcessingPolicyUrl || null,
           partnersDisplayMode,
+          channels_show_subscribers: channelsShowSubscribers,
+          channels_show_reach: channelsShowReach,
+          channels_card_align: channelsCardAlign,
           contactLayout,
           contactFormHidden,
           affiliate_contact_layout: affiliateContactLayout,
@@ -475,6 +499,9 @@ export function SiteSettingsEditor() {
         privacyPolicyUrl,
         dataProcessingPolicyUrl,
         partnersDisplayMode,
+        channelsShowSubscribers,
+        channelsShowReach,
+        channelsCardAlign,
         contactLayout,
         contactFormHidden,
         affiliateContactLayout,
@@ -1559,6 +1586,57 @@ export function SiteSettingsEditor() {
             <p className="text-xs text-muted-foreground">
               Определяет, как партнёры будут отображаться на лендинге в блоке кейсов.
             </p>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Отображение каналов</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="channels_card_align">Выравнивание в карточке</Label>
+            <select
+              id="channels_card_align"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              value={channelsCardAlign}
+              onChange={(e) => {
+                const value = e.target.value
+                setChannelsCardAlign(
+                  value === "center" || value === "right" ? value : "left",
+                )
+              }}
+            >
+              <option value="left">Слева</option>
+              <option value="center">По центру</option>
+              <option value="right">Справа</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="channels_show_subscribers">Показывать подписчиков</Label>
+              <p className="text-xs text-muted-foreground">
+                Если выключено, число подписчиков не отображается на карточках.
+              </p>
+            </div>
+            <Switch
+              id="channels_show_subscribers"
+              checked={channelsShowSubscribers}
+              onCheckedChange={setChannelsShowSubscribers}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="channels_show_reach">Показывать охват</Label>
+              <p className="text-xs text-muted-foreground">
+                Если выключено, охват не отображается на карточках.
+              </p>
+            </div>
+            <Switch
+              id="channels_show_reach"
+              checked={channelsShowReach}
+              onCheckedChange={setChannelsShowReach}
+            />
           </div>
         </CardContent>
       </Card>
