@@ -7,7 +7,7 @@ import type { AffiliateCaseDetailUi } from "@/lib/affiliate/cases-ui"
 import { WISHLISTS_BASE_PATH } from "@/lib/wishlists-path"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AppBreadcrumbs } from "@/components/AppBreadcrumbs"
-import { Eye, Heart, CalendarDays, Tag } from "lucide-react"
+import { Eye, Heart, CalendarDays, Tag, ExternalLink } from "lucide-react"
 import { format } from "date-fns"
 import { enUS, ru } from "date-fns/locale"
 
@@ -112,6 +112,17 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
               </div>
             </div>
             <p className="max-w-3xl text-base leading-relaxed">{desc}</p>
+            {c.steamGameUrl ? (
+              <a
+                href={c.steamGameUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-secondary hover:text-primary"
+              >
+                {cp.openInSteam}
+                <ExternalLink className="h-4 w-4 shrink-0 opacity-80" />
+              </a>
+            ) : null}
           </CardContent>
         </Card>
 

@@ -210,6 +210,7 @@ export function TranslationsEditor() {
         "casePage.back",
         "casePage.aboutGame",
         "casePage.views",
+        "casePage.openInSteam",
       ],
     }
     return keysMap[section] || []

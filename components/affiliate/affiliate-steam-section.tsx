@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useLocale } from "@/lib/locale-context"
 import type { Partner } from "@/components/cases"
 import { Card } from "@/components/ui/card"
@@ -10,14 +10,10 @@ type AffiliateSteamSectionProps = {
   partners: Partner[]
 }
 
-function buildSteamSearchUrl(name: string): string {
-  return `https://store.steampowered.com/search/?developer=${encodeURIComponent(name)}`
-}
-
 export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) {
   const { locale, t } = useLocale()
   const [showAll, setShowAll] = useState(false)
-  const MAX_VISIBLE = 6
+  const MAX_VISIBLE = 16
   const items = [...partners]
     .filter((p) => p.show_in_affiliate_steam ?? true)
     .sort((a, b) => a.order_index - b.order_index)
@@ -36,44 +32,46 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
 
         <div className="grid gap-6 sm:grid-cols-2">
           {visibleItems.map((p) => {
-            const steamUrl = p.developer_url || buildSteamSearchUrl(p.name)
+            const steamUrl = p.developer_url?.trim() || ""
+            const hasLink = steamUrl.length > 0
+
+            const cardInner = (
+              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-28 sm:w-28">
+                  {p.logo_url ? (
+                    <img
+                      src={`/api/content/partners/${p.id}/logo`}
+                      alt=""
+                      className={`h-full w-full object-cover ${hasLink ? "transition-transform duration-300 group-hover:scale-105" : ""}`}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                      Steam
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <h3
+                    className={`text-lg font-semibold leading-snug text-foreground ${hasLink ? "group-hover:text-primary" : ""}`}
+                  >
+                    {p.name}
+                  </h3>
+                  {hasLink ? (
+                    <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+                      {t.affiliate.steam.openSteam}
+                      <ExternalLink className="h-4 w-4 shrink-0 opacity-80" />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            )
+
             return (
-              <a
-                key={p.id}
-                href={steamUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block h-full"
-              >
-                <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
-                  <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
-                    <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-28 sm:w-28">
-                      {p.logo_url ? (
-                        <img
-                          src={`/api/content/partners/${p.id}/logo`}
-                          alt=""
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                          Steam
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <h3 className="text-lg font-semibold leading-snug text-foreground group-hover:text-primary">
-                        {p.name}
-                      </h3>
-                      <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-                        {t.affiliate.steam.openSteam}
-                        <ExternalLink className="h-4 w-4 shrink-0 opacity-80" />
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </a>
+              <SteamPublisherCard key={p.id} href={hasLink ? steamUrl : null}>
+                {cardInner}
+              </SteamPublisherCard>
             )
           })}
         </div>
@@ -102,4 +100,19 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
       </div>
     </section>
   )
+}
+
+function SteamPublisherCard({ href, children }: { href: string | null; children: ReactNode }) {
+  const cardClassName =
+    "h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm"
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="group block h-full">
+        <Card className={`${cardClassName} transition-all hover:border-primary/40`}>{children}</Card>
+      </a>
+    )
+  }
+
+  return <Card className={cardClassName}>{children}</Card>
 }

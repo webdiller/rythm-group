@@ -36,4 +36,12 @@ export function runMigrations(sqlite: Database.Database): void {
       "ALTER TABLE site_settings ADD COLUMN channels_card_align TEXT NOT NULL DEFAULT 'left'"
     )
   }
+
+  const partnerColumns = sqlite
+    .prepare("PRAGMA table_info(partners)")
+    .all() as Array<{ name: string }>
+  const partnerNames = new Set(partnerColumns.map((c) => c.name))
+  if (!partnerNames.has("steam_game_url")) {
+    sqlite.exec("ALTER TABLE partners ADD COLUMN steam_game_url TEXT")
+  }
 }

@@ -37,6 +37,7 @@ interface Partner {
   views?: number | null
   target_url?: string | null
   developer_url?: string | null
+  steam_game_url?: string | null
   show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
@@ -853,6 +854,7 @@ function PartnerForm({
     wishlists: number
     views: number
     target_url: string
+    steam_game_url: string
     developer_url: string
     show_in_landing_cases: boolean
     show_in_affiliate_cases: boolean
@@ -869,6 +871,7 @@ function PartnerForm({
     wishlists: partner?.wishlists ?? 0,
     views: partner?.views ?? 0,
     target_url: partner?.target_url ?? "",
+    steam_game_url: partner?.steam_game_url ?? "",
     developer_url: partner?.developer_url ?? "",
     show_in_landing_cases: partner?.show_in_landing_cases ?? true,
     show_in_affiliate_cases: partner?.show_in_affiliate_cases ?? true,
@@ -945,6 +948,8 @@ function PartnerForm({
         onSave(
           {
             ...formData,
+            steam_game_url: formData.steam_game_url.trim() || null,
+            developer_url: formData.developer_url.trim() || null,
             target_url: resolvedTargetUrl,
             category_id: formData.category_id,
           },
@@ -1098,15 +1103,28 @@ function PartnerForm({
           )}
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label>URL разработчика/издателя (Steam)</Label>
-          <Input
-            value={formData.developer_url}
-            onChange={(e) => setFormData({ ...formData, developer_url: e.target.value })}
-            placeholder="https://store.steampowered.com/developer/..."
-          />
-        </div>
+      <div className="space-y-2">
+        <Label>Ссылка на игру в Steam</Label>
+        <Input
+          value={formData.steam_game_url}
+          onChange={(e) => setFormData({ ...formData, steam_game_url: e.target.value })}
+          placeholder="https://store.steampowered.com/app/..."
+        />
+        <p className="text-xs text-muted-foreground">
+          Опционально. Если заполнено — на детальной странице кейса в блоке «О игре» появится кнопка «Открыть в Steam».
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label>Ссылка издателя в Steam (блок издателей)</Label>
+        <Input
+          value={formData.developer_url}
+          onChange={(e) => setFormData({ ...formData, developer_url: e.target.value })}
+          placeholder="https://store.steampowered.com/developer/..."
+        />
+        <p className="text-xs text-muted-foreground">
+          Опционально. Если заполнено — карточка в блоке «Издатели в Steam» станет кликабельной и покажет «Открыть в
+          Steam». Если пусто — только логотип и название, без ссылки и без этой фразы.
+        </p>
       </div>
       <div className="grid gap-2">
         <div className="flex items-center justify-between rounded border p-3">
@@ -1121,7 +1139,7 @@ function PartnerForm({
         </div>
         <div className="flex items-center justify-between rounded border p-3">
           <Label className="flex items-center justify-between w-full">
-           <p> Показывать в блоке кейсов Affiliate</p>
+           <p> Показывать в блоке кейсов Wishlists</p>
             <Switch
             checked={formData.show_in_affiliate_cases}
             onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_cases: checked })}
@@ -1131,7 +1149,12 @@ function PartnerForm({
         </div>
         <div className="flex items-center justify-between rounded border p-3">
           <Label className="flex items-center justify-between w-full">
-            <p>Показывать в Steam-блоке Affiliate</p>
+            <div className="pr-4">
+              <p>Показывать в Steam-блоке Wishlists</p>
+              <p className="text-xs font-normal text-muted-foreground">
+                Логотип и название. Ссылка — только если заполнено поле «Ссылка издателя в Steam».
+              </p>
+            </div>
             <Switch
               checked={formData.show_in_affiliate_steam}
               onCheckedChange={(checked) => setFormData({ ...formData, show_in_affiliate_steam: checked })}

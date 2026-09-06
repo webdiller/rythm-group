@@ -57,6 +57,7 @@ export class ServicePartners {
     if (body.views !== undefined) set.views = body.views
     if (body.target_url !== undefined) set.target_url = body.target_url
     if (body.developer_url !== undefined) set.developer_url = body.developer_url
+    if (body.steam_game_url !== undefined) set.steam_game_url = body.steam_game_url
     if (body.show_in_landing_cases !== undefined) set.show_in_landing_cases = body.show_in_landing_cases
     if (body.show_in_affiliate_cases !== undefined) set.show_in_affiliate_cases = body.show_in_affiliate_cases
     if (body.show_in_affiliate_steam !== undefined) set.show_in_affiliate_steam = body.show_in_affiliate_steam

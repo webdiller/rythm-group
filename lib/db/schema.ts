@@ -104,6 +104,8 @@ export const tablePartners = sqliteTable("partners", {
   views: integer("views").default(0),
   target_url: text("target_url"),
   developer_url: text("developer_url"),
+  /** Ссылка на страницу игры в Steam (детальная страница кейса) */
+  steam_game_url: text("steam_game_url"),
   show_in_landing_cases: integer("show_in_landing_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_cases: integer("show_in_affiliate_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_steam: integer("show_in_affiliate_steam", { mode: "boolean" }).default(true),

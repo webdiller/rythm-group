@@ -29,6 +29,7 @@ export interface Partner {
   views?: number | null
   target_url?: string | null
   developer_url?: string | null
+  steam_game_url?: string | null
   show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
