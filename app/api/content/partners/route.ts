@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
     }
-    ServicePartners.deleteOne(parsed.data)
+    await ServicePartners.deleteOne(parsed.data)
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {

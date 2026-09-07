@@ -33,8 +33,11 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         : "Без даты"
   const coverSrc = c.coverImage?.trim() || ""
   const showCover = Boolean(coverSrc) && !coverBroken
+  const showWishlists = c.showWishlists
+  const showViews = c.showViews
 
   useEffect(() => {
+    if (!showViews) return
     let cancelled = false
     const run = async () => {
       try {
@@ -52,7 +55,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
     return () => {
       cancelled = true
     }
-  }, [c.id])
+  }, [c.id, showViews])
 
   return (
     <article className="space-y-12 pb-16">
@@ -77,7 +80,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
             <img
               src={coverSrc}
               alt=""
-              className="aspect-21/9 w-full object-cover md:aspect-[2.6/1]"
+              className="aspect-21/9 w-full object-contain p-4 md:aspect-[2.6/1] md:p-6"
               loading="eager"
               decoding="async"
               onError={() => setCoverBroken(true)}
@@ -126,30 +129,38 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <Card className="border-border/80 bg-card/85 py-0 shadow-none">
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}
-                </p>
-              </div>
-              <Heart className="h-6 w-6 text-primary" />
-            </CardContent>
-          </Card>
-          <Card className="border-border/80 bg-card/85 py-0 shadow-none">
-            <CardContent className="flex items-center justify-between p-5">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
-                <p className="text-2xl font-bold text-foreground">
-                  {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(views)}
-                </p>
-              </div>
-              <Eye className="h-6 w-6 text-primary" />
-            </CardContent>
-          </Card>
-        </div>
+        {showWishlists || showViews ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            {showWishlists ? (
+              <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+                <CardContent className="flex items-center justify-between p-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {t.affiliate.cases.wishlistsLabel}
+                    </p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}
+                    </p>
+                  </div>
+                  <Heart className="h-6 w-6 text-primary" />
+                </CardContent>
+              </Card>
+            ) : null}
+            {showViews ? (
+              <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+                <CardContent className="flex items-center justify-between p-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
+                    <p className="text-2xl font-bold text-foreground">
+                      {new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(views)}
+                    </p>
+                  </div>
+                  <Eye className="h-6 w-6 text-primary" />
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </article>
   )

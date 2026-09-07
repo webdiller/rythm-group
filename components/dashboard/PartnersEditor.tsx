@@ -26,7 +26,7 @@ interface Partner {
   id: number
   category_id: number | null
   name: string
-  // base64 logo stored in DB; rendered through /api/content/partners/[id]/logo
+  // S3 object key (partners/{id}/logo-….webp); rendered via /api/content/partners/[id]/logo
   logo_url: string | null
   title_ru?: string | null
   title_en?: string | null
@@ -41,6 +41,8 @@ interface Partner {
   show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
+  show_wishlists?: boolean | null
+  show_views?: boolean | null
   order_index: number
 }
 
@@ -859,6 +861,8 @@ function PartnerForm({
     show_in_landing_cases: boolean
     show_in_affiliate_cases: boolean
     show_in_affiliate_steam: boolean
+    show_wishlists: boolean
+    show_views: boolean
     order_index: number
   }>({
     category_id: partner?.category_id ?? (categories[0]?.id ?? null),
@@ -876,6 +880,8 @@ function PartnerForm({
     show_in_landing_cases: partner?.show_in_landing_cases ?? true,
     show_in_affiliate_cases: partner?.show_in_affiliate_cases ?? true,
     show_in_affiliate_steam: partner?.show_in_affiliate_steam ?? true,
+    show_wishlists: partner?.show_wishlists ?? true,
+    show_views: partner?.show_views ?? true,
     order_index: partner?.order_index ?? 0,
   })
 
@@ -1050,6 +1056,36 @@ function PartnerForm({
           />
         </div>
       </div>
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label className="flex w-full items-center justify-between">
+            <div className="pr-4">
+              <p>Показывать вишлисты на сайте</p>
+              <p className="text-xs font-normal text-muted-foreground">
+                Значение выше сохраняется в любом случае.
+              </p>
+            </div>
+            <Switch
+              checked={formData.show_wishlists}
+              onCheckedChange={(checked) => setFormData({ ...formData, show_wishlists: checked })}
+            />
+          </Label>
+        </div>
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label className="flex w-full items-center justify-between">
+            <div className="pr-4">
+              <p>Показывать просмотры на сайте</p>
+              <p className="text-xs font-normal text-muted-foreground">
+                Значение выше сохраняется в любом случае.
+              </p>
+            </div>
+            <Switch
+              checked={formData.show_views}
+              onCheckedChange={(checked) => setFormData({ ...formData, show_views: checked })}
+            />
+          </Label>
+        </div>
+      </div>
       <div className="flex flex-col gap-4">
         <div className="space-y-2">
           <Label>Куда ведет клик по кейсу</Label>
@@ -1163,30 +1199,38 @@ function PartnerForm({
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Логотип партнёра</Label>
+        <Label>Логотип / обложка партнёра</Label>
         <p className="text-xs text-muted-foreground">
-          Загрузите логотип партнёра. Рекомендуемое разрешение: 320×120 px, формат PNG/WebP, прозрачный фон. Файл будет
-          автоматически сжат до WebP (не более 5 МБ).
+          Одна картинка используется на главной, в кейсах Wishlists и в Steam-блоке. Рекомендуется квадрат или
+          горизонталь от 800px, PNG/WebP с прозрачным фоном. Файл сжимается до WebP (до 5 МБ), без сильного
+          даунскейла. У уже созданной карточки можно заменить или удалить изображение без пересоздания кейса.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="h-16 w-32 flex items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+          <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
             {hasLogo && partner ? (
               <img
                 key={logoVersion}
                 src={`/api/content/partners/${partner.id}/logo?ts=${logoVersion}`}
                 alt={partner.name}
-                className="max-h-16 w-full object-contain"
+                className="max-h-full max-w-full object-contain p-2"
                 onError={() => setHasLogo(false)}
               />
+            ) : newLogoPreviewUrl ? (
+              <img
+                src={newLogoPreviewUrl}
+                alt={formData.name || "Новый партнёр"}
+                className="max-h-full max-w-full object-contain p-2"
+              />
             ) : (
-              <span className="text-xs text-muted-foreground text-center px-2">Логотип не задан</span>
+              <span className="px-2 text-center text-xs text-muted-foreground">Логотип не задан</span>
             )}
           </div>
           {partner && (
             <div className="flex flex-col gap-2">
+              <Label className="text-xs text-muted-foreground">Заменить изображение</Label>
               <Input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
@@ -1194,20 +1238,20 @@ function PartnerForm({
                     .split("; ")
                     .find((row) => row.startsWith("auth_token="))
                     ?.split("=")[1]
-                  const formData = new FormData()
-                  formData.append("file", file)
-                  formData.append("partnerId", String(partner.id))
+                  const formDataUpload = new FormData()
+                  formDataUpload.append("file", file)
+                  formDataUpload.append("partnerId", String(partner.id))
                   const res = await fetch("/api/content/partners/logo", {
                     method: "POST",
                     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                    body: formData,
+                    body: formDataUpload,
                   })
                   if (res.ok) {
                     setHasLogo(true)
                     setLogoVersion((v) => v + 1)
-                    toast.success("Логотип обновлён")
+                    toast.success("Изображение обновлено")
                   } else {
-                    toast.error("Не удалось загрузить логотип")
+                    toast.error("Не удалось загрузить изображение")
                   }
                   e.target.value = ""
                 }}
@@ -1223,23 +1267,23 @@ function PartnerForm({
                       .split("; ")
                       .find((row) => row.startsWith("auth_token="))
                       ?.split("=")[1]
-                    const formData = new FormData()
-                    formData.append("partnerId", String(partner.id))
+                    const formDataDelete = new FormData()
+                    formDataDelete.append("partnerId", String(partner.id))
                     const res = await fetch("/api/content/partners/logo", {
                       method: "DELETE",
                       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                      body: formData,
+                      body: formDataDelete,
                     })
                     if (res.ok) {
                       setHasLogo(false)
                       setLogoVersion((v) => v + 1)
-                      toast.success("Логотип удалён")
+                      toast.success("Изображение удалено")
                     } else {
-                      toast.error("Не удалось удалить логотип")
+                      toast.error("Не удалось удалить изображение")
                     }
                   }}
                 >
-                  Удалить логотип
+                  Удалить изображение
                 </Button>
               )}
             </div>
@@ -1247,20 +1291,21 @@ function PartnerForm({
         </div>
         {!partner && (
           <div className="mt-3 flex flex-col gap-2">
+            <Label className="text-xs text-muted-foreground">Загрузить изображение</Label>
             <Input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               onChange={(e) => {
                 const file = e.target.files?.[0] ?? null
                 setNewLogoFile(file)
               }}
             />
             {newLogoPreviewUrl && (
-              <div className="h-16 w-32 flex items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+              <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
                 <img
                   src={newLogoPreviewUrl}
                   alt={formData.name || "Новый партнёр"}
-                  className="max-h-16 w-full object-contain"
+                  className="max-h-full max-w-full object-contain p-2"
                 />
               </div>
             )}

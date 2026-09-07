@@ -44,4 +44,10 @@ export function runMigrations(sqlite: Database.Database): void {
   if (!partnerNames.has("steam_game_url")) {
     sqlite.exec("ALTER TABLE partners ADD COLUMN steam_game_url TEXT")
   }
+  if (!partnerNames.has("show_wishlists")) {
+    sqlite.exec("ALTER TABLE partners ADD COLUMN show_wishlists INTEGER NOT NULL DEFAULT 1")
+  }
+  if (!partnerNames.has("show_views")) {
+    sqlite.exec("ALTER TABLE partners ADD COLUMN show_views INTEGER NOT NULL DEFAULT 1")
+  }
 }

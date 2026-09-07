@@ -8,69 +8,36 @@ import { ContactForm } from "@/components/contact-form"
 import { Footer, type SiteSettings } from "@/components/footer"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { LandingBlogSection } from "@/components/landing-blog-section"
-import type { GetAllResponse as ChannelsGetAllResponse } from "@/lib/schemas/channels"
 import type { AboutCardListItem } from "@/lib/schemas/about-cards"
 import { getBlogCategoriesSorted, getBlogShowDatesEnabled, getPublishedPosts } from "@/lib/blog/queries"
 import type { BlogCategory, BlogPost } from "@/lib/blog/types"
-import { getSiteBaseUrl } from "@/lib/site-url"
+import { ServiceChannelCategories } from "@/lib/services/channel-categories"
+import { ServiceChannels } from "@/lib/services/channels"
+import { ServicePartnerCategories } from "@/lib/services/partner-categories"
+import { ServicePartners } from "@/lib/services/partners"
+import { ServiceAboutCards } from "@/lib/services/about-cards"
+import { getDb } from "@/lib/db"
+import { tableSiteSettings } from "@/lib/db/schema"
+import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
 
-async function getHomeData(): Promise<{
+function getHomeData(): {
   channelCategories: ChannelCategory[]
   channels: Channel[]
   partnerCategories: PartnerCategory[]
   partners: Partner[]
   siteSettings: SiteSettings | null
-  hasCustomGlobalBackgroundForBothThemes: boolean
   blogPosts: BlogPost[]
   blogCategories: BlogCategory[]
   blogShowDates: boolean
   headerNavOrder: HeaderNavItemId[]
   aboutCards: AboutCardListItem[]
-}> {
-  const baseUrl = getSiteBaseUrl()
+} {
+  const rawCategories = ServiceChannelCategories.getAll().data ?? []
+  const channelCategories = [...rawCategories]
+    .map((c) => ({ ...c, order_index: c.order_index ?? 0 }))
+    .sort((a, b) => a.order_index - b.order_index) as ChannelCategory[]
 
-  const [
-    catRes,
-    chanRes,
-    partnerCatRes,
-    partnerRes,
-    settingsRes,
-    globalLightBgRes,
-    globalDarkBgRes,
-    aboutCardsRes,
-  ] = await Promise.all([
-    fetch(`${baseUrl}/api/content/channel-categories`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/content/channels`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/content/partner-categories`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/content/partners`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/site/settings`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=light`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/content/about-cards`, {
-      cache: "no-store",
-    }),
-  ])
-
-  const categoriesJson = (await catRes.json()) as { data?: ChannelCategory[] }
-  const rawCategories = categoriesJson.data ?? []
-  const channelCategories = rawCategories.sort((a, b) => a.order_index - b.order_index)
-
-  const channelsJson = (await chanRes.json()) as ChannelsGetAllResponse
-  const channels: Channel[] = (channelsJson.data ?? []).map((c) => ({
+  const channels: Channel[] = (ServiceChannels.getAll().data ?? []).map((c) => ({
     id: c.id,
     category_id: c.category_id,
     name: c.name,
@@ -81,38 +48,27 @@ async function getHomeData(): Promise<{
     hasAvatar: !!c.avatar,
   }))
 
-  const partnerCategoriesJson = (await partnerCatRes.json()) as { data?: PartnerCategory[] }
-  const rawPartnerCategories = partnerCategoriesJson.data ?? []
-  const partnerCategories = rawPartnerCategories.sort((a, b) => a.order_index - b.order_index)
+  const rawPartnerCategories = ServicePartnerCategories.getAll().data ?? []
+  const partnerCategories = [...rawPartnerCategories]
+    .map((c) => ({ ...c, order_index: c.order_index ?? 0 }))
+    .sort((a, b) => a.order_index - b.order_index) as PartnerCategory[]
 
-  const partnersJson = (await partnerRes.json()) as { data?: Partner[] }
-  const partners = partnersJson.data ?? []
+  const partners = (ServicePartners.getAll().data ?? []) as Partner[]
 
-  let siteSettings: SiteSettings | null = null
+  const db = getDb()
+  const siteSettings = (db.select().from(tableSiteSettings).limit(1).all()[0] ??
+    null) as SiteSettings | null
+
   let headerNavOrder: HeaderNavItemId[] = normalizeHeaderNavOrder(undefined)
-  if (settingsRes.ok) {
-    const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
-    siteSettings = settingsJson.data ?? null
-    try {
-      headerNavOrder = normalizeHeaderNavOrder(
-        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
-      )
-    } catch {
-      headerNavOrder = normalizeHeaderNavOrder(undefined)
-    }
+  try {
+    headerNavOrder = normalizeHeaderNavOrder(
+      siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+    )
+  } catch {
+    headerNavOrder = normalizeHeaderNavOrder(undefined)
   }
 
-  const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
-
-  const blogPosts = getPublishedPosts().slice(0, 3)
-  const blogCategories = getBlogCategoriesSorted()
-  const blogShowDates = getBlogShowDatesEnabled()
-
-  let aboutCards: AboutCardListItem[] = []
-  if (aboutCardsRes.ok) {
-    const aboutCardsJson = (await aboutCardsRes.json()) as { data?: AboutCardListItem[] }
-    aboutCards = aboutCardsJson.data ?? []
-  }
+  const aboutCards = (ServiceAboutCards.getAll().data ?? []) as AboutCardListItem[]
 
   return {
     channelCategories,
@@ -120,29 +76,31 @@ async function getHomeData(): Promise<{
     partnerCategories,
     partners,
     siteSettings,
-    hasCustomGlobalBackgroundForBothThemes,
-    blogPosts,
-    blogCategories,
-    blogShowDates,
+    blogPosts: getPublishedPosts().slice(0, 3),
+    blogCategories: getBlogCategoriesSorted(),
+    blogShowDates: getBlogShowDatesEnabled(),
     headerNavOrder,
     aboutCards,
   }
 }
 
 export default async function Home() {
+  const data = getHomeData()
+  const bg = await hasGlobalBackgroundThemes()
+  const hasCustomGlobalBackgroundForBothThemes = bg.both
+
   const {
     channelCategories,
     channels,
     partnerCategories,
     partners,
     siteSettings,
-    hasCustomGlobalBackgroundForBothThemes,
     blogPosts,
     blogCategories,
     blogShowDates,
     headerNavOrder,
     aboutCards,
-  } = await getHomeData()
+  } = data
 
   const animationsEnabled = siteSettings?.heroAnimationEnabled ?? true
   const contactLayout =

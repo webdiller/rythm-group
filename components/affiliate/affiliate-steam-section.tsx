@@ -42,7 +42,7 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
                     <img
                       src={`/api/content/partners/${p.id}/logo`}
                       alt=""
-                      className={`h-full w-full object-cover ${hasLink ? "transition-transform duration-300 group-hover:scale-105" : ""}`}
+                      className={`h-full w-full object-contain p-2 ${hasLink ? "transition-transform duration-300 group-hover:scale-105" : ""}`}
                       loading="lazy"
                       decoding="async"
                     />

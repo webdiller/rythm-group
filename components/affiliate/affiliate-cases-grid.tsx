@@ -66,7 +66,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
               <img
                 src={imageSrc}
                 alt=""
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.02]"
                 loading="lazy"
                 decoding="async"
                 onError={() =>
@@ -92,9 +92,13 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
               {title}
             </h3>
             <div className="flex items-center justify-between gap-2 pt-1">
-              <span className="text-sm font-medium text-primary">
-                {t.affiliate.cases.wishlistsLabel}: {nf.format(ui.wishlists)}
-              </span>
+              {(partner.show_wishlists ?? true) ? (
+                <span className="text-sm font-medium text-primary">
+                  {t.affiliate.cases.wishlistsLabel}: {nf.format(ui.wishlists)}
+                </span>
+              ) : (
+                <span />
+              )}
               <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                 {t.affiliate.cases.openCase}
                 <ChevronRight className="h-4 w-4" />

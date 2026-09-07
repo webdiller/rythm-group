@@ -109,6 +109,10 @@ export const tablePartners = sqliteTable("partners", {
   show_in_landing_cases: integer("show_in_landing_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_cases: integer("show_in_affiliate_cases", { mode: "boolean" }).default(true),
   show_in_affiliate_steam: integer("show_in_affiliate_steam", { mode: "boolean" }).default(true),
+  /** Показывать число вишлистов на фронте (значение в админке сохраняется всегда) */
+  show_wishlists: integer("show_wishlists", { mode: "boolean" }).default(true),
+  /** Показывать просмотры на фронте (значение в админке сохраняется всегда) */
+  show_views: integer("show_views", { mode: "boolean" }).default(true),
   order_index: integer("order_index").default(0),
 })
 

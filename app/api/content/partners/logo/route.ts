@@ -4,6 +4,10 @@ import { requireAuth } from "@/lib/auth"
 import { getDb } from "@/lib/db"
 import { tablePartners } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import {
+  deletePartnerLogoIfStored,
+  uploadPartnerLogoWebp,
+} from "@/lib/s3/partner-logo"
 
 export const runtime = "nodejs"
 
@@ -38,22 +42,42 @@ export async function POST(request: NextRequest) {
     const inputBuffer = Buffer.from(arrayBuffer)
 
     const optimizedBuffer = await sharp(inputBuffer)
-      .resize(320, 120, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      .webp({ quality: 80 })
+      .resize(1280, 1280, {
+        fit: "inside",
+        withoutEnlargement: true,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .webp({ quality: 90 })
       .toBuffer()
 
-    const base64 = optimizedBuffer.toString("base64")
-
     const db = getDb()
+    const existing = db
+      .select({ logo_url: tablePartners.logo_url })
+      .from(tablePartners)
+      .where(eq(tablePartners.id, partnerId))
+      .get()
+
+    if (!existing) {
+      return NextResponse.json({ error: "Partner not found" }, { status: 404 })
+    }
+
+    const key = await uploadPartnerLogoWebp(partnerId, optimizedBuffer)
+
     const [updated] = db
       .update(tablePartners)
-      .set({ logo_url: base64 })
+      .set({ logo_url: key })
       .where(eq(tablePartners.id, partnerId))
       .returning()
       .all()
 
     if (!updated) {
+      await deletePartnerLogoIfStored(key)
       return NextResponse.json({ error: "Partner not found" }, { status: 404 })
+    }
+
+    // Старый объект удаляем после успешного обновления БД
+    if (existing.logo_url && existing.logo_url !== key) {
+      await deletePartnerLogoIfStored(existing.logo_url)
     }
 
     return NextResponse.json({ data: updated, meta: null })
@@ -83,6 +107,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = getDb()
+    const existing = db
+      .select({ logo_url: tablePartners.logo_url })
+      .from(tablePartners)
+      .where(eq(tablePartners.id, partnerId))
+      .get()
+
+    if (!existing) {
+      return NextResponse.json({ error: "Partner not found" }, { status: 404 })
+    }
+
     const [updated] = db
       .update(tablePartners)
       .set({ logo_url: null })
@@ -94,6 +128,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Partner not found" }, { status: 404 })
     }
 
+    await deletePartnerLogoIfStored(existing.logo_url)
+
     return NextResponse.json({ data: updated, meta: null })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -103,4 +139,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-

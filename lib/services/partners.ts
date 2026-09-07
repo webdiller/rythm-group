@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db"
 import { tablePartners } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { deletePartnerLogoIfStored } from "@/lib/s3/partner-logo"
 import type {
   GetAllResponse,
   GetOneParams,
@@ -61,17 +62,25 @@ export class ServicePartners {
     if (body.show_in_landing_cases !== undefined) set.show_in_landing_cases = body.show_in_landing_cases
     if (body.show_in_affiliate_cases !== undefined) set.show_in_affiliate_cases = body.show_in_affiliate_cases
     if (body.show_in_affiliate_steam !== undefined) set.show_in_affiliate_steam = body.show_in_affiliate_steam
+    if (body.show_wishlists !== undefined) set.show_wishlists = body.show_wishlists
+    if (body.show_views !== undefined) set.show_views = body.show_views
     if (body.order_index !== undefined) set.order_index = body.order_index
     const [updated] = db.update(tablePartners).set(set).where(eq(tablePartners.id, id)).returning().all()
     if (!updated) throw new Error("Partner not found")
     return { data: updated, meta: null }
   }
 
-  static deleteOne(params: DeleteOneParams): DeleteOneResponse {
+  static async deleteOne(params: DeleteOneParams): Promise<DeleteOneResponse> {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
+    const existing = db
+      .select({ logo_url: tablePartners.logo_url })
+      .from(tablePartners)
+      .where(eq(tablePartners.id, id))
+      .get()
     db.delete(tablePartners).where(eq(tablePartners.id, id)).run()
+    await deletePartnerLogoIfStored(existing?.logo_url)
     return { data: true, meta: null }
   }
 }

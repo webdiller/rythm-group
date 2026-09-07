@@ -23,6 +23,8 @@ export type LandingPartner = {
   steam_game_url?: string | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
+  show_wishlists?: boolean | null
+  show_views?: boolean | null
   order_index: number
 }
 
@@ -50,6 +52,8 @@ export type AffiliateCaseDetailUi = {
   views: number
   publishedAt: string
   steamGameUrl: string | null
+  showWishlists: boolean
+  showViews: boolean
 }
 
 export function buildAffiliateCaseSlug(partner: Pick<LandingPartner, "id" | "name">): string {
@@ -117,5 +121,7 @@ export function mapPartnerToAffiliateCaseDetail(
     views: partner.views ?? generatedViews(partner.id),
     publishedAt: partner.published_at ?? generatedPublishedAt(partner.id),
     steamGameUrl: partner.steam_game_url?.trim() || null,
+    showWishlists: partner.show_wishlists ?? true,
+    showViews: partner.show_views ?? true,
   }
 }

@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import clsx from "clsx"
 import { useLocale } from "@/lib/locale-context"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
-
-type PartnerDisplayMode = "name" | "logo" | "logoAndName"
+import {
+  LandingPartnerCard,
+  type LandingPartnerDisplayMode,
+} from "@/components/landing-partner-card"
 
 export interface PartnerCategory {
   id: number
@@ -33,6 +34,8 @@ export interface Partner {
   show_in_landing_cases?: boolean | null
   show_in_affiliate_cases?: boolean | null
   show_in_affiliate_steam?: boolean | null
+  show_wishlists?: boolean | null
+  show_views?: boolean | null
   order_index: number
 }
 
@@ -40,7 +43,7 @@ interface CasesProps {
   categories: PartnerCategory[]
   partners: Partner[]
   animationsEnabled?: boolean
-  displayMode?: PartnerDisplayMode
+  displayMode?: LandingPartnerDisplayMode
 }
 
 export function Cases({
@@ -101,9 +104,13 @@ export function Cases({
                   <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">
                     {locale === "ru" ? category.name_ru : category.name_en}
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                  <div className="grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {visiblePartners.map((partner) => (
-                      <PartnerCard key={partner.id} partner={partner} displayMode={displayMode} />
+                      <LandingPartnerCard
+                        key={partner.id}
+                        partner={partner}
+                        displayMode={displayMode}
+                      />
                     ))}
                   </div>
                   {categoryPartners.length > MAX_VISIBLE && (
@@ -135,12 +142,16 @@ export function Cases({
 
           {uncategorizedPartners.length > 0 && (
             <ScrollReveal disabled={!animationsEnabled}>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {(showAllUncategorized
                   ? uncategorizedPartners
                   : uncategorizedPartners.slice(0, MAX_VISIBLE)
                 ).map((partner) => (
-                  <PartnerCard key={partner.id} partner={partner} displayMode={displayMode} />
+                  <LandingPartnerCard
+                    key={partner.id}
+                    partner={partner}
+                    displayMode={displayMode}
+                  />
                 ))}
               </div>
               {uncategorizedPartners.length > MAX_VISIBLE && (
@@ -171,72 +182,5 @@ export function Cases({
         </div>
       </div>
     </section>
-  )
-}
-
-function PartnerCard({
-  partner,
-  displayMode,
-}: {
-  partner: Partner
-  displayMode: PartnerDisplayMode
-}) {
-  const hasLogo = Boolean(partner.logo_url)
-
-  const paddingClass =
-    displayMode === "logo"
-      ? hasLogo
-        ? "p-0"
-        : "p-6"
-      : displayMode === "name"
-        ? "p-6"
-        : "p-4"
-
-  return (
-    <div
-      className={clsx(
-        "flex flex-col items-center justify-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30 min-h-[120px]",
-        paddingClass,
-      )}
-    >
-      {displayMode === "name" && (
-        <span className="text-center text-sm font-medium text-foreground">{partner.name}</span>
-      )}
-
-      {displayMode === "logo" && (
-        <>
-          {hasLogo ? (
-            <div className="flex h-16 w-full items-center justify-center">
-              <img
-                src={`/api/content/partners/${partner.id}/logo`}
-                alt={partner.name}
-                title={partner.name}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          ) : (
-            <span className="text-center text-sm font-medium text-foreground">
-              {partner.name}
-            </span>
-          )}
-        </>
-      )}
-
-      {displayMode === "logoAndName" && (
-        <div className="flex flex-col items-center justify-center gap-2">
-          {hasLogo && (
-            <div className="flex h-16 w-full items-center justify-center">
-              <img
-                src={`/api/content/partners/${partner.id}/logo`}
-                alt={partner.name}
-                title={partner.name}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          )}
-          <span className="text-center text-xs font-medium text-foreground">{partner.name}</span>
-        </div>
-      )}
-    </div>
   )
 }

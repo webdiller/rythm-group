@@ -1,19 +1,14 @@
-import { getSiteBaseUrl } from "@/lib/site-url"
 import { createHash } from "node:crypto"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
+import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
 
 /** Флаги фона для единственного `SiteShell` в корневом layout (без повторного спиннера при смене маршрута). */
 export async function getRootShellBackgroundFlags(): Promise<{
   hasAnyCustomBackgrounds: boolean
 }> {
-  const baseUrl = getSiteBaseUrl()
-  const [globalLightBgRes, globalDarkBgRes] = await Promise.all([
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=light`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, { cache: "no-store" }),
-  ])
-  const hasAnyCustomBackgrounds = globalLightBgRes.ok || globalDarkBgRes.ok
-  return { hasAnyCustomBackgrounds }
+  const bg = await hasGlobalBackgroundThemes()
+  return { hasAnyCustomBackgrounds: bg.any }
 }
 
 /** Версия favicon для cache-busting в `<link rel="icon">`. */

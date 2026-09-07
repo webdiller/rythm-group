@@ -2,9 +2,11 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer, type SiteSettings } from "@/components/footer"
-import { getSiteBaseUrl } from "@/lib/site-url"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
+import { getDb } from "@/lib/db"
+import { tableSiteSettings } from "@/lib/db/schema"
+import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
 
 export const metadata: Metadata = {
   title: "Блог | Rythm Group",
@@ -17,32 +19,24 @@ async function getBlogShellMeta(): Promise<{
   hasCustomGlobalBackgroundForBothThemes: boolean
   headerNavOrder: HeaderNavItemId[]
 }> {
-  const baseUrl = getSiteBaseUrl()
-  const [settingsRes, globalLightBgRes, globalDarkBgRes] = await Promise.all([
-    fetch(`${baseUrl}/api/site/settings`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=light`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/backgrounds/global?theme=dark`, { cache: "no-store" }),
-  ])
+  const db = getDb()
+  const siteSettings = (db.select().from(tableSiteSettings).limit(1).all()[0] ??
+    null) as SiteSettings | null
 
-  let siteSettings: SiteSettings | null = null
   let headerNavOrder: HeaderNavItemId[] = normalizeHeaderNavOrder(undefined)
-  if (settingsRes.ok) {
-    const settingsJson = (await settingsRes.json()) as { data?: SiteSettings | null }
-    siteSettings = settingsJson.data ?? null
-    try {
-      headerNavOrder = normalizeHeaderNavOrder(
-        siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
-      )
-    } catch {
-      headerNavOrder = normalizeHeaderNavOrder(undefined)
-    }
+  try {
+    headerNavOrder = normalizeHeaderNavOrder(
+      siteSettings?.headerNavOrder ? JSON.parse(siteSettings.headerNavOrder) : undefined,
+    )
+  } catch {
+    headerNavOrder = normalizeHeaderNavOrder(undefined)
   }
 
-  const hasCustomGlobalBackgroundForBothThemes = globalLightBgRes.ok && globalDarkBgRes.ok
+  const bg = await hasGlobalBackgroundThemes()
 
   return {
     siteSettings,
-    hasCustomGlobalBackgroundForBothThemes,
+    hasCustomGlobalBackgroundForBothThemes: bg.both,
     headerNavOrder,
   }
 }

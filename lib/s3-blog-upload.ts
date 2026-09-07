@@ -1,4 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+import { getS3Bucket, getS3Client } from "@/lib/s3/client"
+import { getPublicObjectUrl } from "@/lib/s3/public-url"
+import { getYaStorageEnv } from "@/lib/s3/env"
 
 const MAX_BYTES = 10 * 1024 * 1024
 
@@ -19,23 +22,17 @@ export type S3Ready =
     }
   | { ok: false }
 
+/** @deprecated Используйте getS3Client / getYaStorageEnv. Оставлено для совместимости. */
 export function getBlogUploadS3Config(): S3Ready {
-  const endpoint = process.env.S3_ENDPOINT
-  const region = process.env.S3_REGION ?? "ru-central1"
-  const bucket = process.env.S3_BUCKET
-  const accessKeyId = process.env.S3_ACCESS_KEY_ID
-  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY
-  const publicUrlPrefix = (process.env.S3_PUBLIC_URL_PREFIX ?? "").replace(/\/$/, "")
-  if (!endpoint || !bucket || !accessKeyId || !secretAccessKey || !publicUrlPrefix) {
+  try {
+    const env = getYaStorageEnv()
+    const client = getS3Client()
+    const bucket = getS3Bucket()
+    const publicUrlPrefix = `${env.YA_ENDPOINT.replace(/\/$/, "")}/${bucket}`
+    return { ok: true, client, bucket, publicUrlPrefix }
+  } catch {
     return { ok: false }
   }
-  const client = new S3Client({
-    endpoint,
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-  })
-  return { ok: true, client, bucket, publicUrlPrefix }
 }
 
 export function assertUploadSizeAndMime(size: number, mime: string) {
@@ -50,12 +47,8 @@ export function assertUploadSizeAndMime(size: number, mime: string) {
 export async function putBlogImageToS3(
   buf: Buffer,
   mime: string,
-  originalName: string
+  originalName: string,
 ): Promise<string> {
-  const cfg = getBlogUploadS3Config()
-  if (!cfg.ok) {
-    throw new Error("S3_NOT_CONFIGURED")
-  }
   const ext =
     mime === "image/jpeg"
       ? ".jpg"
@@ -66,13 +59,17 @@ export async function putBlogImageToS3(
           : ".gif"
   const safeBase = originalName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80) || "upload"
   const key = `blog/${Date.now()}-${safeBase}${ext}`
-  await cfg.client.send(
+  const client = getS3Client()
+  const bucket = getS3Bucket()
+  await client.send(
     new PutObjectCommand({
-      Bucket: cfg.bucket,
+      Bucket: bucket,
       Key: key,
       Body: buf,
       ContentType: mime,
-    })
+      ACL: "public-read",
+      CacheControl: "public, max-age=31536000, immutable",
+    }),
   )
-  return `${cfg.publicUrlPrefix}/${key}`
+  return getPublicObjectUrl(key)
 }

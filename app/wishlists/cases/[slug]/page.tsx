@@ -8,8 +8,9 @@ import {
   parseAffiliateCaseIdFromSlug,
 } from "@/lib/affiliate/cases-ui"
 import type { Metadata } from "next"
-import { getSiteBaseUrl } from "@/lib/site-url"
 import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
+import { ServicePartnerCategories } from "@/lib/services/partner-categories"
+import { ServicePartners } from "@/lib/services/partners"
 
 type PageProps = { params: Promise<{ slug: string }> }
 
@@ -17,25 +18,16 @@ export function generateStaticParams() {
   return []
 }
 
-async function getAffiliateCaseData() {
-  const baseUrl = getSiteBaseUrl()
-  const [partnerCatRes, partnerRes] = await Promise.all([
-    fetch(`${baseUrl}/api/content/partner-categories`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/content/partners`, { cache: "no-store" }),
-  ])
-
-  const partnerCategoriesJson = (await partnerCatRes.json()) as { data?: PartnerCategory[] }
-  const partnersJson = (await partnerRes.json()) as { data?: Partner[] }
-
+function getAffiliateCaseData() {
   return {
-    categories: partnerCategoriesJson.data ?? [],
-    partners: partnersJson.data ?? [],
+    categories: (ServicePartnerCategories.getAll().data ?? []) as PartnerCategory[],
+    partners: (ServicePartners.getAll().data ?? []) as Partner[],
   }
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const { categories, partners } = await getAffiliateCaseData()
+  const { categories, partners } = getAffiliateCaseData()
   const caseId = parseAffiliateCaseIdFromSlug(slug)
   const partner = partners.find((x) => x.id === caseId)
   if (!partner) return { title: "Кейс | Rythm Group" }
@@ -52,7 +44,7 @@ export default async function AffiliateCasePage({ params }: PageProps) {
   if (!pageAffiliateEnabled) notFound()
 
   const { slug } = await params
-  const { categories, partners } = await getAffiliateCaseData()
+  const { categories, partners } = getAffiliateCaseData()
   const caseId = parseAffiliateCaseIdFromSlug(slug)
   const partner = partners.find((x) => x.id === caseId)
   const caseItem = partner ? mapPartnerToAffiliateCaseDetail(partner, categories) : null

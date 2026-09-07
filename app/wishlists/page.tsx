@@ -5,9 +5,15 @@ import { AffiliateSteamSection } from "@/components/affiliate/affiliate-steam-se
 import { AffiliateFaq } from "@/components/affiliate/affiliate-faq"
 import { ContactForm } from "@/components/contact-form"
 import type { Partner, PartnerCategory } from "@/components/cases"
-import { getSiteBaseUrl } from "@/lib/site-url"
 import { notFound } from "next/navigation"
 import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
+import { ServicePartnerCategories } from "@/lib/services/partner-categories"
+import { ServicePartners } from "@/lib/services/partners"
+import { ServiceAffiliateHero } from "@/lib/services/affiliate-hero"
+import { ServiceAffiliateFormats } from "@/lib/services/affiliate-formats"
+import { ServiceAffiliateFaq } from "@/lib/services/affiliate-faq"
+import { getDb } from "@/lib/db"
+import { tableSiteSettings } from "@/lib/db/schema"
 
 type AffiliateSettings = {
   affiliate_show_hero?: boolean | null
@@ -54,38 +60,36 @@ type AffiliateFaqRecord = {
   order_index: number | null
 }
 
-async function getAffiliateData(): Promise<{
+function getAffiliateData(): {
   partnerCategories: PartnerCategory[]
   partners: Partner[]
   settings: AffiliateSettings
   hero: AffiliateHeroRecord | null
   formats: AffiliateFormatRecord[]
   faq: AffiliateFaqRecord[]
-}> {
-  const baseUrl = getSiteBaseUrl()
-  const [partnerCatRes, partnerRes, settingsRes, heroRes, formatsRes, faqRes] = await Promise.all([
-    fetch(`${baseUrl}/api/content/partner-categories`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/content/partners`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/site/settings`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/content/affiliate-hero`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/content/affiliate-formats`, { cache: "no-store" }),
-    fetch(`${baseUrl}/api/content/affiliate-faq`, { cache: "no-store" }),
-  ])
-
-  const partnerCategoriesJson = (await partnerCatRes.json()) as { data?: PartnerCategory[] }
-  const partnersJson = (await partnerRes.json()) as { data?: Partner[] }
-  const settingsJson = (await settingsRes.json()) as { data?: AffiliateSettings | null }
-  const heroJson = (await heroRes.json()) as { data?: AffiliateHeroRecord | null }
-  const formatsJson = (await formatsRes.json()) as { data?: AffiliateFormatRecord[] }
-  const faqJson = (await faqRes.json()) as { data?: AffiliateFaqRecord[] }
+} {
+  const partnerCategories = [...(ServicePartnerCategories.getAll().data ?? [])]
+    .map((c) => ({ ...c, order_index: c.order_index ?? 0 }))
+    .sort((a, b) => a.order_index - b.order_index) as PartnerCategory[]
+  const partners = (ServicePartners.getAll().data ?? []) as Partner[]
+  const db = getDb()
+  const settings = (db.select().from(tableSiteSettings).limit(1).all()[0] ??
+    {}) as AffiliateSettings
+  const hero = (ServiceAffiliateHero.getOne().data ?? null) as AffiliateHeroRecord | null
+  const formats = [...(ServiceAffiliateFormats.getAll().data ?? [])].sort(
+    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0),
+  ) as AffiliateFormatRecord[]
+  const faq = [...(ServiceAffiliateFaq.getAll().data ?? [])].sort(
+    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0),
+  ) as AffiliateFaqRecord[]
 
   return {
-    partnerCategories: (partnerCategoriesJson.data ?? []).sort((a, b) => a.order_index - b.order_index),
-    partners: partnersJson.data ?? [],
-    settings: settingsJson.data ?? {},
-    hero: heroJson.data ?? null,
-    formats: (formatsJson.data ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
-    faq: (faqJson.data ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)),
+    partnerCategories,
+    partners,
+    settings,
+    hero,
+    formats,
+    faq,
   }
 }
 
@@ -93,7 +97,7 @@ export default async function AffiliatePage() {
   const { pageAffiliateEnabled } = getPageVisibilityFlags()
   if (!pageAffiliateEnabled) notFound()
 
-  const { partnerCategories, partners, settings, hero, formats, faq } = await getAffiliateData()
+  const { partnerCategories, partners, settings, hero, formats, faq } = getAffiliateData()
   const animationsEnabled = settings.heroAnimationEnabled ?? true
   const contactLayout = settings.affiliate_contact_layout ?? "formFirst"
   const contactFormHidden = settings.affiliate_contact_form_hidden ?? false

@@ -28,6 +28,8 @@ export const CreateOneBody = allZodSchemas.tablePartners.insert.pick({
   show_in_landing_cases: true,
   show_in_affiliate_cases: true,
   show_in_affiliate_steam: true,
+  show_wishlists: true,
+  show_views: true,
   order_index: true,
 })
 
@@ -55,6 +57,8 @@ export const UpdateOneBody = z.object({
   show_in_landing_cases: z.boolean().optional(),
   show_in_affiliate_cases: z.boolean().optional(),
   show_in_affiliate_steam: z.boolean().optional(),
+  show_wishlists: z.boolean().optional(),
+  show_views: z.boolean().optional(),
   order_index: z.number().optional(),
 })
 
