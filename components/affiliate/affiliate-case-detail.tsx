@@ -80,6 +80,8 @@ function CaseGallery({
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
   const lightboxRef = useRef<PhotoSwipeLightbox | null>(null)
+  const thumbsRef = useRef<HTMLDivElement | null>(null)
+  const thumbButtonRefs = useRef<Array<HTMLButtonElement | null>>([])
   const openLabel = locale === "en" ? "Open image" : "Открыть изображение"
 
   const onSelect = useCallback((carouselApi: CarouselApi) => {
@@ -102,6 +104,15 @@ function CaseGallery({
     setSelectedIndex(0)
     api?.scrollTo(0, true)
   }, [gallery, api])
+
+  useEffect(() => {
+    const container = thumbsRef.current
+    const activeThumb = thumbButtonRefs.current[selectedIndex]
+    if (!container || !activeThumb) return
+    const targetLeft =
+      activeThumb.offsetLeft - (container.clientWidth - activeThumb.offsetWidth) / 2
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" })
+  }, [selectedIndex])
 
   useEffect(() => {
     if (gallery.length === 0) return
@@ -152,9 +163,9 @@ function CaseGallery({
         opts={{ align: "start", loop: false }}
         className="w-full"
       >
-        <CarouselContent className="-ml-3 sm:-ml-4">
+        <CarouselContent className="-ml-0">
           {gallery.map((image, index) => (
-            <CarouselItem key={image.id} className="basis-[88%] pl-3 sm:basis-[90%] sm:pl-4">
+            <CarouselItem key={image.id} className="pl-0">
               <GallerySlide
                 image={image}
                 priority={index === 0}
@@ -174,12 +185,18 @@ function CaseGallery({
         />
       </Carousel>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div
+        ref={thumbsRef}
+        className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {gallery.map((image, index) => {
           const isActive = index === selectedIndex
           return (
             <button
               key={image.id}
+              ref={(node) => {
+                thumbButtonRefs.current[index] = node
+              }}
               type="button"
               onClick={() => api?.scrollTo(index)}
               className={cn(
