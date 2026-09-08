@@ -36,6 +36,9 @@ export function runMigrations(sqlite: Database.Database): void {
       "ALTER TABLE site_settings ADD COLUMN channels_card_align TEXT NOT NULL DEFAULT 'left'"
     )
   }
+  if (!names.has("backgrounds")) {
+    sqlite.exec("ALTER TABLE site_settings ADD COLUMN backgrounds TEXT")
+  }
 
   const partnerColumns = sqlite
     .prepare("PRAGMA table_info(partners)")

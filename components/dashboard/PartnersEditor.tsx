@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
 import { buildAffiliateCaseSlug } from "@/lib/affiliate/cases-ui"
 import { wishlistsCasePath } from "@/lib/wishlists-path"
+import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
 interface PartnerCategory {
   id: number
@@ -26,7 +27,7 @@ interface Partner {
   id: number
   category_id: number | null
   name: string
-  // S3 object key (partners/{id}/logo-….webp); rendered via /api/content/partners/[id]/logo
+  // S3 object key (partners/{id}/logo-….webp); URL через getPartnerLogoSrc
   logo_url: string | null
   title_ru?: string | null
   title_en?: string | null
@@ -44,6 +45,12 @@ interface Partner {
   show_wishlists?: boolean | null
   show_views?: boolean | null
   order_index: number
+}
+
+function PartnerLogoThumb({ partner }: { partner: Partner }) {
+  const src = getPartnerLogoSrc(partner)
+  if (!src) return null
+  return <img src={src} alt={partner.name} className="h-8 w-8 object-contain" />
 }
 
 type BlogPostOption = {
@@ -600,13 +607,7 @@ export function PartnersEditor() {
                       onDrop={() => onPartnerDropAt(category.id, index)}
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        {partner.logo_url ? (
-                          <img
-                            src={`/api/content/partners/${partner.id}/logo`}
-                            alt={partner.name}
-                            className="h-8 w-8 object-contain"
-                          />
-                        ) : null}
+                        <PartnerLogoThumb partner={partner} />
                         <span className="truncate font-medium">{partner.name}</span>
                         <span className="text-sm text-muted-foreground">
                           (порядок: {partner.order_index})
@@ -694,13 +695,7 @@ export function PartnersEditor() {
                   onDrop={() => onPartnerDropAt(null, index)}
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    {partner.logo_url ? (
-                      <img
-                        src={`/api/content/partners/${partner.id}/logo`}
-                        alt={partner.name}
-                        className="h-8 w-8 object-contain"
-                      />
-                    ) : null}
+                    <PartnerLogoThumb partner={partner} />
                     <span className="truncate font-medium">{partner.name}</span>
                   </div>
                   <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -886,6 +881,7 @@ function PartnerForm({
   })
 
   const [hasLogo, setHasLogo] = useState(Boolean(partner?.logo_url))
+  const [logoKey, setLogoKey] = useState<string | null>(partner?.logo_url ?? null)
   const [logoVersion, setLogoVersion] = useState(0)
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
   const [newLogoPreviewUrl, setNewLogoPreviewUrl] = useState<string | null>(null)
@@ -1210,7 +1206,12 @@ function PartnerForm({
             {hasLogo && partner ? (
               <img
                 key={logoVersion}
-                src={`/api/content/partners/${partner.id}/logo?ts=${logoVersion}`}
+                src={
+                  getPartnerLogoSrc(
+                    { id: partner.id, logo_url: logoKey },
+                    { cacheBust: logoVersion },
+                  ) ?? undefined
+                }
                 alt={partner.name}
                 className="max-h-full max-w-full object-contain p-2"
                 onError={() => setHasLogo(false)}
@@ -1247,7 +1248,9 @@ function PartnerForm({
                     body: formDataUpload,
                   })
                   if (res.ok) {
-                    setHasLogo(true)
+                    const json = (await res.json()) as { data?: { logo_url?: string | null } }
+                    setLogoKey(json.data?.logo_url ?? null)
+                    setHasLogo(Boolean(json.data?.logo_url))
                     setLogoVersion((v) => v + 1)
                     toast.success("Изображение обновлено")
                   } else {
@@ -1275,6 +1278,7 @@ function PartnerForm({
                       body: formDataDelete,
                     })
                     if (res.ok) {
+                      setLogoKey(null)
                       setHasLogo(false)
                       setLogoVersion((v) => v + 1)
                       toast.success("Изображение удалено")

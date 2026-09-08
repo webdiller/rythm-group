@@ -9,7 +9,13 @@
     "lint": "eslint .",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx lib/db/seed-run.ts",
-    "db:migrate-logos-s3": "tsx --env-file=.env scripts/migrate-partner-logos-to-s3.ts"
+    "db:migrate-logos-s3": "tsx --env-file=.env.local scripts/migrate-partner-logos-to-s3.ts",
+    "db:migrate-channel-avatars-s3": "tsx --env-file=.env.local scripts/migrate-channel-avatars-to-s3.ts",
+    "db:migrate-about-icons-s3": "tsx --env-file=.env.local scripts/migrate-about-icons-to-s3.ts",
+    "db:migrate-site-branding-s3": "tsx --env-file=.env.local scripts/migrate-site-branding-to-s3.ts",
+    "db:migrate-backgrounds-s3": "tsx --env-file=.env.local scripts/migrate-backgrounds-to-s3.ts",
+    "db:migrate-blog-uploads-s3": "tsx --env-file=.env.local scripts/migrate-blog-uploads-to-s3.ts",
+    "db:rewrite-blog-html-s3-urls": "tsx --env-file=.env.local scripts/rewrite-blog-html-upload-urls.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1014.0",

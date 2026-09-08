@@ -5,6 +5,7 @@ import { tableBlogCategories, tableBlogPosts, tableSiteSettings } from "@/lib/db
 import { and, asc, desc, eq, isNull } from "drizzle-orm"
 import type { BlogCategory, BlogPost } from "./types"
 import { sanitizeBlogHtml } from "./html-sanitize"
+import { resolveBlogCoverDisplayUrl } from "@/lib/s3/blog-assets"
 
 function unixToIso(sec: number): string {
   return new Date(sec * 1000).toISOString()
@@ -32,7 +33,7 @@ function mapPost(
     title_en: row.title_en,
     excerpt_ru: row.excerpt_ru,
     excerpt_en: row.excerpt_en,
-    cover_image_url: row.cover_image_url,
+    cover_image_url: resolveBlogCoverDisplayUrl(row.cover_image_url),
     body_html_ru: sanitizeBlogHtml(row.body_html_ru),
     body_html_en: sanitizeBlogHtml(row.body_html_en),
     published_at: unixToIso(row.published_at),

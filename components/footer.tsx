@@ -6,8 +6,10 @@ import { createAnchorClickHandler } from "@/lib/anchor-nav"
 import { normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { resolveNavHref } from "@/lib/nav-hrefs"
 import { WISHLISTS_BASE_PATH } from "@/lib/wishlists-path"
+import { getSiteLogoSrc } from "@/lib/s3/site-asset-url"
 
 export type SiteSettings = {
+  logo?: string | null
   logo_text?: string | null
   privacyPolicyUrl?: string | null
   dataProcessingPolicyUrl?: string | null
@@ -84,7 +86,13 @@ export function Footer({ siteSettings, sectionHrefPrefix = "", pageBlogEnabled, 
               >
                 <div className="flex items-center gap-2 text-lg font-bold tracking-tight text-foreground">
                   <div className="overflow-hidden rounded-full">
-                    <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
+                    <img
+                      src={getSiteLogoSrc(siteSettings?.logo)}
+                      width={32}
+                      height={32}
+                      alt="Rythm Group"
+                      className="h-8 w-8 object-cover"
+                    />
                   </div>
                   {logoText ? <span>{logoText}</span> : null}
                 </div>

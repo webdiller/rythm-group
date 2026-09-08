@@ -4,10 +4,11 @@ import { KEBAB_SLUG_REGEX } from "@/lib/blog/slug"
 
 const kebabSlug = z.string().regex(KEBAB_SLUG_REGEX, "slug: латиница, kebab-case")
 
-/** Абсолютный URL (http/https) или путь с сайта (например `/uploads/blog/...` после локальной загрузки). */
+/** Абсолютный URL (http/https), путь `/uploads/...`, или S3 key `blog/images/...`. */
 const coverImageUrl = z.union([
   z.string().url(),
   z.string().regex(/^\/[^?\s]+$/, "Invalid url"),
+  z.string().regex(/^blog\/images\/[\w.-]+$/, "Invalid blog cover key"),
   z.literal(""),
   z.null(),
 ])

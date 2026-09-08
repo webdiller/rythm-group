@@ -1,6 +1,7 @@
 "use client"
 
 import clsx from "clsx"
+import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
 export type LandingPartnerDisplayMode = "name" | "logo" | "logoAndName"
 
@@ -23,7 +24,8 @@ export function LandingPartnerCard({
   partner,
   displayMode = "logoAndName",
 }: LandingPartnerCardProps) {
-  const hasLogo = Boolean(partner.logo_url)
+  const logoSrc = getPartnerLogoSrc(partner)
+  const hasLogo = Boolean(logoSrc)
   const showLogo = displayMode !== "name" && hasLogo
   const showName = displayMode !== "logo" || !hasLogo
   const href = partner.target_url?.trim() || null
@@ -32,10 +34,10 @@ export function LandingPartnerCard({
 
   const inner = (
     <>
-      {showLogo ? (
+      {showLogo && logoSrc ? (
         <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40 p-3">
           <img
-            src={`/api/content/partners/${partner.id}/logo`}
+            src={logoSrc}
             alt=""
             aria-hidden
             className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover blur-md"
@@ -43,7 +45,7 @@ export function LandingPartnerCard({
             decoding="async"
           />
           <img
-            src={`/api/content/partners/${partner.id}/logo`}
+            src={logoSrc}
             alt={partner.name}
             title={partner.name}
             className="relative z-10 h-full w-full rounded-lg object-contain"

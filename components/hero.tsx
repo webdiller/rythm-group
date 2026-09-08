@@ -20,9 +20,15 @@ const LIGHT_RAYS_LIGHT = {
 
 type HeroProps = {
   animationEnabled?: boolean
+  backgroundLightSrc?: string
+  backgroundDarkSrc?: string
 }
 
-export function Hero({ animationEnabled = true }: HeroProps) {
+export function Hero({
+  animationEnabled = true,
+  backgroundLightSrc = "/backgrounds/hero-light.webp",
+  backgroundDarkSrc = "/backgrounds/hero-dark.webp",
+}: HeroProps) {
   const { t } = useLocale()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -35,8 +41,7 @@ export function Hero({ animationEnabled = true }: HeroProps) {
 
   useEffect(() => {
     if (!mounted) return
-    const theme = resolvedTheme === "light" ? "light" : "dark"
-    const src = `/api/site/backgrounds/hero?theme=${theme}`
+    const src = resolvedTheme === "light" ? backgroundLightSrc : backgroundDarkSrc
     setHeroImageLoaded(false)
     setHeroContentVisible(false)
 
@@ -47,14 +52,14 @@ export function Hero({ animationEnabled = true }: HeroProps) {
       // Если фон недоступен, не держим тёмную подложку бесконечно.
       setHeroImageLoaded(true)
     }
-  }, [mounted, resolvedTheme])
+  }, [mounted, resolvedTheme, backgroundLightSrc, backgroundDarkSrc])
 
   useEffect(() => {
     if (!mounted) return
     // Прогреваем dark-версию заранее, чтобы при переключении темы не ждать загрузки.
     const darkImg = new Image()
-    darkImg.src = "/api/site/backgrounds/hero?theme=dark"
-  }, [mounted])
+    darkImg.src = backgroundDarkSrc
+  }, [mounted, backgroundDarkSrc])
 
   useEffect(() => {
     if (!heroImageLoaded) return
@@ -75,11 +80,11 @@ export function Hero({ animationEnabled = true }: HeroProps) {
         <div className="absolute inset-0 z-0" aria-hidden="true">
           <div
             className="absolute inset-0 bg-cover bg-center dark:hidden"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=light')" }}
+            style={{ backgroundImage: `url('${backgroundLightSrc}')` }}
           />
           <div
             className="absolute inset-0 hidden bg-cover bg-center dark:block"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?theme=dark')" }}
+            style={{ backgroundImage: `url('${backgroundDarkSrc}')` }}
           />
           <div
             className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}

@@ -7,6 +7,7 @@ import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
+import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
 
 export const dynamic = "force-dynamic"
 
@@ -19,6 +20,8 @@ async function getAffiliateShellMeta(): Promise<{
   siteSettings: SiteSettings | null
   hasCustomGlobalBackgroundForBothThemes: boolean
   headerNavOrder: HeaderNavItemId[]
+  globalBgLight: string
+  globalBgDark: string
 }> {
   const db = getDb()
   const siteSettings = (db.select().from(tableSiteSettings).limit(1).all()[0] ??
@@ -39,6 +42,8 @@ async function getAffiliateShellMeta(): Promise<{
     siteSettings,
     hasCustomGlobalBackgroundForBothThemes: bg.both,
     headerNavOrder,
+    globalBgLight: resolveBackgroundSrc("global", "light", "affiliate"),
+    globalBgDark: resolveBackgroundSrc("global", "dark", "affiliate"),
   }
 }
 
@@ -46,19 +51,24 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
   const { pageAffiliateEnabled, pageBlogEnabled } = getPageVisibilityFlags()
   if (!pageAffiliateEnabled) notFound()
 
-  const { siteSettings, hasCustomGlobalBackgroundForBothThemes, headerNavOrder } =
-    await getAffiliateShellMeta()
+  const {
+    siteSettings,
+    hasCustomGlobalBackgroundForBothThemes,
+    headerNavOrder,
+    globalBgLight,
+    globalBgDark,
+  } = await getAffiliateShellMeta()
 
   return (
     <div className="relative min-h-screen w-full">
       <div className="absolute inset-0 z-0" aria-hidden="true">
         <div
           className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
-          style={{ backgroundImage: "url('/api/site/backgrounds/global?scope=affiliate&theme=light')" }}
+          style={{ backgroundImage: `url('${globalBgLight}')` }}
         />
         <div
           className="absolute inset-0 hidden bg-cover bg-center bg-fixed dark:block"
-          style={{ backgroundImage: "url('/api/site/backgrounds/global?scope=affiliate&theme=dark')" }}
+          style={{ backgroundImage: `url('${globalBgDark}')` }}
         />
       </div>
       {!hasCustomGlobalBackgroundForBothThemes && (
@@ -79,6 +89,7 @@ export default async function AffiliateLayout({ children }: Readonly<{ children:
           sectionHrefPrefix="/"
           navOrder={headerNavOrder}
           logoText={siteSettings?.logo_text ?? null}
+          logo={siteSettings?.logo ?? null}
           pageBlogEnabled={pageBlogEnabled}
           pageAffiliateEnabled={pageAffiliateEnabled}
         />

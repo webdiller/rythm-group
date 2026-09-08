@@ -4,6 +4,8 @@ import { tableSiteSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { requireAuth } from "@/lib/auth"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder } from "@/lib/header-nav"
+import { sanitizeSiteSettingsBranding } from "@/lib/server/sanitize-site-branding"
+import { getBackgroundPresenceMap } from "@/lib/server/site-backgrounds"
 
 export const runtime = "nodejs"
 
@@ -41,10 +43,11 @@ type SiteSettingsPayload = {
 export async function GET() {
   const db = getDb()
   const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
+  const background_presence = await getBackgroundPresenceMap()
 
   return NextResponse.json({
-    data: existing ?? null,
-    meta: null,
+    data: existing ? sanitizeSiteSettingsBranding(existing) : null,
+    meta: { background_presence },
   })
 }
 
@@ -175,7 +178,10 @@ export async function PUT(request: NextRequest) {
         .returning()
         .all()
 
-      return NextResponse.json({ data: updated, meta: null })
+      return NextResponse.json({
+        data: updated ? sanitizeSiteSettingsBranding(updated) : null,
+        meta: null,
+      })
     }
 
     const [created] = db
@@ -211,7 +217,10 @@ export async function PUT(request: NextRequest) {
       .returning()
       .all()
 
-    return NextResponse.json({ data: created, meta: null }, { status: 201 })
+    return NextResponse.json(
+      { data: created ? sanitizeSiteSettingsBranding(created) : null, meta: null },
+      { status: 201 },
+    )
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

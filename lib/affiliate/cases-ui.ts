@@ -1,3 +1,5 @@
+import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
+
 export type LandingPartnerCategory = {
   id: number
   name: string
@@ -88,12 +90,11 @@ function generatedViews(id: number): number {
 }
 
 export function mapPartnerToAffiliateCaseCard(partner: LandingPartner): AffiliateCaseCardUi {
-  const hasLogo = Boolean(partner.logo_url && partner.logo_url.trim())
   return {
     id: partner.id,
     slug: buildAffiliateCaseSlug(partner),
     title: partner.title_ru ?? partner.name,
-    coverImage: hasLogo ? `/api/content/partners/${partner.id}/logo` : "",
+    coverImage: getPartnerLogoSrc(partner) ?? "",
     publishedAt: partner.published_at ?? generatedPublishedAt(partner.id),
     wishlists: partner.wishlists ?? generatedWishlists(partner.id),
   }
@@ -104,7 +105,6 @@ export function mapPartnerToAffiliateCaseDetail(
   categories: LandingPartnerCategory[],
 ): AffiliateCaseDetailUi {
   const category = categories.find((item) => item.id === partner.category_id) ?? null
-  const hasLogo = Boolean(partner.logo_url && partner.logo_url.trim())
 
   return {
     id: partner.id,
@@ -112,7 +112,7 @@ export function mapPartnerToAffiliateCaseDetail(
     title: partner.title_ru ?? partner.name,
     title_ru: partner.title_ru ?? partner.name,
     title_en: partner.title_en ?? partner.name,
-    coverImage: hasLogo ? `/api/content/partners/${partner.id}/logo` : "",
+    coverImage: getPartnerLogoSrc(partner) ?? "",
     category_ru: category?.name_ru ?? "Без категории",
     category_en: category?.name_en ?? "Uncategorized",
     shortDescription_ru: partner.short_description_ru ?? "",

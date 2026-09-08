@@ -1,6 +1,8 @@
 import { getDb } from "@/lib/db"
 import { tableAboutCards } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { deleteAboutIconIfStored } from "@/lib/s3/about-icon"
+import { isAboutIconS3Key } from "@/lib/s3/about-icon-url"
 import type {
   AboutCardListItem,
   CreateOneBody,
@@ -11,10 +13,11 @@ import type {
 type AboutCardDbRow = typeof tableAboutCards.$inferSelect
 
 function toListItem(row: AboutCardDbRow): AboutCardListItem {
-  const { icon_image: _, ...rest } = row
+  const { icon_image, ...rest } = row
   return {
     ...rest,
-    has_custom_icon: icon_imagePresent(row.icon_image),
+    has_custom_icon: icon_imagePresent(icon_image),
+    icon_image: isAboutIconS3Key(icon_image) ? icon_image!.trim() : null,
   }
 }
 
@@ -49,24 +52,40 @@ export class ServiceAboutCards {
     return { data: toListItem(updated), meta: null }
   }
 
-  static deleteOne(params: DeleteOneParams) {
+  static async deleteOne(params: DeleteOneParams) {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
+    const existing = db
+      .select({ icon_image: tableAboutCards.icon_image })
+      .from(tableAboutCards)
+      .where(eq(tableAboutCards.id, id))
+      .get()
     db.delete(tableAboutCards).where(eq(tableAboutCards.id, id)).run()
+    await deleteAboutIconIfStored(existing?.icon_image)
     return { data: true, meta: null }
   }
 
-  /** Обновление base64-иконки (только из API загрузки) */
-  static setIconImage(cardId: number, base64Webp: string | null) {
+  /** Запись ключа S3 или null (только из API загрузки иконки). */
+  static setIconImage(cardId: number, iconImage: string | null) {
     const db = getDb()
     const [updated] = db
       .update(tableAboutCards)
-      .set({ icon_image: base64Webp })
+      .set({ icon_image: iconImage })
       .where(eq(tableAboutCards.id, cardId))
       .returning()
       .all()
     if (!updated) throw new Error("About card not found")
     return { data: toListItem(updated), meta: null }
+  }
+
+  static getIconImageRaw(cardId: number): string | null {
+    const db = getDb()
+    const row = db
+      .select({ icon_image: tableAboutCards.icon_image })
+      .from(tableAboutCards)
+      .where(eq(tableAboutCards.id, cardId))
+      .get()
+    return row?.icon_image ?? null
   }
 }

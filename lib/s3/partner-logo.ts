@@ -1,15 +1,11 @@
 import { randomUUID } from "node:crypto"
 import { deleteObjectByKey, putPublicObject } from "@/lib/s3/objects"
 import { getPublicObjectUrl } from "@/lib/s3/public-url"
+import {
+  isPartnerLogoS3Key,
+} from "@/lib/s3/partner-logo-url"
 
-const PARTNER_LOGO_PREFIX = "partners/"
-
-/** Ключ в нашем бакете (не base64 и не полный URL). */
-export function isPartnerLogoS3Key(value: string | null | undefined): boolean {
-  if (!value) return false
-  const v = value.trim()
-  return v.startsWith(PARTNER_LOGO_PREFIX) && v.length < 1024
-}
+export { isPartnerLogoS3Key, getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
 /** Старые записи: сырой base64 WebP в колонке logo_url. */
 export function isLegacyBase64Logo(value: string | null | undefined): boolean {
@@ -21,7 +17,7 @@ export function isLegacyBase64Logo(value: string | null | undefined): boolean {
 }
 
 export function buildPartnerLogoKey(partnerId: number): string {
-  return `${PARTNER_LOGO_PREFIX}${partnerId}/logo-${randomUUID()}.webp`
+  return `partners/${partnerId}/logo-${randomUUID()}.webp`
 }
 
 export async function uploadPartnerLogoWebp(

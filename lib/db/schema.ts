@@ -188,6 +188,8 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   page_affiliate_enabled: integer("page_affiliate_enabled", { mode: "boolean" }).default(true),
   /** Режим обслуживания: если false, сайт показывает страницу заглушку */
   site_published: integer("site_published", { mode: "boolean" }).default(true),
+  /** JSON: `{ "hero_light": "site/backgrounds/...", ... }` — S3-ключи фонов */
+  backgrounds: text("backgrounds"),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

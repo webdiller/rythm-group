@@ -10,6 +10,7 @@ import type { Translations } from "@/lib/i18n"
 type RootShellProvidersProps = {
   children: ReactNode
   hasAnyCustomBackgrounds: boolean
+  prefetchBackgroundSrcs?: string[]
   initialTranslations: Translations
 }
 
@@ -17,13 +18,19 @@ type RootShellProvidersProps = {
 export function RootShellProviders({
   children,
   hasAnyCustomBackgrounds,
+  prefetchBackgroundSrcs,
   initialTranslations,
 }: RootShellProvidersProps) {
   return (
     <LocaleProvider initialLocale="ru" initialTranslations={initialTranslations}>
       <PageRouteTransitionProvider>
         <HashScrollHandler />
-        <SiteShell hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}>{children}</SiteShell>
+        <SiteShell
+          hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}
+          prefetchBackgroundSrcs={prefetchBackgroundSrcs}
+        >
+          {children}
+        </SiteShell>
       </PageRouteTransitionProvider>
     </LocaleProvider>
   )

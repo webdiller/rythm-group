@@ -4,53 +4,13 @@ import { requireAuth } from "@/lib/auth"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { promises as fs } from "node:fs"
-import path from "node:path"
+import {
+  deleteSiteAssetIfStored,
+  uploadSiteLogoWebp,
+} from "@/lib/s3/site-assets"
+import { sanitizeSiteSettingsBranding } from "@/lib/server/sanitize-site-branding"
 
 export const runtime = "nodejs"
-
-export async function GET() {
-  const db = getDb()
-  const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
-
-  if (existing?.logo) {
-    const buffer = Buffer.from(existing.logo, "base64")
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/webp",
-        // Логотип меняется из админки по тому же URL — отключаем агрессивный кэш.
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    })
-  }
-
-  // Fallback to default logo from public
-  try {
-    const logoPath = path.join(process.cwd(), "public", "logo.jpg")
-    const fileBuffer = await fs.readFile(logoPath)
-    return new NextResponse(fileBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/jpeg",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    })
-  } catch {
-    return new NextResponse(null, {
-      status: 404,
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    })
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,23 +37,36 @@ export async function POST(request: NextRequest) {
       .webp({ quality: 85 })
       .toBuffer()
 
-    const base64 = optimizedBuffer.toString("base64")
+    const key = await uploadSiteLogoWebp(optimizedBuffer)
 
     const db = getDb()
     const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
+    const previous = existing?.logo ?? null
 
-    if (existing) {
-      const [updated] = db
-        .update(tableSiteSettings)
-        .set({ logo: base64 })
-        .where(eq(tableSiteSettings.id, existing.id))
-        .returning()
-        .all()
-      return NextResponse.json({ data: updated, meta: null })
+    try {
+      if (existing) {
+        const [updated] = db
+          .update(tableSiteSettings)
+          .set({ logo: key })
+          .where(eq(tableSiteSettings.id, existing.id))
+          .returning()
+          .all()
+        if (previous && previous !== key) await deleteSiteAssetIfStored(previous)
+        return NextResponse.json({
+          data: updated ? sanitizeSiteSettingsBranding(updated) : null,
+          meta: null,
+        })
+      }
+
+      const [created] = db.insert(tableSiteSettings).values({ logo: key }).returning().all()
+      return NextResponse.json(
+        { data: created ? sanitizeSiteSettingsBranding(created) : null, meta: null },
+        { status: 201 },
+      )
+    } catch (error) {
+      await deleteSiteAssetIfStored(key)
+      throw error
     }
-
-    const [created] = db.insert(tableSiteSettings).values({ logo: base64 }).returning().all()
-    return NextResponse.json({ data: created, meta: null }, { status: 201 })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -113,6 +86,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ data: null, meta: null })
     }
 
+    const previous = existing.logo
     const [updated] = db
       .update(tableSiteSettings)
       .set({ logo: null })
@@ -120,7 +94,12 @@ export async function DELETE(request: NextRequest) {
       .returning()
       .all()
 
-    return NextResponse.json({ data: updated, meta: null })
+    await deleteSiteAssetIfStored(previous)
+
+    return NextResponse.json({
+      data: updated ? sanitizeSiteSettingsBranding(updated) : null,
+      meta: null,
+    })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

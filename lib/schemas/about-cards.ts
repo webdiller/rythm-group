@@ -5,7 +5,7 @@ import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/
 const iconKeys = Object.keys(ABOUT_CARD_ICON_MAP) as [string, ...string[]]
 export const AboutCardIconSchema = z.enum(iconKeys)
 
-/** Ответ API списка: без base64, с флагом своей иконки */
+/** Ответ API списка: без base64, с флагом своей иконки и S3-ключом (если есть) */
 export const AboutCardListItemSchema = z.object({
   id: z.number(),
   icon: z.string(),
@@ -16,6 +16,8 @@ export const AboutCardListItemSchema = z.object({
   hidden: z.boolean().nullable(),
   order_index: z.number().nullable(),
   has_custom_icon: z.boolean(),
+  /** S3 key `about-cards/...` или null (legacy отдаётся через API) */
+  icon_image: z.string().nullable(),
 })
 
 export type AboutCardListItem = z.infer<typeof AboutCardListItemSchema>

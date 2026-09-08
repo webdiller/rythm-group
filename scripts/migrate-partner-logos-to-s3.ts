@@ -1,10 +1,10 @@
 /**
  * Одноразовая миграция: base64 logo_url → Yandex Object Storage, в БД остаётся S3 key.
  *
- * Локально / на VPS (env уже в окружении или в .env):
+ * Локально (Next.js env в `.env.local`):
  *   npm run db:migrate-logos-s3
  *
- * Или явно:
+ * На VPS с `.env`:
  *   npx tsx --env-file=.env scripts/migrate-partner-logos-to-s3.ts
  */
 import { getDb } from "@/lib/db"

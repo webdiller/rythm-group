@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { RootShellProviders } from '@/components/RootShellProviders'
-import { getFaviconVersion, getRootShellBackgroundFlags } from '@/lib/server/root-shell-meta'
+import { getRootShellBackgroundFlags, getSiteFaviconHref } from '@/lib/server/root-shell-meta'
 import { getInitialTranslations } from '@/lib/server/initial-translations'
 import './globals.css'
 
@@ -39,19 +39,20 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const { hasAnyCustomBackgrounds } = await getRootShellBackgroundFlags()
-  const faviconVersion = getFaviconVersion()
+  const { hasAnyCustomBackgrounds, prefetchBackgroundSrcs } = await getRootShellBackgroundFlags()
+  const faviconHref = getSiteFaviconHref()
   const initialTranslations = getInitialTranslations("ru")
 
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        <link rel="icon" href={`/api/site/favicon?v=${faviconVersion}`} />
+        <link rel="icon" href={faviconHref} />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <RootShellProviders
             hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}
+            prefetchBackgroundSrcs={prefetchBackgroundSrcs}
             initialTranslations={initialTranslations}
           >
             {children}

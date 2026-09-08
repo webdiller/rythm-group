@@ -4,6 +4,10 @@ import { requireAuth } from "@/lib/auth"
 import { getDb } from "@/lib/db"
 import { tableChannels } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import {
+  deleteChannelAvatarIfStored,
+  uploadChannelAvatarWebp,
+} from "@/lib/s3/channel-avatar"
 
 export const runtime = "nodejs"
 
@@ -42,18 +46,33 @@ export async function POST(request: NextRequest) {
       .webp({ quality: 80 })
       .toBuffer()
 
-    const base64 = optimizedBuffer.toString("base64")
-
     const db = getDb()
+    const existing = db
+      .select({ avatar: tableChannels.avatar })
+      .from(tableChannels)
+      .where(eq(tableChannels.id, channelId))
+      .get()
+
+    if (!existing) {
+      return NextResponse.json({ error: "Channel not found" }, { status: 404 })
+    }
+
+    const key = await uploadChannelAvatarWebp(channelId, optimizedBuffer)
+
     const [updated] = db
       .update(tableChannels)
-      .set({ avatar: base64 })
+      .set({ avatar: key })
       .where(eq(tableChannels.id, channelId))
       .returning()
       .all()
 
     if (!updated) {
+      await deleteChannelAvatarIfStored(key)
       return NextResponse.json({ error: "Channel not found" }, { status: 404 })
+    }
+
+    if (existing.avatar && existing.avatar !== key) {
+      await deleteChannelAvatarIfStored(existing.avatar)
     }
 
     return NextResponse.json({ data: updated, meta: null })
@@ -83,6 +102,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     const db = getDb()
+    const existing = db
+      .select({ avatar: tableChannels.avatar })
+      .from(tableChannels)
+      .where(eq(tableChannels.id, channelId))
+      .get()
+
+    if (!existing) {
+      return NextResponse.json({ error: "Channel not found" }, { status: 404 })
+    }
+
     const [updated] = db
       .update(tableChannels)
       .set({ avatar: null })
@@ -94,6 +123,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Channel not found" }, { status: 404 })
     }
 
+    await deleteChannelAvatarIfStored(existing.avatar)
+
     return NextResponse.json({ data: updated, meta: null })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
@@ -103,4 +134,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-

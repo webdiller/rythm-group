@@ -3,8 +3,7 @@ import { tableBlogCategories, tableBlogPosts } from "@/lib/db/schema"
 import { and, desc, eq, isNull, ne } from "drizzle-orm"
 import { sanitizeBlogHtml } from "@/lib/blog/html-sanitize"
 import type { CreatePostBody, PatchPostBody } from "@/lib/schemas/blog-posts"
-import { deleteBlogUploadFileByPublicUrl } from "@/lib/blog-local-upload"
-import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
+import { deleteBlogAssetByRef, isManagedBlogAssetRef } from "@/lib/s3/blog-assets"
 
 function unixNow(): number {
   return Math.floor(Date.now() / 1000)
@@ -184,8 +183,8 @@ export class ServiceBlogPosts {
     if (coverKeyPresent && body.cover_image_url !== undefined) {
       const oldUrl = existing.cover_image_url
       const newUrl = body.cover_image_url
-      if (oldUrl && oldUrl !== newUrl && isLocalBlogUploadUrl(oldUrl)) {
-        await deleteBlogUploadFileByPublicUrl(oldUrl)
+      if (oldUrl && oldUrl !== newUrl && isManagedBlogAssetRef(oldUrl)) {
+        await deleteBlogAssetByRef(oldUrl)
       }
     }
 
@@ -233,11 +232,11 @@ export class ServiceBlogPosts {
     const posterUrlsToDelete: string[] = []
     for (const oldPosterUrl of oldPosterUrls) {
       if (nextPosterUrls.has(oldPosterUrl)) continue
-      if (!isLocalBlogUploadUrl(oldPosterUrl)) continue
+      if (!isManagedBlogAssetRef(oldPosterUrl)) continue
       posterUrlsToDelete.push(oldPosterUrl)
     }
     for (const posterUrl of posterUrlsToDelete) {
-      await deleteBlogUploadFileByPublicUrl(posterUrl)
+      await deleteBlogAssetByRef(posterUrl)
     }
 
     const withSlug = this.getByIdForAdmin(id)
@@ -253,8 +252,8 @@ export class ServiceBlogPosts {
       .get()
     if (!existing) throw new Error("NOT_FOUND")
     const cover = existing.cover_image_url
-    if (cover && isLocalBlogUploadUrl(cover)) {
-      await deleteBlogUploadFileByPublicUrl(cover)
+    if (cover && isManagedBlogAssetRef(cover)) {
+      await deleteBlogAssetByRef(cover)
     }
     const ts = unixNow()
     db.update(tableBlogPosts)

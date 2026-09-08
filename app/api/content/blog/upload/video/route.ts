@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
-import { putBlogVideoToPublic } from "@/lib/blog-local-upload"
 import { assertVideoUploadSizeAndMime } from "@/lib/blog-video-upload"
+import { uploadBlogVideo } from "@/lib/s3/blog-assets"
 
 export const runtime = "nodejs"
 
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
       }
       throw e
     }
-    const url = await putBlogVideoToPublic(buf, mime)
-    return NextResponse.json({ data: { url }, meta: null })
+    const { key, url } = await uploadBlogVideo(buf, mime)
+    return NextResponse.json({ data: { url, key }, meta: null })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

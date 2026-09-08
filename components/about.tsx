@@ -6,12 +6,14 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 import { getAboutCardIcon } from "@/lib/about-card-icons"
 import type { AboutCardListItem } from "@/lib/schemas/about-cards"
+import { getAboutIconSrc } from "@/lib/s3/about-icon-url"
 
 type DisplayCard = {
   key: string
   id?: number
   iconName: string
   hasCustomIcon: boolean
+  iconSrc: string | null
   title: string
   text: string
 }
@@ -34,6 +36,7 @@ export function About({
         id: c.id,
         iconName: c.icon,
         hasCustomIcon: c.has_custom_icon,
+        iconSrc: getAboutIconSrc(c),
         title: locale === "en" ? c.title_en : c.title_ru,
         text: locale === "en" ? c.text_en : c.text_ru,
       }))
@@ -43,6 +46,7 @@ export function About({
         key: "mission",
         iconName: "Target",
         hasCustomIcon: false,
+        iconSrc: null,
         title: t.about.mission.title,
         text: t.about.mission.text,
       },
@@ -50,6 +54,7 @@ export function About({
         key: "team",
         iconName: "Users",
         hasCustomIcon: false,
+        iconSrc: null,
         title: t.about.team.title,
         text: t.about.team.text,
       },
@@ -57,6 +62,7 @@ export function About({
         key: "audience",
         iconName: "Crosshair",
         hasCustomIcon: false,
+        iconSrc: null,
         title: t.about.audience.title,
         text: t.about.audience.text,
       },
@@ -90,10 +96,10 @@ export function About({
               >
                 <div className="group rounded-xl h-full border border-border bg-card p-8 transition-all hover:border-primary/30 glow-border">
                   <div className="mb-5 flex mx-auto h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
-                    {card.hasCustomIcon && card.id != null ? (
+                    {card.hasCustomIcon && card.iconSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element -- динамический URL из CMS
                       <img
-                        src={`/api/content/about-cards/${card.id}/icon`}
+                        src={card.iconSrc}
                         alt=""
                         className="h-6 w-6 object-contain"
                         width={24}

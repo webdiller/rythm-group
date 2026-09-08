@@ -36,6 +36,7 @@ import { toast } from "sonner"
 import { GripVertical } from "lucide-react"
 import { ABOUT_CARD_ICON_NAMES } from "@/lib/about-card-icons"
 import type { AboutCardListItem } from "@/lib/schemas/about-cards"
+import { getAboutIconSrc } from "@/lib/s3/about-icon-url"
 
 const ICON_OPTIONS = [...ABOUT_CARD_ICON_NAMES].sort((a, b) => a.localeCompare(b))
 const DEFAULT_CREATE_FORM = {
@@ -121,10 +122,10 @@ function SortableAboutCard({
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor={`about-card-custom-icon-${item.id}`}>Своя иконка</Label>
         <div className="flex flex-wrap items-center gap-3">
-          {item.has_custom_icon ? (
-            // eslint-disable-next-line @next/next/no-img-element -- превью из API
+          {item.has_custom_icon && getAboutIconSrc(item, { cacheBust: iconVersion }) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- превью из S3
             <img
-              src={`/api/content/about-cards/${item.id}/icon?v=${iconVersion}`}
+              src={getAboutIconSrc(item, { cacheBust: iconVersion })!}
               alt=""
               className="h-12 w-12 rounded-md border border-border object-contain bg-muted/30"
               width={48}

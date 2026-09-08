@@ -19,6 +19,8 @@ import { ServiceAboutCards } from "@/lib/services/about-cards"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
+import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
+import { isChannelAvatarS3Key } from "@/lib/s3/channel-avatar-url"
 
 function getHomeData(): {
   channelCategories: ChannelCategory[]
@@ -45,7 +47,8 @@ function getHomeData(): {
     reach: c.reach ?? null,
     url: c.url,
     order_index: c.order_index ?? 0,
-    hasAvatar: !!c.avatar,
+    avatar: isChannelAvatarS3Key(c.avatar) ? c.avatar!.trim() : null,
+    hasAvatar: Boolean(c.avatar),
   }))
 
   const rawPartnerCategories = ServicePartnerCategories.getAll().data ?? []
@@ -88,6 +91,10 @@ export default async function Home() {
   const data = getHomeData()
   const bg = await hasGlobalBackgroundThemes()
   const hasCustomGlobalBackgroundForBothThemes = bg.both
+  const globalBgLight = resolveBackgroundSrc("global", "light")
+  const globalBgDark = resolveBackgroundSrc("global", "dark")
+  const heroBgLight = resolveBackgroundSrc("hero", "light")
+  const heroBgDark = resolveBackgroundSrc("hero", "dark")
 
   const {
     channelCategories,
@@ -121,11 +128,11 @@ export default async function Home() {
           <div className="absolute inset-0 z-0" aria-hidden="true">
             <div
               className="absolute inset-0 bg-cover bg-center bg-fixed dark:hidden"
-              style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=light')" }}
+              style={{ backgroundImage: `url('${globalBgLight}')` }}
             />
             <div
               className="absolute inset-0 hidden bg-cover bg-center bg-fixed dark:block"
-              style={{ backgroundImage: "url('/api/site/backgrounds/global?theme=dark')" }}
+              style={{ backgroundImage: `url('${globalBgDark}')` }}
             />
           </div>
           {!hasCustomGlobalBackgroundForBothThemes && (
@@ -145,11 +152,16 @@ export default async function Home() {
             <Header
               navOrder={headerNavOrder}
               logoText={siteSettings?.logo_text ?? null}
+              logo={siteSettings?.logo ?? null}
               pageBlogEnabled={siteSettings?.page_blog_enabled ?? true}
               pageAffiliateEnabled={siteSettings?.page_affiliate_enabled ?? true}
             />
             <main>
-              <Hero animationEnabled={animationsEnabled} />
+              <Hero
+                animationEnabled={animationsEnabled}
+                backgroundLightSrc={heroBgLight}
+                backgroundDarkSrc={heroBgDark}
+              />
               <About animationsEnabled={animationsEnabled} cards={aboutCards} />
               <Channels
                 categories={channelCategories}

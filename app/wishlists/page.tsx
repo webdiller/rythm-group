@@ -14,6 +14,7 @@ import { ServiceAffiliateFormats } from "@/lib/services/affiliate-formats"
 import { ServiceAffiliateFaq } from "@/lib/services/affiliate-faq"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
+import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
 
 type AffiliateSettings = {
   affiliate_show_hero?: boolean | null
@@ -102,6 +103,8 @@ export default async function AffiliatePage() {
   const contactLayout = settings.affiliate_contact_layout ?? "formFirst"
   const contactFormHidden = settings.affiliate_contact_form_hidden ?? false
   const showFormatsSection = settings.affiliate_show_formats ?? true
+  const heroBgLight = resolveBackgroundSrc("hero", "light", "affiliate")
+  const heroBgDark = resolveBackgroundSrc("hero", "dark", "affiliate")
 
   return (
     <>
@@ -109,6 +112,8 @@ export default async function AffiliatePage() {
         <AffiliateHero
           data={hero}
           enableAffiliateCooperationFormats={showFormatsSection}
+          backgroundLightSrc={heroBgLight}
+          backgroundDarkSrc={heroBgDark}
         />
       ) : null}
       {showFormatsSection ? <AffiliateCooperationFormats items={formats} /> : null}

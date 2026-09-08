@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/locale-context"
 import type { Partner } from "@/components/cases"
 import { Card } from "@/components/ui/card"
 import { ExternalLink } from "lucide-react"
+import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
 type AffiliateSteamSectionProps = {
   partners: Partner[]
@@ -34,13 +35,14 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
           {visibleItems.map((p) => {
             const steamUrl = p.developer_url?.trim() || ""
             const hasLink = steamUrl.length > 0
+            const logoSrc = getPartnerLogoSrc(p)
 
             const cardInner = (
               <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
                 <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-28 sm:w-28">
-                  {p.logo_url ? (
+                  {logoSrc ? (
                     <img
-                      src={`/api/content/partners/${p.id}/logo`}
+                      src={logoSrc}
                       alt=""
                       className={`h-full w-full object-contain p-2 ${hasLink ? "transition-transform duration-300 group-hover:scale-105" : ""}`}
                       loading="lazy"

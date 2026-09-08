@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import sharp from "sharp"
 import { requireAuth } from "@/lib/auth"
 import { ServiceAboutCards } from "@/lib/services/about-cards"
+import {
+  deleteAboutIconIfStored,
+  uploadAboutIconWebp,
+} from "@/lib/s3/about-icon"
 
 export const runtime = "nodejs"
 
@@ -32,6 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File size must not exceed 5MB" }, { status: 400 })
     }
 
+    const previous = ServiceAboutCards.getIconImageRaw(cardId)
+
     const arrayBuffer = await file.arrayBuffer()
     const inputBuffer = Buffer.from(arrayBuffer)
 
@@ -40,10 +46,21 @@ export async function POST(request: NextRequest) {
       .webp({ quality: 85 })
       .toBuffer()
 
-    const base64 = optimizedBuffer.toString("base64")
+    const key = await uploadAboutIconWebp(cardId, optimizedBuffer)
 
-    const result = ServiceAboutCards.setIconImage(cardId, base64)
-    return NextResponse.json(result)
+    try {
+      const result = ServiceAboutCards.setIconImage(cardId, key)
+      if (previous && previous !== key) {
+        await deleteAboutIconIfStored(previous)
+      }
+      return NextResponse.json(result)
+    } catch (error) {
+      await deleteAboutIconIfStored(key)
+      if (error instanceof Error && error.message === "About card not found") {
+        return NextResponse.json({ error: "Card not found" }, { status: 404 })
+      }
+      throw error
+    }
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -69,8 +86,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "cardId must be a number" }, { status: 400 })
     }
 
-    const result = ServiceAboutCards.setIconImage(cardId, null)
-    return NextResponse.json(result)
+    const previous = ServiceAboutCards.getIconImageRaw(cardId)
+    try {
+      const result = ServiceAboutCards.setIconImage(cardId, null)
+      await deleteAboutIconIfStored(previous)
+      return NextResponse.json(result)
+    } catch (error) {
+      if (error instanceof Error && error.message === "About card not found") {
+        return NextResponse.json({ error: "Card not found" }, { status: 404 })
+      }
+      throw error
+    }
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

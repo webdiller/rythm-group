@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useState, type ReactNode } from "react"
 type SiteShellProps = {
   children: ReactNode
   hasAnyCustomBackgrounds: boolean
+  prefetchBackgroundSrcs?: string[]
 }
 
 const PREFETCH_DONE_KEY = "__rg_site_shell_bg_prefetch_done"
@@ -27,7 +28,11 @@ function writePrefetchDone() {
   }
 }
 
-export function SiteShell({ children, hasAnyCustomBackgrounds }: SiteShellProps) {
+export function SiteShell({
+  children,
+  hasAnyCustomBackgrounds,
+  prefetchBackgroundSrcs = [],
+}: SiteShellProps) {
   const [ready, setReady] = useState(() => !hasAnyCustomBackgrounds)
 
   /** После первой успешной загрузки фиксируем в sessionStorage — при перемонтировании (навигация) не показываем спиннер снова. */
@@ -46,12 +51,15 @@ export function SiteShell({ children, hasAnyCustomBackgrounds }: SiteShellProps)
     if (!hasAnyCustomBackgrounds) return
     if (readPrefetchDone()) return
 
-    const sources = [
-      "/api/site/backgrounds/global?theme=light",
-      "/api/site/backgrounds/global?theme=dark",
-      "/api/site/backgrounds/hero?theme=light",
-      "/api/site/backgrounds/hero?theme=dark",
-    ]
+    const sources =
+      prefetchBackgroundSrcs.length > 0
+        ? prefetchBackgroundSrcs
+        : [
+            "/backgrounds/global-light.webp",
+            "/backgrounds/global-dark.webp",
+            "/backgrounds/hero-light.webp",
+            "/backgrounds/hero-dark.webp",
+          ]
 
     let completed = 0
     const onDone = () => {
@@ -76,7 +84,7 @@ export function SiteShell({ children, hasAnyCustomBackgrounds }: SiteShellProps)
         img.onerror = null
       })
     }
-  }, [hasAnyCustomBackgrounds])
+  }, [hasAnyCustomBackgrounds, prefetchBackgroundSrcs])
 
   if (!ready) {
     return (
@@ -91,4 +99,3 @@ export function SiteShell({ children, hasAnyCustomBackgrounds }: SiteShellProps)
 
   return <>{children}</>
 }
-

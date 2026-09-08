@@ -7,6 +7,7 @@ import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { getChannelAvatarSrc } from "@/lib/s3/channel-avatar-url"
 
 export interface ChannelCategory {
   id: string
@@ -24,6 +25,8 @@ export interface Channel {
   reach?: string | null
   url: string
   order_index: number
+  /** S3 key, если аватар уже в Object Storage */
+  avatar?: string | null
   hasAvatar?: boolean
 }
 
@@ -230,7 +233,12 @@ function ChannelCard({
         cardAlign === "right" && "flex flex-row-reverse items-center gap-4 text-right",
       )}
     >
-      <ChannelAvatar channelId={channel.id} name={channel.name} hasAvatar={channel.hasAvatar} />
+      <ChannelAvatar
+        channelId={channel.id}
+        name={channel.name}
+        avatar={channel.avatar}
+        hasAvatar={channel.hasAvatar}
+      />
       <div className={cn(cardAlign === "center" && "flex flex-col items-center")}>
         <h3 className="text-base font-semibold text-card-foreground md:text-lg">{channel.name}</h3>
         {showMeta ? (
@@ -267,23 +275,26 @@ function ChannelCard({
 function ChannelAvatar({
   channelId,
   name,
+  avatar,
   hasAvatar,
 }: {
   channelId: number
   name: string
+  avatar?: string | null
   hasAvatar?: boolean
 }) {
-  const [hasImage, setHasImage] = useState(hasAvatar ?? true)
+  const src = getChannelAvatarSrc({ id: channelId, avatar, hasAvatar })
+  const [hasImage, setHasImage] = useState(Boolean(src))
   return (
     <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20 md:h-20 md:w-20">
-      {hasImage && (
+      {hasImage && src ? (
         <img
-          src={`/api/content/channels/${channelId}/avatar`}
+          src={src}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setHasImage(false)}
         />
-      )}
+      ) : null}
       {!hasImage && <span className="text-xl font-bold md:text-2xl">{name.charAt(0)}</span>}
     </div>
   )

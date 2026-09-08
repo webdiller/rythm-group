@@ -9,6 +9,7 @@ import { resolveNavHref } from "@/lib/nav-hrefs"
 import { wishlistsSectionHref } from "@/lib/wishlists-path"
 import { Menu, X } from "lucide-react"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
+import { getSiteLogoSrc } from "@/lib/s3/site-asset-url"
 
 type HeaderProps = {
   /** На подстраницах (`/blog`, `/wishlists`) якоря ведут на главную: `/#section`. */
@@ -17,13 +18,22 @@ type HeaderProps = {
   navOrder?: HeaderNavItemId[]
   /** Текст рядом с логотипом. Если пусто, скрывается. */
   logoText?: string | null
+  /** S3-ключ логотипа (или null → `/logo.jpg`). */
+  logo?: string | null
   /** Показывать ли пункт меню "Блог". По умолчанию true. */
   pageBlogEnabled?: boolean
   /** Показывать ли пункт меню "Affiliate". По умолчанию true. */
   pageAffiliateEnabled?: boolean
 }
 
-export function Header({ sectionHrefPrefix = "", navOrder, logoText, pageBlogEnabled = true, pageAffiliateEnabled = true }: HeaderProps) {
+export function Header({
+  sectionHrefPrefix = "",
+  navOrder,
+  logoText,
+  logo,
+  pageBlogEnabled = true,
+  pageAffiliateEnabled = true,
+}: HeaderProps) {
   const { locale, setLocale, t } = useLocale()
   const [mobileOpen, setMobileOpen] = useState(false)
   const resolvedNavOrder = normalizeHeaderNavOrder(navOrder ?? DEFAULT_HEADER_NAV_ORDER)
@@ -59,7 +69,13 @@ export function Header({ sectionHrefPrefix = "", navOrder, logoText, pageBlogEna
         >
           <span className="text-lg font-bold tracking-tight flex items-center gap-1 sm:gap-2 text-foreground">
             <div className="rounded-full overflow-hidden">
-              <img src="/api/site/logo" width={32} height={32} alt="Rythm Group" className="h-8 w-8 object-cover" />
+              <img
+                src={getSiteLogoSrc(logo)}
+                width={32}
+                height={32}
+                alt="Rythm Group"
+                className="h-8 w-8 object-cover"
+              />
             </div>
             {logoText?.trim() ? (
               <span className="text-xs sm:text-sm md:text-base">{logoText}</span>

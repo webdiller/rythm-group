@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch"
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor"
 import { toast } from "sonner"
 import { ArrowLeft, Trash2, Upload } from "lucide-react"
-import { isLocalBlogUploadUrl } from "@/lib/blog/local-upload-url"
+import { isManagedBlogImageRef, getBlogCoverSrc } from "@/lib/s3/blog-asset-url"
 import { slugifyRuTitle } from "@/lib/blog/slug"
 
 function unixToDatetimeLocal(sec: number): string {
@@ -232,10 +232,11 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         toast.error(err.error ?? "Загрузка не удалась")
         return null
       }
-      const json = (await res.json()) as { data?: { url?: string } }
-      const url = json.data?.url
-      if (!url) return null
-      return url
+      const json = (await res.json()) as { data?: { url?: string; key?: string } }
+      // Обложка в БД — S3 key; публичный url нужен только для TipTap.
+      const stored = json.data?.key ?? json.data?.url
+      if (!stored) return null
+      return stored
     } catch {
       toast.error("Ошибка загрузки")
       return null
@@ -333,7 +334,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   }
 
   const reopenCoverEditorFromCurrentImage = async () => {
-    const src = coverDraftPreviewUrl || cover_image_url.trim()
+    const raw = coverDraftPreviewUrl || cover_image_url.trim()
+    const src = coverDraftPreviewUrl || (raw ? getBlogCoverSrc(raw) ?? raw : "")
     if (!src) return
     try {
       const res = await fetch(src)
@@ -469,7 +471,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   const clearCover = async () => {
     clearCoverDraft()
     const u = cover_image_url.trim()
-    if (!isEdit && u && isLocalBlogUploadUrl(u)) {
+    if (!isEdit && u && isManagedBlogImageRef(u)) {
       const ok = await deleteLocalBlogUploadFile(u)
       if (!ok) return
     }
@@ -487,7 +489,8 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
   }
 
   const trimmedCoverUrl = cover_image_url.trim()
-  const coverPreviewSrc = coverDraftPreviewUrl || trimmedCoverUrl
+  const coverPreviewSrc =
+    coverDraftPreviewUrl || (trimmedCoverUrl ? getBlogCoverSrc(trimmedCoverUrl) ?? trimmedCoverUrl : "")
   const hasCoverPreview = coverPreviewSrc.length > 0
 
   const save = async () => {
@@ -510,7 +513,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
         !isEdit &&
         finalCoverUrl &&
         finalCoverUrl !== uploadedCoverUrl &&
-        isLocalBlogUploadUrl(finalCoverUrl)
+        isManagedBlogImageRef(finalCoverUrl)
       ) {
         await deleteLocalBlogUploadFile(finalCoverUrl)
       }
@@ -721,7 +724,7 @@ export function BlogPostFormPage({ postId }: { postId?: number }) {
             <Input
               value={cover_image_url}
               onChange={(e) => handleCoverUrlChange(e.target.value)}
-              placeholder="https://... или /uploads/blog/..."
+              placeholder="https://... или blog/images/..."
             />
             <input
               ref={coverFileInputRef}

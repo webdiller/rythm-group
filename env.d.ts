@@ -19,6 +19,8 @@ declare global {
       YA_BUCKET_NAME: string
       YA_REGION: string
       YA_ENDPOINT: string
+      /** Публичный префикс: https://storage.yandexcloud.net/{bucket} */
+      NEXT_PUBLIC_YA_PUBLIC_BASE?: string
     }
   }
   interface Window {

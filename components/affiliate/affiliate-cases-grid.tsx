@@ -10,14 +10,11 @@ import { mapPartnerToAffiliateCaseCard } from "@/lib/affiliate/cases-ui"
 import { wishlistsCasePath } from "@/lib/wishlists-path"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight } from "lucide-react"
+import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
 type AffiliateCasesGridProps = {
   categories: PartnerCategory[]
   partners: Partner[]
-}
-
-function getCaseCoverUrl(id: number, hasLogo: boolean): string {
-  return hasLogo ? `/api/content/partners/${id}/logo` : ""
 }
 
 export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridProps) {
@@ -52,8 +49,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
           ? "No date"
           : "Без даты"
     const href = partner.target_url || wishlistsCasePath(ui.slug)
-    const cover = getCaseCoverUrl(ui.id, Boolean(partner.logo_url))
-    const imageSrc = cover || ui.coverImage?.trim() || ""
+    const imageSrc = getPartnerLogoSrc(partner) || ui.coverImage?.trim() || ""
     const showImage = Boolean(imageSrc) && !brokenImageByPartner[partner.id]
     const title =
       locale === "en" ? partner.title_en || partner.name : partner.title_ru || partner.name

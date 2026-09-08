@@ -30,6 +30,14 @@ import { toast } from "sonner"
 import { DEFAULT_HEADER_NAV_ORDER, normalizeHeaderNavOrder, type HeaderNavItemId } from "@/lib/header-nav"
 import { useLocale } from "@/lib/locale-context"
 import { fallbackTranslations } from "@/lib/i18n"
+import { getSiteFaviconSrc, getSiteLogoSrc } from "@/lib/s3/site-asset-url"
+import {
+  getBackgroundSrc,
+  parseBackgroundsJson,
+  resolveBackgroundSlot,
+  type BackgroundSlot,
+  type BackgroundsMap,
+} from "@/lib/s3/background-slots"
 
 function SortableNavList({ items, children }: { items: HeaderNavItemId[]; children: ReactNode }) {
   return (
@@ -90,11 +98,14 @@ export function SiteSettingsEditor() {
     contacts: { ru: fallbackTranslations.ru.nav.contacts, en: fallbackTranslations.en.nav.contacts },
   })
   const [hasLogo, setHasLogo] = useState(false)
+  const [logoKey, setLogoKey] = useState<string | null>(null)
   const [logoVersion, setLogoVersion] = useState(() => Date.now())
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [deletingLogo, setDeletingLogo] = useState(false)
   const [hasFavicon, setHasFavicon] = useState(false)
+  const [faviconKey, setFaviconKey] = useState<string | null>(null)
   const [faviconVersion, setFaviconVersion] = useState(() => Date.now())
+  const [backgroundKeys, setBackgroundKeys] = useState<BackgroundsMap>({})
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [hasHeroBackground, setHasHeroBackground] = useState(false)
@@ -255,72 +266,60 @@ export function SiteSettingsEditor() {
 
   useEffect(() => {
     const logo = new Image()
-    logo.src = `/api/site/logo?ts=${Date.now()}`
+    logo.src = getSiteLogoSrc(logoKey, { cacheBust: Date.now() })
     logo.onload = () => setHasLogo(true)
     logo.onerror = () => setHasLogo(false)
-  }, [])
+  }, [logoKey])
 
   useEffect(() => {
     const img = new Image()
-    img.src = `/api/site/favicon?ts=${Date.now()}`
+    img.src = getSiteFaviconSrc(faviconKey, { cacheBust: Date.now() })
     img.onload = () => setHasFavicon(true)
     img.onerror = () => setHasFavicon(false)
-  }, [])
+  }, [faviconKey])
 
-  useEffect(() => {
-    const checkBackgrounds = async () => {
-      try {
-        const [
-          heroRes,
-          heroLightRes,
-          heroDarkRes,
-          globalRes,
-          globalLightRes,
-          globalDarkRes,
-          affiliateHeroLightRes,
-          affiliateHeroDarkRes,
-          affiliateGlobalLightRes,
-          affiliateGlobalDarkRes,
-        ] =
-          await Promise.all([
-            fetch("/api/site/backgrounds/hero", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/hero?theme=light", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/hero?theme=dark", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/global", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/global?theme=light", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/global?theme=dark", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/hero?scope=affiliate&theme=light", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/hero?scope=affiliate&theme=dark", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/global?scope=affiliate&theme=light", { cache: "no-store" }),
-            fetch("/api/site/backgrounds/global?scope=affiliate&theme=dark", { cache: "no-store" }),
-          ])
+  const applyBackgroundPresence = (p: Partial<Record<BackgroundSlot, boolean>>) => {
+    setHasHeroBackground(Boolean(p.hero))
+    setHasHeroBackgroundLight(Boolean(p.hero_light))
+    setHasHeroBackgroundDark(Boolean(p.hero_dark))
+    setHasGlobalBackground(Boolean(p.global))
+    setHasGlobalBackgroundLight(Boolean(p.global_light))
+    setHasGlobalBackgroundDark(Boolean(p.global_dark))
+    setHasAffiliateHeroBackgroundLight(Boolean(p.hero_affiliate_light))
+    setHasAffiliateHeroBackgroundDark(Boolean(p.hero_affiliate_dark))
+    setHasAffiliateGlobalBackgroundLight(Boolean(p.global_affiliate_light))
+    setHasAffiliateGlobalBackgroundDark(Boolean(p.global_affiliate_dark))
+  }
 
-        setHasHeroBackground(heroRes.ok)
-        setHasHeroBackgroundLight(heroLightRes.ok)
-        setHasHeroBackgroundDark(heroDarkRes.ok)
-        setHasGlobalBackground(globalRes.ok)
-        setHasGlobalBackgroundLight(globalLightRes.ok)
-        setHasGlobalBackgroundDark(globalDarkRes.ok)
-        setHasAffiliateHeroBackgroundLight(affiliateHeroLightRes.ok)
-        setHasAffiliateHeroBackgroundDark(affiliateHeroDarkRes.ok)
-        setHasAffiliateGlobalBackgroundLight(affiliateGlobalLightRes.ok)
-        setHasAffiliateGlobalBackgroundDark(affiliateGlobalDarkRes.ok)
-      } catch {
-        setHasHeroBackground(false)
-        setHasHeroBackgroundLight(false)
-        setHasHeroBackgroundDark(false)
-        setHasGlobalBackground(false)
-        setHasGlobalBackgroundLight(false)
-        setHasGlobalBackgroundDark(false)
-        setHasAffiliateHeroBackgroundLight(false)
-        setHasAffiliateHeroBackgroundDark(false)
-        setHasAffiliateGlobalBackgroundLight(false)
-        setHasAffiliateGlobalBackgroundDark(false)
-      }
-    }
+  const bgPreview = (
+    kind: "hero" | "global",
+    theme?: "light" | "dark" | null,
+    scope?: "affiliate" | null,
+    cacheBust?: number,
+  ) => {
+    const slot = resolveBackgroundSlot(kind, theme, scope)
+    return getBackgroundSrc(kind, {
+      theme,
+      scope,
+      key: backgroundKeys[slot],
+      cacheBust,
+    })
+  }
 
-    void checkBackgrounds()
-  }, [])
+  const rememberBackgroundKey = (
+    kind: "hero" | "global",
+    theme: string | null | undefined,
+    scope: string | null | undefined,
+    key: string | null | undefined,
+  ) => {
+    const slot = resolveBackgroundSlot(kind, theme, scope)
+    setBackgroundKeys((prev) => {
+      const next = { ...prev }
+      if (key) next[slot] = key
+      else delete next[slot]
+      return next
+    })
+  }
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -331,8 +330,10 @@ export function SiteSettingsEditor() {
 
         const json = (await res.json()) as {
           data?: {
+            favicon?: string | null
             logo_text?: string | null
             logo?: string | null
+            backgrounds?: string | null
             heroAnimationEnabled?: boolean | null
             privacyPolicyUrl?: string | null
             dataProcessingPolicyUrl?: string | null
@@ -351,10 +352,18 @@ export function SiteSettingsEditor() {
             site_published?: boolean | null
             headerNavOrder?: string | null
           } | null
+          meta?: {
+            background_presence?: Partial<Record<BackgroundSlot, boolean>>
+          } | null
         }
 
         const data = json.data ?? null
+        setLogoKey(data?.logo ?? null)
+        setFaviconKey(data?.favicon ?? null)
         setHasLogo(Boolean(data?.logo))
+        setHasFavicon(Boolean(data?.favicon))
+        setBackgroundKeys(parseBackgroundsJson(data?.backgrounds))
+        applyBackgroundPresence(json.meta?.background_presence ?? {})
         const logoTextValue = data?.logo_text ?? ""
         const heroAnimation = data?.heroAnimationEnabled ?? true
         const privacy = data?.privacyPolicyUrl ?? ""
@@ -440,8 +449,8 @@ export function SiteSettingsEditor() {
     toast.error(message)
   }
 
-  const syncDocumentFavicon = (version: number) => {
-    const faviconHref = `/api/site/favicon?ts=${version}`
+  const syncDocumentFavicon = (version: number, key?: string | null) => {
+    const faviconHref = getSiteFaviconSrc(key ?? faviconKey, { cacheBust: version })
     const iconSelectors = ['link[rel="icon"]', 'link[rel="shortcut icon"]'] as const
 
     for (const selector of iconSelectors) {
@@ -544,6 +553,8 @@ export function SiteSettingsEditor() {
         return
       }
 
+      const json = (await res.json()) as { data?: { logo?: string | null } }
+      setLogoKey(json.data?.logo ?? null)
       setHasLogo(true)
       setLogoVersion(Date.now())
       toast.success("Логотип обновлён")
@@ -568,6 +579,7 @@ export function SiteSettingsEditor() {
         return
       }
 
+      setLogoKey(null)
       setHasLogo(false)
       setLogoVersion(Date.now())
       toast.success("Логотип сброшен до значения по умолчанию")
@@ -602,10 +614,13 @@ export function SiteSettingsEditor() {
         return
       }
 
+      const json = (await res.json()) as { data?: { favicon?: string | null } }
+      const nextKey = json.data?.favicon ?? null
+      setFaviconKey(nextKey)
       setHasFavicon(true)
       const nextVersion = Date.now()
       setFaviconVersion(nextVersion)
-      syncDocumentFavicon(nextVersion)
+      syncDocumentFavicon(nextVersion, nextKey)
       toast.success("Фавикон обновлён")
     } catch {
       notifyMutationError("Не удалось загрузить фавикон")
@@ -633,12 +648,13 @@ export function SiteSettingsEditor() {
         body: formData,
       })
 
+      const json = (await res.json().catch(() => null)) as { error?: string; key?: string } | null
       if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as { error?: string } | null
         notifyMutationError(json?.error ?? "Не удалось загрузить фон для hero")
         return
       }
 
+      rememberBackgroundKey("hero", null, null, json?.key)
       setHasHeroBackground(true)
       setHeroBackgroundVersion((v) => v + 1)
       toast.success("Фон hero обновлён")
@@ -682,12 +698,13 @@ export function SiteSettingsEditor() {
         body: formData,
       })
 
+      const json = (await res.json().catch(() => null)) as { error?: string; key?: string } | null
       if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as { error?: string } | null
         notifyMutationError(json?.error ?? "Не удалось загрузить фон для hero")
         return
       }
 
+      rememberBackgroundKey("hero", theme, scope === "affiliate" ? "affiliate" : null, json?.key)
       if (theme === "light") {
         if (scope === "affiliate") {
           setHasAffiliateHeroBackgroundLight(true)
@@ -731,6 +748,7 @@ export function SiteSettingsEditor() {
         return
       }
 
+      rememberBackgroundKey("hero", null, null, null)
       setHasHeroBackground(false)
       setHeroBackgroundVersion((v) => v + 1)
       toast.success("Фон hero сброшен")
@@ -768,6 +786,7 @@ export function SiteSettingsEditor() {
         return
       }
 
+      rememberBackgroundKey("hero", theme, scope === "affiliate" ? "affiliate" : null, null)
       if (theme === "light") {
         if (scope === "affiliate") {
           setHasAffiliateHeroBackgroundLight(false)
@@ -816,12 +835,13 @@ export function SiteSettingsEditor() {
         body: formData,
       })
 
+      const json = (await res.json().catch(() => null)) as { error?: string; key?: string } | null
       if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as { error?: string } | null
         notifyMutationError(json?.error ?? "Не удалось загрузить общий фон")
         return
       }
 
+      rememberBackgroundKey("global", null, null, json?.key)
       setHasGlobalBackground(true)
       setGlobalBackgroundVersion((v) => v + 1)
       toast.success("Общий фон обновлён")
@@ -865,12 +885,13 @@ export function SiteSettingsEditor() {
         body: formData,
       })
 
+      const json = (await res.json().catch(() => null)) as { error?: string; key?: string } | null
       if (!res.ok) {
-        const json = (await res.json().catch(() => null)) as { error?: string } | null
         notifyMutationError(json?.error ?? "Не удалось загрузить общий фон")
         return
       }
 
+      rememberBackgroundKey("global", theme, scope === "affiliate" ? "affiliate" : null, json?.key)
       if (theme === "light") {
         if (scope === "affiliate") {
           setHasAffiliateGlobalBackgroundLight(true)
@@ -914,6 +935,7 @@ export function SiteSettingsEditor() {
         return
       }
 
+      rememberBackgroundKey("global", null, null, null)
       setHasGlobalBackground(false)
       setGlobalBackgroundVersion((v) => v + 1)
       toast.success("Общий фон сброшен")
@@ -951,6 +973,7 @@ export function SiteSettingsEditor() {
         return
       }
 
+      rememberBackgroundKey("global", theme, scope === "affiliate" ? "affiliate" : null, null)
       if (theme === "light") {
         if (scope === "affiliate") {
           setHasAffiliateGlobalBackgroundLight(false)
@@ -994,10 +1017,11 @@ export function SiteSettingsEditor() {
         return
       }
 
+      setFaviconKey(null)
       setHasFavicon(false)
       const nextVersion = Date.now()
       setFaviconVersion(nextVersion)
-      syncDocumentFavicon(nextVersion)
+      syncDocumentFavicon(nextVersion, null)
       toast.success("Фавикон сброшен до значения по умолчанию")
     } catch {
       notifyMutationError("Не удалось удалить фавикон")
@@ -1020,7 +1044,7 @@ export function SiteSettingsEditor() {
               <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted border border-border">
                 <img
                   key={logoVersion}
-                  src={`/api/site/logo?ts=${logoVersion}`}
+                  src={getSiteLogoSrc(logoKey, { cacheBust: logoVersion })}
                   alt="Logo preview"
                   className="h-full w-full object-cover"
                   onLoad={() => setHasLogo(true)}
@@ -1100,7 +1124,7 @@ export function SiteSettingsEditor() {
                 {hasFavicon ? (
                   <img
                     key={faviconVersion}
-                    src={`/api/site/favicon?ts=${faviconVersion}`}
+                    src={getSiteFaviconSrc(faviconKey, { cacheBust: faviconVersion })}
                     alt="Favicon preview"
                     className="h-full w-full object-contain"
                     onError={() => setHasFavicon(false)}
@@ -1114,7 +1138,7 @@ export function SiteSettingsEditor() {
             </div>
             <p className="text-xs text-muted-foreground">
               Загрузите PNG/WebP/SVG логотип. Он будет автоматически преобразован в квадратный фавикон 32×32 px. Если
-              удалить кастомный фавикон, вернётся значение по умолчанию из <code>public/favicon.ico</code>.
+              удалить кастомный фавикон, вернётся значение по умолчанию (<code>/logo.jpg</code>).
             </p>
           </div>
           <div className="space-y-2">
@@ -1177,7 +1201,7 @@ export function SiteSettingsEditor() {
                 {hasHeroBackgroundLight ? (
                   <img
                     key={heroBackgroundLightVersion}
-                    src={`/api/site/backgrounds/hero?theme=light&ts=${heroBackgroundLightVersion}`}
+                    src={bgPreview("hero", "light", null, heroBackgroundLightVersion)}
                     alt="Hero background preview (light theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasHeroBackgroundLight(false)}
@@ -1229,7 +1253,7 @@ export function SiteSettingsEditor() {
                 {hasHeroBackgroundDark ? (
                   <img
                     key={heroBackgroundDarkVersion}
-                    src={`/api/site/backgrounds/hero?theme=dark&ts=${heroBackgroundDarkVersion}`}
+                    src={bgPreview("hero", "dark", null, heroBackgroundDarkVersion)}
                     alt="Hero background preview (dark theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasHeroBackgroundDark(false)}
@@ -1281,7 +1305,7 @@ export function SiteSettingsEditor() {
                 {hasGlobalBackgroundLight ? (
                   <img
                     key={globalBackgroundLightVersion}
-                    src={`/api/site/backgrounds/global?theme=light&ts=${globalBackgroundLightVersion}`}
+                    src={bgPreview("global", "light", null, globalBackgroundLightVersion)}
                     alt="Global background preview (light theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasGlobalBackgroundLight(false)}
@@ -1333,7 +1357,7 @@ export function SiteSettingsEditor() {
                 {hasGlobalBackgroundDark ? (
                   <img
                     key={globalBackgroundDarkVersion}
-                    src={`/api/site/backgrounds/global?theme=dark&ts=${globalBackgroundDarkVersion}`}
+                    src={bgPreview("global", "dark", null, globalBackgroundDarkVersion)}
                     alt="Global background preview (dark theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasGlobalBackgroundDark(false)}
@@ -1392,7 +1416,7 @@ export function SiteSettingsEditor() {
                 {hasAffiliateHeroBackgroundLight ? (
                   <img
                     key={affiliateHeroBackgroundLightVersion}
-                    src={`/api/site/backgrounds/hero?scope=affiliate&theme=light&ts=${affiliateHeroBackgroundLightVersion}`}
+                    src={bgPreview("hero", "light", "affiliate", affiliateHeroBackgroundLightVersion)}
                     alt="Affiliate hero background preview (light theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasAffiliateHeroBackgroundLight(false)}
@@ -1437,7 +1461,7 @@ export function SiteSettingsEditor() {
                 {hasAffiliateHeroBackgroundDark ? (
                   <img
                     key={affiliateHeroBackgroundDarkVersion}
-                    src={`/api/site/backgrounds/hero?scope=affiliate&theme=dark&ts=${affiliateHeroBackgroundDarkVersion}`}
+                    src={bgPreview("hero", "dark", "affiliate", affiliateHeroBackgroundDarkVersion)}
                     alt="Affiliate hero background preview (dark theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasAffiliateHeroBackgroundDark(false)}
@@ -1482,7 +1506,7 @@ export function SiteSettingsEditor() {
                 {hasAffiliateGlobalBackgroundLight ? (
                   <img
                     key={affiliateGlobalBackgroundLightVersion}
-                    src={`/api/site/backgrounds/global?scope=affiliate&theme=light&ts=${affiliateGlobalBackgroundLightVersion}`}
+                    src={bgPreview("global", "light", "affiliate", affiliateGlobalBackgroundLightVersion)}
                     alt="Affiliate global background preview (light theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasAffiliateGlobalBackgroundLight(false)}
@@ -1527,7 +1551,7 @@ export function SiteSettingsEditor() {
                 {hasAffiliateGlobalBackgroundDark ? (
                   <img
                     key={affiliateGlobalBackgroundDarkVersion}
-                    src={`/api/site/backgrounds/global?scope=affiliate&theme=dark&ts=${affiliateGlobalBackgroundDarkVersion}`}
+                    src={bgPreview("global", "dark", "affiliate", affiliateGlobalBackgroundDarkVersion)}
                     alt="Affiliate global background preview (dark theme)"
                     className="h-full w-full object-cover"
                     onError={() => setHasAffiliateGlobalBackgroundDark(false)}

@@ -41,7 +41,7 @@ export function maintenanceHtml(telegramUrl: string | null): string {
   </style>
 </head>
 <body>
-  <img src="/api/site/logo" width="48" height="48" style="border-radius:8px;margin-bottom:24px" alt="Logo" />
+  <img src="/logo.jpg" width="48" height="48" style="border-radius:8px;margin-bottom:24px" alt="Logo" />
   <h1>Сайт временно недоступен</h1>
   <p>Site temporarily unavailable</p>
   ${telegramButton}

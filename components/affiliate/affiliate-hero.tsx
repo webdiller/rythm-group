@@ -24,9 +24,16 @@ type AffiliateHeroData = {
 type AffiliateHeroProps = {
   data?: AffiliateHeroData | null
   enableAffiliateCooperationFormats: boolean
+  backgroundLightSrc?: string
+  backgroundDarkSrc?: string
 }
 
-export function AffiliateHero({ data, enableAffiliateCooperationFormats }: AffiliateHeroProps) {
+export function AffiliateHero({
+  data,
+  enableAffiliateCooperationFormats,
+  backgroundLightSrc = "/backgrounds/hero-affiliate-light.webp",
+  backgroundDarkSrc = "/backgrounds/hero-affiliate-dark.webp",
+}: AffiliateHeroProps) {
   const { locale, t } = useLocale()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -57,8 +64,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
 
   useEffect(() => {
     if (!mounted) return
-    const theme = resolvedTheme === "light" ? "light" : "dark"
-    const src = `/api/site/backgrounds/hero?scope=affiliate&theme=${theme}`
+    const src = resolvedTheme === "light" ? backgroundLightSrc : backgroundDarkSrc
     setHeroImageLoaded(false)
     setHeroContentVisible(false)
 
@@ -69,14 +75,14 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
       // Не держим экран затемнённым, если изображение не загрузилось.
       setHeroImageLoaded(true)
     }
-  }, [mounted, resolvedTheme])
+  }, [mounted, resolvedTheme, backgroundLightSrc, backgroundDarkSrc])
 
   useEffect(() => {
     if (!mounted) return
     // Прогреваем dark-версию заранее, чтобы переключение темы было плавнее.
     const darkImg = new Image()
-    darkImg.src = "/api/site/backgrounds/hero?scope=affiliate&theme=dark"
-  }, [mounted])
+    darkImg.src = backgroundDarkSrc
+  }, [mounted, backgroundDarkSrc])
 
   useEffect(() => {
     if (!heroImageLoaded) return
@@ -95,11 +101,11 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats }: Affil
         <div className="absolute inset-0 z-0" aria-hidden="true">
           <div
             className="absolute inset-0 bg-cover bg-center dark:hidden"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=light')" }}
+            style={{ backgroundImage: `url('${backgroundLightSrc}')` }}
           />
           <div
             className="absolute inset-0 hidden bg-cover bg-center dark:block"
-            style={{ backgroundImage: "url('/api/site/backgrounds/hero?scope=affiliate&theme=dark')" }}
+            style={{ backgroundImage: `url('${backgroundDarkSrc}')` }}
           />
           <div
             className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}

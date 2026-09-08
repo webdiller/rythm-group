@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Plus, Trash2, Edit, Image as ImageIcon, ArrowUp, ArrowDown } from "lucide-react"
+import { getChannelAvatarSrc, isChannelAvatarS3Key } from "@/lib/s3/channel-avatar-url"
 
 interface Channel {
   id: number
@@ -19,6 +20,8 @@ interface Channel {
   reach: string | null
   url: string
   order_index: number
+  avatar?: string | null
+  hasAvatar?: boolean
 }
 
 interface Category {
@@ -57,10 +60,15 @@ export function ChannelsEditor() {
       if (channelsRes.ok) {
         const channelsJson = (await channelsRes.json()) as { data?: Channel[] }
         setChannels(
-          (channelsJson.data ?? []).map((ch) => ({
-            ...ch,
-            reach: ch.reach ?? null,
-          })),
+          (channelsJson.data ?? []).map((ch) => {
+            const hadAvatar = Boolean(ch.avatar)
+            return {
+              ...ch,
+              reach: ch.reach ?? null,
+              avatar: isChannelAvatarS3Key(ch.avatar) ? ch.avatar!.trim() : null,
+              hasAvatar: hadAvatar,
+            }
+          }),
         )
       }
       if (categoriesRes.ok) {
@@ -171,12 +179,12 @@ export function ChannelsEditor() {
     .slice()
     .sort((a, b) => a.order_index - b.order_index)
 
-  const handleUploadAvatar = async (channelId: number, file: File) => {
+  const handleUploadAvatar = async (channelId: number, file: File): Promise<string | null> => {
     try {
       const maxSizeBytes = 5 * 1024 * 1024
       if (file.size > maxSizeBytes) {
         toast.error("Файл не должен превышать 5 МБ")
-        return
+        return null
       }
 
       const token = getToken()
@@ -193,14 +201,19 @@ export function ChannelsEditor() {
       })
 
       if (response.ok) {
+        const json = (await response.json()) as { data?: { avatar?: string | null } }
+        const key = isChannelAvatarS3Key(json.data?.avatar) ? json.data!.avatar!.trim() : null
         toast.success("Аватар обновлён")
         await loadData()
         setAvatarsVersion((v) => v + 1)
+        return key
       } else {
         toast.error("Не удалось загрузить аватар")
+        return null
       }
     } catch {
       toast.error("Не удалось загрузить аватар")
+      return null
     }
   }
 
@@ -625,6 +638,8 @@ export function ChannelsEditor() {
                         <AdminChannelAvatar
                           channelId={channel.id}
                           name={channel.name}
+                          avatar={channel.avatar}
+                          hasAvatar={channel.hasAvatar}
                           version={avatarsVersion}
                         />
                         <div>
@@ -717,6 +732,8 @@ export function ChannelsEditor() {
                     <AdminChannelAvatar
                       channelId={channel.id}
                       name={channel.name}
+                      avatar={channel.avatar}
+                      hasAvatar={channel.hasAvatar}
                       version={avatarsVersion}
                     />
                     <div>
@@ -791,24 +808,31 @@ export function ChannelsEditor() {
 function AdminChannelAvatar({
   channelId,
   name,
+  avatar,
+  hasAvatar,
   version,
 }: {
   channelId: number
   name: string
+  avatar?: string | null
+  hasAvatar?: boolean
   version?: number
 }) {
-  const [hasImage, setHasImage] = useState(true)
+  const src = getChannelAvatarSrc(
+    { id: channelId, avatar, hasAvatar },
+    { cacheBust: version },
+  )
+  const [hasImage, setHasImage] = useState(Boolean(src))
 
-  // При смене версии аватара пробуем снова показать изображение
   useEffect(() => {
-    setHasImage(true)
-  }, [version, channelId])
+    setHasImage(Boolean(src))
+  }, [src, version, channelId])
 
   return (
     <div className="h-10 w-10 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
-      {hasImage ? (
+      {hasImage && src ? (
         <img
-          src={`/api/content/channels/${channelId}/avatar?ts=${version ?? 0}`}
+          src={src}
           alt={name}
           className="h-full w-full object-cover"
           onError={() => setHasImage(false)}
@@ -904,7 +928,7 @@ function ChannelForm({
   categories: Category[]
   onSave: (channel: Partial<Channel>, avatarFile?: File | null) => void
   submitting: boolean
-  onUploadAvatar: (channelId: number, file: File) => Promise<void> | void
+  onUploadAvatar: (channelId: number, file: File) => Promise<string | null> | void
   onDeleteAvatar: (channelId: number) => void
   onCancel: () => void
 }) {
@@ -917,7 +941,12 @@ function ChannelForm({
     order_index: channel?.order_index || 0,
   })
 
-  const [hasAvatar, setHasAvatar] = useState(true)
+  const [hasAvatar, setHasAvatar] = useState(
+    Boolean(channel?.avatar) || Boolean(channel?.hasAvatar),
+  )
+  const [avatarKey, setAvatarKey] = useState<string | null>(
+    isChannelAvatarS3Key(channel?.avatar) ? channel!.avatar!.trim() : null,
+  )
   const [avatarVersion, setAvatarVersion] = useState(0)
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null)
   const [newAvatarPreviewUrl, setNewAvatarPreviewUrl] = useState<string | null>(null)
@@ -1005,7 +1034,16 @@ function ChannelForm({
               {hasAvatar ? (
                 <img
                   key={avatarVersion}
-                  src={`/api/content/channels/${channel.id}/avatar?ts=${avatarVersion}`}
+                  src={
+                    getChannelAvatarSrc(
+                      {
+                        id: channel.id,
+                        avatar: avatarKey,
+                        hasAvatar: true,
+                      },
+                      { cacheBust: avatarVersion },
+                    ) ?? undefined
+                  }
                   alt={channel.name}
                   className="h-full w-full object-cover"
                   onError={() => setHasAvatar(false)}
@@ -1021,8 +1059,11 @@ function ChannelForm({
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    await onUploadAvatar(channel.id, file)
+                    const key = await onUploadAvatar(channel.id, file)
                     e.target.value = ""
+                    if (typeof key === "string" || key === null) {
+                      setAvatarKey(key)
+                    }
                     setHasAvatar(true)
                     setAvatarVersion((v) => v + 1)
                   }
@@ -1033,7 +1074,12 @@ function ChannelForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => onDeleteAvatar(channel.id)}
+                  onClick={() => {
+                    onDeleteAvatar(channel.id)
+                    setAvatarKey(null)
+                    setHasAvatar(false)
+                    setAvatarVersion((v) => v + 1)
+                  }}
                 >
                   Удалить аватар
                 </Button>

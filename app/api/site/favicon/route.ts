@@ -4,41 +4,13 @@ import { requireAuth } from "@/lib/auth"
 import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
-import { promises as fs } from "node:fs"
-import path from "node:path"
+import {
+  deleteSiteAssetIfStored,
+  uploadSiteFaviconPng,
+} from "@/lib/s3/site-assets"
+import { sanitizeSiteSettingsBranding } from "@/lib/server/sanitize-site-branding"
 
 export const runtime = "nodejs"
-
-export async function GET() {
-  const db = getDb()
-  const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
-
-  if (existing?.favicon) {
-    const buffer = Buffer.from(existing.favicon, "base64")
-    return new NextResponse(buffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=86400, immutable",
-      },
-    })
-  }
-
-  // Fallback to default favicon from public
-  try {
-    const faviconPath = path.join(process.cwd(), "public", "favicon.ico")
-    const fileBuffer = await fs.readFile(faviconPath)
-    return new NextResponse(fileBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "image/x-icon",
-        "Cache-Control": "public, max-age=86400, immutable",
-      },
-    })
-  } catch {
-    return new NextResponse(null, { status: 404 })
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,23 +37,36 @@ export async function POST(request: NextRequest) {
       .png({ quality: 80 })
       .toBuffer()
 
-    const base64 = optimizedBuffer.toString("base64")
+    const key = await uploadSiteFaviconPng(optimizedBuffer)
 
     const db = getDb()
     const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
+    const previous = existing?.favicon ?? null
 
-    if (existing) {
-      const [updated] = db
-        .update(tableSiteSettings)
-        .set({ favicon: base64 })
-        .where(eq(tableSiteSettings.id, existing.id))
-        .returning()
-        .all()
-      return NextResponse.json({ data: updated, meta: null })
+    try {
+      if (existing) {
+        const [updated] = db
+          .update(tableSiteSettings)
+          .set({ favicon: key })
+          .where(eq(tableSiteSettings.id, existing.id))
+          .returning()
+          .all()
+        if (previous && previous !== key) await deleteSiteAssetIfStored(previous)
+        return NextResponse.json({
+          data: updated ? sanitizeSiteSettingsBranding(updated) : null,
+          meta: null,
+        })
+      }
+
+      const [created] = db.insert(tableSiteSettings).values({ favicon: key }).returning().all()
+      return NextResponse.json(
+        { data: created ? sanitizeSiteSettingsBranding(created) : null, meta: null },
+        { status: 201 },
+      )
+    } catch (error) {
+      await deleteSiteAssetIfStored(key)
+      throw error
     }
-
-    const [created] = db.insert(tableSiteSettings).values({ favicon: base64 }).returning().all()
-    return NextResponse.json({ data: created, meta: null }, { status: 201 })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -98,10 +83,10 @@ export async function DELETE(request: NextRequest) {
     const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
 
     if (!existing) {
-      // Nothing to delete, but fallback will still use default favicon
       return NextResponse.json({ data: null, meta: null })
     }
 
+    const previous = existing.favicon
     const [updated] = db
       .update(tableSiteSettings)
       .set({ favicon: null })
@@ -109,7 +94,12 @@ export async function DELETE(request: NextRequest) {
       .returning()
       .all()
 
-    return NextResponse.json({ data: updated, meta: null })
+    await deleteSiteAssetIfStored(previous)
+
+    return NextResponse.json({
+      data: updated ? sanitizeSiteSettingsBranding(updated) : null,
+      meta: null,
+    })
   } catch (error: unknown) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -118,4 +108,3 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-

@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db"
 import { tableChannels, tableChannelCategories } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
+import { deleteChannelAvatarIfStored } from "@/lib/s3/channel-avatar"
 import type {
   GetAllResponse,
   GetOneParams,
@@ -69,11 +70,17 @@ export class ServiceChannels {
     return { data: updated, meta: null }
   }
 
-  static deleteOne(params: DeleteOneParams): DeleteOneResponse {
+  static async deleteOne(params: DeleteOneParams): Promise<DeleteOneResponse> {
     const db = getDb()
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
+    const existing = db
+      .select({ avatar: tableChannels.avatar })
+      .from(tableChannels)
+      .where(eq(tableChannels.id, id))
+      .get()
     db.delete(tableChannels).where(eq(tableChannels.id, id)).run()
+    await deleteChannelAvatarIfStored(existing?.avatar)
     return { data: true, meta: null }
   }
 }
