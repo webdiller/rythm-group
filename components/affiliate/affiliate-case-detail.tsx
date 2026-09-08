@@ -19,7 +19,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
   const { locale, t } = useLocale()
   const cp = t.affiliate.casePage
   const [views, setViews] = useState(c.views)
-  const [coverBroken, setCoverBroken] = useState(false)
+  const [activeGalleryId, setActiveGalleryId] = useState(c.gallery[0]?.id ?? null)
   const title = locale === "en" ? c.title_en : c.title_ru
   const desc = locale === "en" ? c.shortDescription_en : c.shortDescription_ru
   const category = locale === "en" ? c.category_en : c.category_ru
@@ -32,9 +32,15 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         ? "No date"
         : "Без даты"
   const coverSrc = c.coverImage?.trim() || ""
-  const showCover = Boolean(coverSrc) && !coverBroken
+  const showAvatar = Boolean(c.showLogoOnCaseDetail && coverSrc)
+  const gallery = c.gallery
+  const activeImage = gallery.find((item) => item.id === activeGalleryId) ?? gallery[0] ?? null
   const showWishlists = c.showWishlists
   const showViews = c.showViews
+
+  useEffect(() => {
+    setActiveGalleryId(c.gallery[0]?.id ?? null)
+  }, [c.gallery])
 
   useEffect(() => {
     if (!showViews) return
@@ -74,22 +80,82 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         ← {cp.back}
       </Link>
 
-      <header className="space-y-4">
-        {showCover ? (
-          <div className="overflow-hidden rounded-2xl border border-border/80 bg-muted">
-            <img
-              src={coverSrc}
-              alt=""
-              className="aspect-21/9 w-full object-contain p-4 md:aspect-[2.6/1] md:p-6"
-              loading="eager"
-              decoding="async"
-              onError={() => setCoverBroken(true)}
-            />
+      <header className="space-y-6">
+        {activeImage ? (
+          <div className="space-y-3">
+            <div className="relative flex max-h-[70vh] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted">
+              <img
+                key={`${activeImage.id}-blur`}
+                src={activeImage.originalSrc}
+                alt=""
+                aria-hidden
+                width={activeImage.width}
+                height={activeImage.height}
+                className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover blur-md"
+                loading="eager"
+                decoding="async"
+              />
+              <img
+                key={activeImage.id}
+                src={activeImage.originalSrc}
+                alt=""
+                width={activeImage.width}
+                height={activeImage.height}
+                className="relative z-10 mx-auto max-h-[70vh] w-full object-contain"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+            {gallery.length > 1 ? (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {gallery.map((image) => {
+                  const isActive = image.id === activeImage.id
+                  return (
+                    <button
+                      key={image.id}
+                      type="button"
+                      onClick={() => setActiveGalleryId(image.id)}
+                      className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border transition-colors ${
+                        isActive
+                          ? "border-primary ring-2 ring-primary/40"
+                          : "border-border/70 hover:border-primary/40"
+                      }`}
+                      aria-label={locale === "en" ? "Show image" : "Показать изображение"}
+                      aria-pressed={isActive}
+                    >
+                      <img
+                        src={image.thumbnailSrc}
+                        alt=""
+                        width={image.thumbnailWidth}
+                        height={image.thumbnailHeight}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
           </div>
         ) : null}
-        <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
-          {title}
-        </h1>
+
+        <div className="flex items-center gap-4">
+          {showAvatar ? (
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-muted sm:h-16 sm:w-16">
+              <img
+                src={coverSrc}
+                alt=""
+                className="h-full w-full object-contain p-1"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+          ) : null}
+          <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+            {title}
+          </h1>
+        </div>
       </header>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">

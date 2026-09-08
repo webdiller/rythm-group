@@ -2,6 +2,7 @@ import { getDb } from "@/lib/db"
 import { tablePartners } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { deletePartnerLogoIfStored } from "@/lib/s3/partner-logo"
+import { deletePartnerCaseGalleryAll } from "@/lib/s3/partner-gallery"
 import type {
   GetAllResponse,
   GetOneParams,
@@ -64,6 +65,10 @@ export class ServicePartners {
     if (body.show_in_affiliate_steam !== undefined) set.show_in_affiliate_steam = body.show_in_affiliate_steam
     if (body.show_wishlists !== undefined) set.show_wishlists = body.show_wishlists
     if (body.show_views !== undefined) set.show_views = body.show_views
+    if (body.case_gallery !== undefined) set.case_gallery = body.case_gallery
+    if (body.show_logo_on_case_detail !== undefined) {
+      set.show_logo_on_case_detail = body.show_logo_on_case_detail
+    }
     if (body.order_index !== undefined) set.order_index = body.order_index
     const [updated] = db.update(tablePartners).set(set).where(eq(tablePartners.id, id)).returning().all()
     if (!updated) throw new Error("Partner not found")
@@ -75,12 +80,16 @@ export class ServicePartners {
     const id = Number(params.id)
     if (Number.isNaN(id)) throw new Error("Invalid id")
     const existing = db
-      .select({ logo_url: tablePartners.logo_url })
+      .select({
+        logo_url: tablePartners.logo_url,
+        case_gallery: tablePartners.case_gallery,
+      })
       .from(tablePartners)
       .where(eq(tablePartners.id, id))
       .get()
     db.delete(tablePartners).where(eq(tablePartners.id, id)).run()
     await deletePartnerLogoIfStored(existing?.logo_url)
+    await deletePartnerCaseGalleryAll(existing?.case_gallery)
     return { data: true, meta: null }
   }
 }

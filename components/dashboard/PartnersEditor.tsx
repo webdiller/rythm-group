@@ -14,6 +14,7 @@ import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
 import { buildAffiliateCaseSlug } from "@/lib/affiliate/cases-ui"
 import { wishlistsCasePath } from "@/lib/wishlists-path"
 import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
+import { PartnerCaseGalleryEditor } from "@/components/dashboard/partner-case-gallery-editor"
 
 interface PartnerCategory {
   id: number
@@ -44,6 +45,8 @@ interface Partner {
   show_in_affiliate_steam?: boolean | null
   show_wishlists?: boolean | null
   show_views?: boolean | null
+  case_gallery?: string | null
+  show_logo_on_case_detail?: boolean | null
   order_index: number
 }
 
@@ -573,6 +576,14 @@ export function PartnersEditor() {
                   categories={categories}
                   onSave={handleSavePartner}
                   submitting={savingPartner}
+                  onGalleryJsonChange={(caseGalleryJson) => {
+                    if (!editingPartner) return
+                    const next = { ...editingPartner, case_gallery: caseGalleryJson }
+                    setEditingPartner(next)
+                    setPartners((prev) =>
+                      prev.map((item) => (item.id === next.id ? { ...item, case_gallery: caseGalleryJson } : item)),
+                    )
+                  }}
                   onCancel={() => {
                     setIsPartnerDialogOpen(false)
                     setEditingPartner(null)
@@ -833,12 +844,14 @@ function PartnerForm({
   onSave,
   submitting,
   onCancel,
+  onGalleryJsonChange,
 }: {
   partner: Partner | null
   categories: PartnerCategory[]
   onSave: (partner: Partial<Partner>, logoFile?: File | null) => void
   submitting: boolean
   onCancel: () => void
+  onGalleryJsonChange?: (caseGalleryJson: string) => void
 }) {
   const [formData, setFormData] = useState<{
     category_id: number | null
@@ -858,6 +871,7 @@ function PartnerForm({
     show_in_affiliate_steam: boolean
     show_wishlists: boolean
     show_views: boolean
+    show_logo_on_case_detail: boolean
     order_index: number
   }>({
     category_id: partner?.category_id ?? (categories[0]?.id ?? null),
@@ -877,6 +891,7 @@ function PartnerForm({
     show_in_affiliate_steam: partner?.show_in_affiliate_steam ?? true,
     show_wishlists: partner?.show_wishlists ?? true,
     show_views: partner?.show_views ?? true,
+    show_logo_on_case_detail: partner?.show_logo_on_case_detail ?? true,
     order_index: partner?.order_index ?? 0,
   })
 
@@ -1078,6 +1093,23 @@ function PartnerForm({
             <Switch
               checked={formData.show_views}
               onCheckedChange={(checked) => setFormData({ ...formData, show_views: checked })}
+            />
+          </Label>
+        </div>
+        <div className="flex items-center justify-between rounded border p-3">
+          <Label className="flex w-full items-center justify-between">
+            <div className="pr-4">
+              <p>Показывать аву на детальной странице</p>
+              <p className="text-xs font-normal text-muted-foreground">
+                Если выключено — на детальной странице остаются только изображения галереи (без аватарки
+                рядом с названием).
+              </p>
+            </div>
+            <Switch
+              checked={formData.show_logo_on_case_detail}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, show_logo_on_case_detail: checked })
+              }
             />
           </Label>
         </div>
@@ -1316,6 +1348,17 @@ function PartnerForm({
           </div>
         )}
       </div>
+      {partner ? (
+        <PartnerCaseGalleryEditor
+          partnerId={partner.id}
+          initialGalleryJson={partner.case_gallery}
+          onGalleryJsonChange={onGalleryJsonChange}
+        />
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Галерею детальной страницы можно заполнить после сохранения кейса.
+        </p>
+      )}
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:flex-row sm:justify-end sm:px-6">
         <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
           Отменить

@@ -61,7 +61,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
           <h1 className="text-lg font-bold sm:text-xl">CMS Dashboard</h1>
           <Button
-            variant="outline"
+            variant="dark"
             onClick={handleLogout}
             className="h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
           >

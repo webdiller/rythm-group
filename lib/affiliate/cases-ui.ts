@@ -1,4 +1,10 @@
 import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
+import {
+  getPartnerGalleryOriginalSrc,
+  getPartnerGalleryThumbnailSrc,
+  parsePartnerCaseGalleryJson,
+  type PartnerCaseGalleryImage,
+} from "@/lib/s3/partner-gallery-url"
 
 export type LandingPartnerCategory = {
   id: number
@@ -27,6 +33,8 @@ export type LandingPartner = {
   show_in_affiliate_steam?: boolean | null
   show_wishlists?: boolean | null
   show_views?: boolean | null
+  case_gallery?: string | null
+  show_logo_on_case_detail?: boolean | null
   order_index: number
 }
 
@@ -39,6 +47,16 @@ export type AffiliateCaseCardUi = {
   wishlists: number
 }
 
+export type AffiliateCaseGalleryImageUi = {
+  id: string
+  originalSrc: string
+  thumbnailSrc: string
+  width: number
+  height: number
+  thumbnailWidth: number
+  thumbnailHeight: number
+}
+
 export type AffiliateCaseDetailUi = {
   id: number
   slug: string
@@ -46,6 +64,8 @@ export type AffiliateCaseDetailUi = {
   title_ru: string
   title_en: string
   coverImage: string
+  showLogoOnCaseDetail: boolean
+  gallery: AffiliateCaseGalleryImageUi[]
   category_ru: string
   category_en: string
   shortDescription_ru: string
@@ -89,6 +109,26 @@ function generatedViews(id: number): number {
   return 1200 + ((id * 173) % 95000)
 }
 
+function mapGalleryForUi(raw: string | null | undefined): AffiliateCaseGalleryImageUi[] {
+  const images = parsePartnerCaseGalleryJson(raw)
+  const out: AffiliateCaseGalleryImageUi[] = []
+  for (const image of images) {
+    const originalSrc = getPartnerGalleryOriginalSrc(image.originalKey)
+    const thumbnailSrc = getPartnerGalleryThumbnailSrc(image.thumbnailKey)
+    if (!originalSrc || !thumbnailSrc) continue
+    out.push({
+      id: image.id,
+      originalSrc,
+      thumbnailSrc,
+      width: image.width,
+      height: image.height,
+      thumbnailWidth: image.thumbnailWidth,
+      thumbnailHeight: image.thumbnailHeight,
+    })
+  }
+  return out
+}
+
 export function mapPartnerToAffiliateCaseCard(partner: LandingPartner): AffiliateCaseCardUi {
   return {
     id: partner.id,
@@ -113,6 +153,8 @@ export function mapPartnerToAffiliateCaseDetail(
     title_ru: partner.title_ru ?? partner.name,
     title_en: partner.title_en ?? partner.name,
     coverImage: getPartnerLogoSrc(partner) ?? "",
+    showLogoOnCaseDetail: partner.show_logo_on_case_detail ?? true,
+    gallery: mapGalleryForUi(partner.case_gallery),
     category_ru: category?.name_ru ?? "Без категории",
     category_en: category?.name_en ?? "Uncategorized",
     shortDescription_ru: partner.short_description_ru ?? "",
@@ -125,3 +167,5 @@ export function mapPartnerToAffiliateCaseDetail(
     showViews: partner.show_views ?? true,
   }
 }
+
+export type { PartnerCaseGalleryImage }

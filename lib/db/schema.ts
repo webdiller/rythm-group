@@ -113,6 +113,13 @@ export const tablePartners = sqliteTable("partners", {
   show_wishlists: integer("show_wishlists", { mode: "boolean" }).default(true),
   /** Показывать просмотры на фронте (значение в админке сохраняется всегда) */
   show_views: integer("show_views", { mode: "boolean" }).default(true),
+  /**
+   * JSON-галерея детальной страницы кейса:
+   * [{ id, originalKey, thumbnailKey, width, height, thumbnailWidth, thumbnailHeight }]
+   */
+  case_gallery: text("case_gallery"),
+  /** Показывать основную аву (logo_url) на детальной странице кейса рядом с названием */
+  show_logo_on_case_detail: integer("show_logo_on_case_detail", { mode: "boolean" }).default(true),
   order_index: integer("order_index").default(0),
 })
 

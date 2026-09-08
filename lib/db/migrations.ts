@@ -53,4 +53,12 @@ export function runMigrations(sqlite: Database.Database): void {
   if (!partnerNames.has("show_views")) {
     sqlite.exec("ALTER TABLE partners ADD COLUMN show_views INTEGER NOT NULL DEFAULT 1")
   }
+  if (!partnerNames.has("case_gallery")) {
+    sqlite.exec("ALTER TABLE partners ADD COLUMN case_gallery TEXT")
+  }
+  if (!partnerNames.has("show_logo_on_case_detail")) {
+    sqlite.exec(
+      "ALTER TABLE partners ADD COLUMN show_logo_on_case_detail INTEGER NOT NULL DEFAULT 1",
+    )
+  }
 }
