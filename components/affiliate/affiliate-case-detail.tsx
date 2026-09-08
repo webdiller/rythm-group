@@ -35,7 +35,7 @@ function GallerySlide({
   priority?: boolean
 }) {
   return (
-    <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:aspect-[16/10] lg:aspect-auto lg:min-h-[22rem] lg:max-h-[min(70vh,36rem)]">
+    <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:h-[360px] lg:h-[420px]">
       <img
         src={image.originalSrc}
         alt=""
@@ -51,7 +51,7 @@ function GallerySlide({
         alt=""
         width={image.width}
         height={image.height}
-        className="relative z-10 max-h-full w-full object-contain"
+        className="relative z-10 h-full w-full object-contain"
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
