@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import PhotoSwipeLightbox from "photoswipe/lightbox"
+import "photoswipe/style.css"
 import { useLocale } from "@/lib/locale-context"
 import type {
   AffiliateCaseDetailUi,
@@ -30,12 +32,21 @@ type AffiliateCaseDetailProps = {
 function GallerySlide({
   image,
   priority,
+  onOpen,
+  openLabel,
 }: {
   image: AffiliateCaseGalleryImageUi
   priority?: boolean
+  onOpen: () => void
+  openLabel: string
 }) {
   return (
-    <div className="relative flex h-[280px] w-full items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:h-[360px] lg:h-[420px]">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={openLabel}
+      className="relative flex h-[280px] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:h-[360px] lg:h-[420px]"
+    >
       <img
         src={image.originalSrc}
         alt=""
@@ -55,7 +66,7 @@ function GallerySlide({
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
-    </div>
+    </button>
   )
 }
 
@@ -68,6 +79,8 @@ function CaseGallery({
 }) {
   const [api, setApi] = useState<CarouselApi>()
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const lightboxRef = useRef<PhotoSwipeLightbox | null>(null)
+  const openLabel = locale === "en" ? "Open image" : "Открыть изображение"
 
   const onSelect = useCallback((carouselApi: CarouselApi) => {
     if (!carouselApi) return
@@ -90,12 +103,44 @@ function CaseGallery({
     api?.scrollTo(0, true)
   }, [gallery, api])
 
+  useEffect(() => {
+    if (gallery.length === 0) return
+
+    const lightbox = new PhotoSwipeLightbox({
+      dataSource: gallery.map((image) => ({
+        src: image.originalSrc,
+        width: image.width,
+        height: image.height,
+        msrc: image.thumbnailSrc,
+      })),
+      // Dynamic import — PhotoSwipe core loads on first open
+      // https://photoswipe.com/react-image-gallery/
+      pswpModule: () => import("photoswipe"),
+    })
+    lightbox.init()
+    lightboxRef.current = lightbox
+
+    return () => {
+      lightbox.destroy()
+      lightboxRef.current = null
+    }
+  }, [gallery])
+
+  const openLightbox = useCallback((index: number) => {
+    lightboxRef.current?.loadAndOpen(index)
+  }, [])
+
   if (gallery.length === 0) return null
 
   if (gallery.length === 1) {
     return (
       <div className="w-full">
-        <GallerySlide image={gallery[0]!} priority />
+        <GallerySlide
+          image={gallery[0]!}
+          priority
+          onOpen={() => openLightbox(0)}
+          openLabel={openLabel}
+        />
       </div>
     )
   }
@@ -107,20 +152,25 @@ function CaseGallery({
         opts={{ align: "start", loop: false }}
         className="w-full"
       >
-        <CarouselContent className="-ml-0">
+        <CarouselContent className="-ml-3 sm:-ml-4">
           {gallery.map((image, index) => (
-            <CarouselItem key={image.id} className="pl-0">
-              <GallerySlide image={image} priority={index === 0} />
+            <CarouselItem key={image.id} className="basis-[88%] pl-3 sm:basis-[90%] sm:pl-4">
+              <GallerySlide
+                image={image}
+                priority={index === 0}
+                onOpen={() => openLightbox(index)}
+                openLabel={openLabel}
+              />
             </CarouselItem>
           ))}
         </CarouselContent>
         <CarouselPrevious
           variant="secondary"
-          className="left-3 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40"
+          className="left-1 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:left-2"
         />
         <CarouselNext
           variant="secondary"
-          className="right-3 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40"
+          className="right-1 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:right-2"
         />
       </Carousel>
 

@@ -161,45 +161,57 @@ export function PartnerCaseGalleryEditor({
     document.cookie.split("; ").find((row) => row.startsWith("auth_token="))?.split("=")[1]
 
   const handleUpload = async (fileList: FileList | null) => {
-    const files = fileList ? Array.from(fileList) : []
-    if (files.length === 0) return
+    const selected = fileList ? Array.from(fileList) : []
+    if (selected.length === 0) return
+
     const maxSizeBytes = 15 * 1024 * 1024
-    const tooLarge = files.find((file) => file.size > maxSizeBytes)
-    if (tooLarge) {
-      toast.error("Каждый файл не должен превышать 15 МБ")
-      return
+    const files: File[] = []
+    for (const file of selected) {
+      if (file.size > maxSizeBytes) {
+        toast.error(`«${file.name}» больше 15 МБ — пропущен`)
+        continue
+      }
+      files.push(file)
     }
-    setUploadingCount(files.length)
-    try {
-      const token = getToken()
-      const formData = new FormData()
-      for (const file of files) {
+    if (files.length === 0) return
+
+    setUploadingCount((count) => count + files.length)
+    const token = getToken()
+    let successCount = 0
+
+    // По одному запросу: скелетон снимается сразу после каждого файла,
+    // без ожидания всей пачки (параллельные POST гоняют запись case_gallery).
+    for (const file of files) {
+      try {
+        const formData = new FormData()
         formData.append("file", file)
+        formData.append("partnerId", String(partnerId))
+        const res = await fetch("/api/content/partners/gallery", {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          body: formData,
+        })
+        if (!res.ok) {
+          const err = (await res.json().catch(() => null)) as { error?: string } | null
+          toast.error(err?.error ?? `Не удалось загрузить «${file.name}»`)
+        } else {
+          const json = (await res.json()) as {
+            data?: { images?: PartnerCaseGalleryImage[] }
+          }
+          commitImages(json.data?.images ?? [])
+          successCount += 1
+        }
+      } catch {
+        toast.error(`Не удалось загрузить «${file.name}»`)
+      } finally {
+        setUploadingCount((count) => Math.max(0, count - 1))
       }
-      formData.append("partnerId", String(partnerId))
-      const res = await fetch("/api/content/partners/gallery", {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        body: formData,
-      })
-      if (!res.ok) {
-        const err = (await res.json().catch(() => null)) as { error?: string } | null
-        toast.error(err?.error ?? "Не удалось загрузить изображения")
-        return
-      }
-      const json = (await res.json()) as {
-        data?: { images?: PartnerCaseGalleryImage[]; uploaded?: PartnerCaseGalleryImage[] }
-      }
-      const next = json.data?.images ?? []
-      commitImages(next)
-      const count = json.data?.uploaded?.length ?? files.length
-      toast.success(
-        count === 1 ? "Изображение добавлено в галерею" : `Добавлено изображений: ${count}`,
-      )
-    } catch {
-      toast.error("Не удалось загрузить изображения")
-    } finally {
-      setUploadingCount(0)
+    }
+
+    if (successCount === 1) {
+      toast.success("Изображение добавлено в галерею")
+    } else if (successCount > 1) {
+      toast.success(`Добавлено изображений: ${successCount}`)
     }
   }
 
