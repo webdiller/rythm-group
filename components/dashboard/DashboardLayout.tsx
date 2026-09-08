@@ -42,7 +42,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const tabs: DashboardTab[] = [
     { id: "translations", label: "Переводы", icon: FileText },
     { id: "channels", label: "Каналы", icon: Tv },
-    { id: "partners", label: "Партнёры", icon: Users },
+    { id: "partners", label: "Партнёры (кейсы)", icon: Users },
     { id: "about-cards", label: "О нас (карточки)", icon: IdCard },
     { id: "blog", label: "Блог", icon: Newspaper },
     { id: "contacts", label: "Контакты", icon: Mail },
@@ -71,7 +71,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         </div>
       </header>
       <div className="container mx-auto flex flex-col gap-4 p-4 sm:gap-6 sm:p-6 lg:flex-row">
-        <aside className="w-full space-y-2 overflow-x-auto lg:w-64 lg:overflow-visible">
+        <aside className="w-full space-y-2 overflow-x-auto lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:w-64 lg:shrink-0 lg:self-start lg:overflow-x-visible lg:overflow-y-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (

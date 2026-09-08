@@ -69,6 +69,7 @@ export class ServicePartners {
     if (body.show_logo_on_case_detail !== undefined) {
       set.show_logo_on_case_detail = body.show_logo_on_case_detail
     }
+    if (body.related_channel_ids !== undefined) set.related_channel_ids = body.related_channel_ids
     if (body.order_index !== undefined) set.order_index = body.order_index
     const [updated] = db.update(tablePartners).set(set).where(eq(tablePartners.id, id)).returning().all()
     if (!updated) throw new Error("Partner not found")

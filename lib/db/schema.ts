@@ -120,6 +120,11 @@ export const tablePartners = sqliteTable("partners", {
   case_gallery: text("case_gallery"),
   /** Показывать основную аву (logo_url) на детальной странице кейса рядом с названием */
   show_logo_on_case_detail: integer("show_logo_on_case_detail", { mode: "boolean" }).default(true),
+  /**
+   * JSON-массив id каналов из «Наши каналы»:
+   * [1, 5, 9]
+   */
+  related_channel_ids: text("related_channel_ids"),
   order_index: integer("order_index").default(0),
 })
 

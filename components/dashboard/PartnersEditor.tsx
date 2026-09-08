@@ -1,20 +1,43 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { Plus, Trash2, Edit, ArrowUp, ArrowDown } from "lucide-react"
+import { Plus, Trash2, Edit, ArrowUp, ArrowDown, GripVertical, X, Upload } from "lucide-react"
 import { buildAffiliateCaseSlug } from "@/lib/affiliate/cases-ui"
 import { wishlistsCasePath } from "@/lib/wishlists-path"
 import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 import { PartnerCaseGalleryEditor } from "@/components/dashboard/partner-case-gallery-editor"
+import {
+  parseRelatedChannelIds,
+  serializeRelatedChannelIds,
+} from "@/lib/partners/related-channel-ids"
+import { getChannelAvatarSrc } from "@/lib/s3/channel-avatar-url"
 
 interface PartnerCategory {
   id: number
@@ -47,7 +70,73 @@ interface Partner {
   show_views?: boolean | null
   case_gallery?: string | null
   show_logo_on_case_detail?: boolean | null
+  related_channel_ids?: string | null
   order_index: number
+}
+
+type ChannelOption = {
+  id: number
+  name: string
+  avatar?: string | null
+  order_index?: number | null
+}
+
+function SortableRelatedChannelItem({
+  channel,
+  onRemove,
+}: {
+  channel: ChannelOption
+  onRemove: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: channel.id,
+  })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+  }
+  const avatarSrc = getChannelAvatarSrc({
+    id: channel.id,
+    avatar: channel.avatar,
+    hasAvatar: Boolean(channel.avatar),
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-2 py-1.5"
+    >
+      <button
+        type="button"
+        className="cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        aria-label="Перетащить"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-xs font-bold text-primary">
+        {avatarSrc ? (
+          <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+        ) : (
+          channel.name.charAt(0)
+        )}
+      </div>
+      <span className="min-w-0 flex-1 truncate text-sm">{channel.name}</span>
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        className="h-8 w-8"
+        onClick={onRemove}
+        aria-label="Убрать канал"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  )
 }
 
 function PartnerLogoThumb({ partner }: { partner: Partner }) {
@@ -564,7 +653,7 @@ export function PartnersEditor() {
                 Добавить кейс
               </Button>
             </DialogTrigger>
-            <DialogContent className="flex max-h-[min(92vh,860px)] w-[calc(100vw-1rem)] max-w-5xl flex-col gap-0 p-0 sm:w-full">
+            <DialogContent className="flex max-h-[min(94vh,1040px)] w-[calc(100vw-1rem)] max-w-6xl flex-col gap-0 p-0 sm:w-full sm:max-w-6xl lg:max-w-7xl">
               <DialogHeader className="border-b px-4 py-3 sm:px-6 sm:py-4">
                 <DialogTitle>
                   {editingPartner ? "Редактировать кейс" : "Добавить кейс"}
@@ -898,9 +987,16 @@ function PartnerForm({
   const [hasLogo, setHasLogo] = useState(Boolean(partner?.logo_url))
   const [logoKey, setLogoKey] = useState<string | null>(partner?.logo_url ?? null)
   const [logoVersion, setLogoVersion] = useState(0)
+  const [logoUploading, setLogoUploading] = useState(false)
   const [newLogoFile, setNewLogoFile] = useState<File | null>(null)
   const [newLogoPreviewUrl, setNewLogoPreviewUrl] = useState<string | null>(null)
+  const logoFileInputRef = useRef<HTMLInputElement>(null)
+  const newLogoFileInputRef = useRef<HTMLInputElement>(null)
   const [blogPosts, setBlogPosts] = useState<BlogPostOption[]>([])
+  const [channelOptions, setChannelOptions] = useState<ChannelOption[]>([])
+  const [relatedChannelIds, setRelatedChannelIds] = useState<number[]>(() =>
+    parseRelatedChannelIds(partner?.related_channel_ids),
+  )
   const [targetType, setTargetType] = useState<"case_detail" | "blog_post">(
     partner?.target_url?.startsWith("/blog/") ? "blog_post" : "case_detail",
   )
@@ -939,7 +1035,52 @@ function PartnerForm({
     }
 
     void loadBlogPosts()
+
+    const loadChannels = async () => {
+      try {
+        const res = await fetch("/api/content/channels")
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: ChannelOption[] }
+        const rows = [...(json.data ?? [])].sort(
+          (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0) || a.id - b.id,
+        )
+        setChannelOptions(rows)
+      } catch {
+        // ignore channels list fetch errors in partner form
+      }
+    }
+    void loadChannels()
   }, [])
+
+  useEffect(() => {
+    setRelatedChannelIds(parseRelatedChannelIds(partner?.related_channel_ids))
+  }, [partner?.id, partner?.related_channel_ids])
+
+  const toggleRelatedChannel = (channelId: number, checked: boolean) => {
+    setRelatedChannelIds((prev) => {
+      if (checked) {
+        if (prev.includes(channelId)) return prev
+        return [...prev, channelId]
+      }
+      return prev.filter((id) => id !== channelId)
+    })
+  }
+
+  const relatedChannelSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const handleRelatedChannelDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setRelatedChannelIds((prev) => {
+      const oldIndex = prev.indexOf(Number(active.id))
+      const newIndex = prev.indexOf(Number(over.id))
+      if (oldIndex < 0 || newIndex < 0) return prev
+      return arrayMove(prev, oldIndex, newIndex)
+    })
+  }
 
   const NO_CATEGORY_VALUE = "none"
   const NO_BLOG_POST_VALUE = "__none__"
@@ -969,6 +1110,7 @@ function PartnerForm({
             developer_url: formData.developer_url.trim() || null,
             target_url: resolvedTargetUrl,
             category_id: formData.category_id,
+            related_channel_ids: serializeRelatedChannelIds(relatedChannelIds),
           },
           newLogoFile ?? undefined,
         )
@@ -1114,6 +1256,88 @@ function PartnerForm({
           </Label>
         </div>
       </div>
+      <div className="space-y-3 rounded-md border border-border p-3">
+        <div>
+          <Label>Каналы публикации</Label>
+          <p className="text-xs text-muted-foreground">
+            Отметьте каналы из «Наши каналы», затем перетащите выбранные, чтобы задать порядок на
+            детальной странице.
+          </p>
+        </div>
+        {channelOptions.length === 0 ? (
+          <p className="text-xs text-muted-foreground">Сначала добавьте каналы в «Наши каналы».</p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Доступные каналы</p>
+              <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-border/70 p-2 lg:max-h-80">
+                {channelOptions.map((channel) => {
+                  const checked = relatedChannelIds.includes(channel.id)
+                  const avatarSrc = getChannelAvatarSrc({
+                    id: channel.id,
+                    avatar: channel.avatar,
+                    hasAvatar: Boolean(channel.avatar),
+                  })
+                  return (
+                    <label
+                      key={channel.id}
+                      className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) =>
+                          toggleRelatedChannel(channel.id, value === true)
+                        }
+                      />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-xs font-bold text-primary">
+                        {avatarSrc ? (
+                          <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          channel.name.charAt(0)
+                        )}
+                      </div>
+                      <span className="min-w-0 truncate text-sm">{channel.name}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">
+                Выбранные (перетащите для порядка)
+              </p>
+              {relatedChannelIds.length === 0 ? (
+                <p className="rounded-md border border-dashed border-border/70 px-3 py-6 text-center text-xs text-muted-foreground">
+                  Пока ничего не выбрано
+                </p>
+              ) : (
+                <DndContext
+                  sensors={relatedChannelSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleRelatedChannelDragEnd}
+                >
+                  {/* @ts-expect-error — occasional TS2786 between @dnd-kit/sortable and React 19 type packages */}
+                  <SortableContext items={relatedChannelIds} strategy={verticalListSortingStrategy}>
+                    <div className="max-h-64 space-y-2 overflow-y-auto rounded-md border border-border/70 p-2 lg:max-h-80">
+                      {relatedChannelIds.map((channelId) => {
+                        const channel = channelOptions.find((item) => item.id === channelId)
+                        if (!channel) return null
+                        return (
+                          <SortableRelatedChannelItem
+                            key={channelId}
+                            channel={channel}
+                            onRemove={() => toggleRelatedChannel(channelId, false)}
+                          />
+                        )
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="flex flex-col gap-4">
         <div className="space-y-2">
           <Label>Куда ведет клик по кейсу</Label>
@@ -1234,7 +1458,7 @@ function PartnerForm({
           даунскейла. У уже созданной карточки можно заменить или удалить изображение без пересоздания кейса.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+          <div className="relative flex h-28 w-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
             {hasLogo && partner ? (
               <img
                 key={logoVersion}
@@ -1245,7 +1469,7 @@ function PartnerForm({
                   ) ?? undefined
                 }
                 alt={partner.name}
-                className="max-h-full max-w-full object-contain p-2"
+                className={`max-h-full max-w-full object-contain p-2 ${logoUploading ? "opacity-40" : ""}`}
                 onError={() => setHasLogo(false)}
               />
             ) : newLogoPreviewUrl ? (
@@ -1257,94 +1481,152 @@ function PartnerForm({
             ) : (
               <span className="px-2 text-center text-xs text-muted-foreground">Логотип не задан</span>
             )}
+            {logoUploading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 text-xs font-medium text-foreground">
+                Загрузка…
+              </div>
+            ) : null}
           </div>
           {partner && (
             <div className="flex flex-col gap-2">
-              <Label className="text-xs text-muted-foreground">Заменить изображение</Label>
-              <Input
+              <input
+                ref={logoFileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
-                  const token = document.cookie
-                    .split("; ")
-                    .find((row) => row.startsWith("auth_token="))
-                    ?.split("=")[1]
-                  const formDataUpload = new FormData()
-                  formDataUpload.append("file", file)
-                  formDataUpload.append("partnerId", String(partner.id))
-                  const res = await fetch("/api/content/partners/logo", {
-                    method: "POST",
-                    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                    body: formDataUpload,
-                  })
-                  if (res.ok) {
-                    const json = (await res.json()) as { data?: { logo_url?: string | null } }
-                    setLogoKey(json.data?.logo_url ?? null)
-                    setHasLogo(Boolean(json.data?.logo_url))
-                    setLogoVersion((v) => v + 1)
-                    toast.success("Изображение обновлено")
-                  } else {
-                    toast.error("Не удалось загрузить изображение")
-                  }
-                  e.target.value = ""
-                }}
-              />
-              {hasLogo && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={async () => {
-                    if (!partner) return
+                  setLogoUploading(true)
+                  try {
                     const token = document.cookie
                       .split("; ")
                       .find((row) => row.startsWith("auth_token="))
                       ?.split("=")[1]
-                    const formDataDelete = new FormData()
-                    formDataDelete.append("partnerId", String(partner.id))
+                    const formDataUpload = new FormData()
+                    formDataUpload.append("file", file)
+                    formDataUpload.append("partnerId", String(partner.id))
                     const res = await fetch("/api/content/partners/logo", {
-                      method: "DELETE",
+                      method: "POST",
                       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                      body: formDataDelete,
+                      body: formDataUpload,
                     })
                     if (res.ok) {
-                      setLogoKey(null)
-                      setHasLogo(false)
+                      const json = (await res.json()) as { data?: { logo_url?: string | null } }
+                      setLogoKey(json.data?.logo_url ?? null)
+                      setHasLogo(Boolean(json.data?.logo_url))
                       setLogoVersion((v) => v + 1)
-                      toast.success("Изображение удалено")
+                      toast.success("Изображение обновлено")
                     } else {
-                      toast.error("Не удалось удалить изображение")
+                      toast.error("Не удалось загрузить изображение")
                     }
-                  }}
+                  } catch {
+                    toast.error("Не удалось загрузить изображение")
+                  } finally {
+                    setLogoUploading(false)
+                    e.target.value = ""
+                  }
+                }}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={logoUploading}
+                  onClick={() => logoFileInputRef.current?.click()}
                 >
-                  Удалить изображение
+                  <Upload className="h-4 w-4" />
+                  {logoUploading ? "Загрузка…" : hasLogo ? "Заменить" : "Загрузить"}
                 </Button>
-              )}
+                {hasLogo ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={logoUploading}
+                    onClick={async () => {
+                      if (!partner) return
+                      setLogoUploading(true)
+                      try {
+                        const token = document.cookie
+                          .split("; ")
+                          .find((row) => row.startsWith("auth_token="))
+                          ?.split("=")[1]
+                        const formDataDelete = new FormData()
+                        formDataDelete.append("partnerId", String(partner.id))
+                        const res = await fetch("/api/content/partners/logo", {
+                          method: "DELETE",
+                          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                          body: formDataDelete,
+                        })
+                        if (res.ok) {
+                          setLogoKey(null)
+                          setHasLogo(false)
+                          setLogoVersion((v) => v + 1)
+                          toast.success("Изображение удалено")
+                        } else {
+                          toast.error("Не удалось удалить изображение")
+                        }
+                      } catch {
+                        toast.error("Не удалось удалить изображение")
+                      } finally {
+                        setLogoUploading(false)
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Удалить
+                  </Button>
+                ) : null}
+              </div>
             </div>
           )}
         </div>
         {!partner && (
           <div className="mt-3 flex flex-col gap-2">
-            <Label className="text-xs text-muted-foreground">Загрузить изображение</Label>
-            <Input
+            <input
+              ref={newLogoFileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              aria-hidden
+              tabIndex={-1}
               onChange={(e) => {
                 const file = e.target.files?.[0] ?? null
                 setNewLogoFile(file)
+                e.target.value = ""
               }}
             />
-            {newLogoPreviewUrl && (
-              <div className="flex h-28 w-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
-                <img
-                  src={newLogoPreviewUrl}
-                  alt={formData.name || "Новый партнёр"}
-                  className="max-h-full max-w-full object-contain p-2"
-                />
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => newLogoFileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+                {newLogoFile ? "Выбрать другой файл" : "Загрузить файл"}
+              </Button>
+              {newLogoFile ? (
+                <>
+                  <span className="max-w-[14rem] truncate text-xs text-muted-foreground">
+                    {newLogoFile.name}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setNewLogoFile(null)}
+                  >
+                    <X className="h-4 w-4" />
+                    Сбросить
+                  </Button>
+                </>
+              ) : null}
+            </div>
           </div>
         )}
       </div>

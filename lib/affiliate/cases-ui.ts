@@ -5,6 +5,8 @@ import {
   parsePartnerCaseGalleryJson,
   type PartnerCaseGalleryImage,
 } from "@/lib/s3/partner-gallery-url"
+import { getChannelAvatarSrc } from "@/lib/s3/channel-avatar-url"
+import { parseRelatedChannelIds } from "@/lib/partners/related-channel-ids"
 
 export type LandingPartnerCategory = {
   id: number
@@ -35,7 +37,16 @@ export type LandingPartner = {
   show_views?: boolean | null
   case_gallery?: string | null
   show_logo_on_case_detail?: boolean | null
+  related_channel_ids?: string | null
   order_index: number
+}
+
+export type LandingChannel = {
+  id: number
+  name: string
+  url: string
+  avatar?: string | null
+  order_index?: number | null
 }
 
 export type AffiliateCaseCardUi = {
@@ -57,6 +68,13 @@ export type AffiliateCaseGalleryImageUi = {
   thumbnailHeight: number
 }
 
+export type AffiliateCaseChannelUi = {
+  id: number
+  name: string
+  url: string
+  avatarSrc: string | null
+}
+
 export type AffiliateCaseDetailUi = {
   id: number
   slug: string
@@ -66,6 +84,7 @@ export type AffiliateCaseDetailUi = {
   coverImage: string
   showLogoOnCaseDetail: boolean
   gallery: AffiliateCaseGalleryImageUi[]
+  channels: AffiliateCaseChannelUi[]
   category_ru: string
   category_en: string
   shortDescription_ru: string
@@ -129,6 +148,31 @@ function mapGalleryForUi(raw: string | null | undefined): AffiliateCaseGalleryIm
   return out
 }
 
+function mapChannelsForUi(
+  rawIds: string | null | undefined,
+  channels: LandingChannel[],
+): AffiliateCaseChannelUi[] {
+  const ids = parseRelatedChannelIds(rawIds)
+  if (ids.length === 0 || channels.length === 0) return []
+  const byId = new Map(channels.map((channel) => [channel.id, channel]))
+  const out: AffiliateCaseChannelUi[] = []
+  for (const id of ids) {
+    const channel = byId.get(id)
+    if (!channel?.url?.trim()) continue
+    out.push({
+      id: channel.id,
+      name: channel.name,
+      url: channel.url.trim(),
+      avatarSrc: getChannelAvatarSrc({
+        id: channel.id,
+        avatar: channel.avatar,
+        hasAvatar: Boolean(channel.avatar),
+      }),
+    })
+  }
+  return out
+}
+
 export function mapPartnerToAffiliateCaseCard(partner: LandingPartner): AffiliateCaseCardUi {
   return {
     id: partner.id,
@@ -143,6 +187,7 @@ export function mapPartnerToAffiliateCaseCard(partner: LandingPartner): Affiliat
 export function mapPartnerToAffiliateCaseDetail(
   partner: LandingPartner,
   categories: LandingPartnerCategory[],
+  channels: LandingChannel[] = [],
 ): AffiliateCaseDetailUi {
   const category = categories.find((item) => item.id === partner.category_id) ?? null
 
@@ -155,6 +200,7 @@ export function mapPartnerToAffiliateCaseDetail(
     coverImage: getPartnerLogoSrc(partner) ?? "",
     showLogoOnCaseDetail: partner.show_logo_on_case_detail ?? true,
     gallery: mapGalleryForUi(partner.case_gallery),
+    channels: mapChannelsForUi(partner.related_channel_ids, channels),
     category_ru: category?.name_ru ?? "Без категории",
     category_en: category?.name_en ?? "Uncategorized",
     shortDescription_ru: partner.short_description_ru ?? "",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Plus, Trash2, Edit, Image as ImageIcon, ArrowUp, ArrowDown } from "lucide-react"
+import { Plus, Trash2, Edit, Image as ImageIcon, ArrowUp, ArrowDown, Upload, X } from "lucide-react"
 import { getChannelAvatarSrc, isChannelAvatarS3Key } from "@/lib/s3/channel-avatar-url"
 
 interface Channel {
@@ -948,8 +948,11 @@ function ChannelForm({
     isChannelAvatarS3Key(channel?.avatar) ? channel!.avatar!.trim() : null,
   )
   const [avatarVersion, setAvatarVersion] = useState(0)
+  const [avatarUploading, setAvatarUploading] = useState(false)
   const [newAvatarFile, setNewAvatarFile] = useState<File | null>(null)
   const [newAvatarPreviewUrl, setNewAvatarPreviewUrl] = useState<string | null>(null)
+  const avatarFileInputRef = useRef<HTMLInputElement>(null)
+  const newAvatarFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!newAvatarFile) {
@@ -1030,7 +1033,7 @@ function ChannelForm({
         <div className="space-y-2">
           <Label>Аватар канала</Label>
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
+            <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
               {hasAvatar ? (
                 <img
                   key={avatarVersion}
@@ -1045,45 +1048,72 @@ function ChannelForm({
                     ) ?? undefined
                   }
                   alt={channel.name}
-                  className="h-full w-full object-cover"
+                  className={`h-full w-full object-cover ${avatarUploading ? "opacity-40" : ""}`}
                   onError={() => setHasAvatar(false)}
                 />
               ) : (
                 <span className="text-xs font-semibold">{channel.name.charAt(0)}</span>
               )}
+              {avatarUploading ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50 text-[10px] font-medium text-foreground">
+                  …
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-col gap-2">
-              <Input
+              <input
+                ref={avatarFileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
-                  if (file) {
+                  if (!file) return
+                  setAvatarUploading(true)
+                  try {
                     const key = await onUploadAvatar(channel.id, file)
-                    e.target.value = ""
                     if (typeof key === "string" || key === null) {
                       setAvatarKey(key)
                     }
                     setHasAvatar(true)
                     setAvatarVersion((v) => v + 1)
+                  } finally {
+                    setAvatarUploading(false)
+                    e.target.value = ""
                   }
                 }}
               />
-              {hasAvatar && (
+              <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    onDeleteAvatar(channel.id)
-                    setAvatarKey(null)
-                    setHasAvatar(false)
-                    setAvatarVersion((v) => v + 1)
-                  }}
+                  disabled={avatarUploading || submitting}
+                  onClick={() => avatarFileInputRef.current?.click()}
                 >
-                  Удалить аватар
+                  <Upload className="h-4 w-4" />
+                  {avatarUploading ? "Загрузка…" : hasAvatar ? "Заменить" : "Загрузить"}
                 </Button>
-              )}
+                {hasAvatar ? (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={avatarUploading || submitting}
+                    onClick={() => {
+                      onDeleteAvatar(channel.id)
+                      setAvatarKey(null)
+                      setHasAvatar(false)
+                      setAvatarVersion((v) => v + 1)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Удалить
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -1094,25 +1124,63 @@ function ChannelForm({
       {!channel && (
         <div className="space-y-2">
           <Label>Аватар канала (опционально)</Label>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null
-              setNewAvatarFile(file)
-            }}
-          />
-          {newAvatarPreviewUrl && (
-            <div className="mt-2">
-              <div className="h-12 w-12 overflow-hidden rounded-full border border-border flex items-center justify-center bg-muted">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
+              {newAvatarPreviewUrl ? (
                 <img
                   src={newAvatarPreviewUrl}
                   alt={formData.name || "Новый канал"}
                   className="h-full w-full object-cover"
                 />
+              ) : (
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {(formData.name || "?").charAt(0)}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                ref={newAvatarFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null
+                  setNewAvatarFile(file)
+                  e.target.value = ""
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => newAvatarFileInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  {newAvatarFile ? "Выбрать другой файл" : "Загрузить файл"}
+                </Button>
+                {newAvatarFile ? (
+                  <>
+                    <span className="max-w-[14rem] truncate text-xs text-muted-foreground">
+                      {newAvatarFile.name}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setNewAvatarFile(null)}
+                    >
+                      <X className="h-4 w-4" />
+                      Сбросить
+                    </Button>
+                  </>
+                ) : null}
               </div>
             </div>
-          )}
+          </div>
           <p className="text-xs text-muted-foreground">
             Изображение до 5 МБ. При загрузке будет автоматически сжато до 256x256 и формата WebP.
           </p>

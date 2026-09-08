@@ -1868,10 +1868,14 @@ export function SiteSettingsEditor() {
               Укажите полный URL на страницу с политикой обработки данных. Это может быть внешний сайт.
             </p>
           </div>
-          <div className="flex justify-end gap-2">
+        </CardContent>
+      </Card>
+
+      
+      <div className="sticky bottom-2 inset-x-0 bg-background p-2 rounded-lg z-10 border border-muted shadow"><div className="flex justify-between *:flex-1 md:justify-end md:*:flex-none gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="dark"
               onClick={() => {
                 if (!initialSettings) return
                 setLogoText(initialSettings.logoText)
@@ -1885,9 +1889,7 @@ export function SiteSettingsEditor() {
             <Button type="button" onClick={handleSaveSettings} disabled={savingSettings || loadingSettings}>
               {savingSettings ? "Сохранение…" : "Сохранить"}
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </div></div>
     </div>
   )
 }

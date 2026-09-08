@@ -32,6 +32,9 @@
   --chart-5: #991100;
   --radius: 0.5rem;
   --glow: #e61b00;
+  /* Типографика тела статьи блога: мягче контраст body ↔ bold */
+  --blog-body: #b8b8cc;
+  --blog-emphasis: #d8d8e4;
 }
 
 /* Light theme */
@@ -61,6 +64,8 @@
   --chart-4: #CC1600;
   --chart-5: #991100;
   --glow: #e61b00;
+  --blog-body: #3d3d52;
+  --blog-emphasis: #1c1c28;
 }
 
 @theme inline {
@@ -251,32 +256,38 @@ html {
 
 /* Rich text из блога (TipTap HTML); на проде контент санитизировать перед сохранением/выводом. */
 .blog-article-body {
-  @apply text-base leading-relaxed text-foreground;
+  @apply text-base leading-relaxed;
+  color: var(--blog-body);
 }
 .blog-article-body > * + * {
   margin-top: 1rem;
 }
 .blog-article-body h1 {
-  @apply mt-10 mb-4 text-2xl font-bold tracking-tight text-foreground;
+  @apply mt-10 mb-4 text-2xl font-bold tracking-tight;
+  color: var(--blog-emphasis);
 }
 .blog-article-body h2 {
-  @apply mt-10 mb-3 text-xl font-semibold tracking-tight text-foreground;
+  @apply mt-10 mb-3 text-xl font-semibold tracking-tight;
+  color: var(--blog-emphasis);
 }
 .blog-article-body h3 {
-  @apply mt-8 mb-2 text-lg font-semibold text-foreground;
+  @apply mt-8 mb-2 text-lg font-semibold;
+  color: var(--blog-emphasis);
 }
 .blog-article-body p {
-  @apply text-muted-foreground;
+  color: var(--blog-body);
 }
 .blog-article-body blockquote {
-  @apply my-4 border-l-4 border-primary/35 pl-4 italic text-muted-foreground;
+  @apply my-4 border-l-4 border-primary/35 pl-4 italic;
+  color: color-mix(in srgb, var(--blog-body) 88%, var(--blog-emphasis));
 }
 .blog-article-body a {
   @apply font-medium text-primary underline-offset-4 hover:underline;
 }
 .blog-article-body ul,
 .blog-article-body ol {
-  @apply my-4 pl-6 text-muted-foreground;
+  @apply my-4 pl-6;
+  color: var(--blog-body);
 }
 .blog-article-body ul {
   list-style-type: disc;
@@ -316,11 +327,15 @@ html {
   flex: 1;
   min-width: 0;
 }
-.blog-article-body strong {
-  @apply font-semibold text-foreground;
+.blog-article-body strong,
+.blog-article-body b {
+  @apply font-semibold;
+  color: var(--blog-emphasis);
 }
-.blog-article-body em {
-  @apply italic text-foreground/90;
+.blog-article-body em,
+.blog-article-body i {
+  @apply italic;
+  color: color-mix(in srgb, var(--blog-emphasis) 70%, var(--blog-body));
 }
 .blog-article-body .blog-video-embed,
 .blog-article-body video[data-video-embed] {

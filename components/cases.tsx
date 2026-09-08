@@ -36,6 +36,9 @@ export interface Partner {
   show_in_affiliate_steam?: boolean | null
   show_wishlists?: boolean | null
   show_views?: boolean | null
+  case_gallery?: string | null
+  show_logo_on_case_detail?: boolean | null
+  related_channel_ids?: string | null
   order_index: number
 }
 

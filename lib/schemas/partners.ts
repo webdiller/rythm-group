@@ -31,6 +31,7 @@ export const CreateOneBody = allZodSchemas.tablePartners.insert.pick({
   show_wishlists: true,
   show_views: true,
   show_logo_on_case_detail: true,
+  related_channel_ids: true,
   order_index: true,
 })
 
@@ -62,6 +63,7 @@ export const UpdateOneBody = z.object({
   show_views: z.boolean().optional(),
   case_gallery: z.string().nullable().optional(),
   show_logo_on_case_detail: z.boolean().optional(),
+  related_channel_ids: z.string().nullable().optional(),
   order_index: z.number().optional(),
 })
 

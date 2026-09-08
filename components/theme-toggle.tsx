@@ -30,9 +30,9 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="outline"
+      variant="dark"
       size="icon"
-      className="h-9 w-9 border-border bg-secondary text-secondary-foreground transition-colors hover:bg-border"
+      className="h-9 w-9 border-border bg-secondary! text-secondary-foreground transition-colors hover:bg-border"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? "Включить светлую тему" : "Включить тёмную тему"}
     >

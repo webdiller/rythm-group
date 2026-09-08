@@ -6,6 +6,7 @@ import PhotoSwipeLightbox from "photoswipe/lightbox"
 import "photoswipe/style.css"
 import { useLocale } from "@/lib/locale-context"
 import type {
+  AffiliateCaseChannelUi,
   AffiliateCaseDetailUi,
   AffiliateCaseGalleryImageUi,
 } from "@/lib/affiliate/cases-ui"
@@ -24,6 +25,35 @@ import { Eye, Heart, CalendarDays, Tag, ExternalLink } from "lucide-react"
 import { format } from "date-fns"
 import { enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+
+function CaseChannelMiniCard({ channel }: { channel: AffiliateCaseChannelUi }) {
+  const [hasImage, setHasImage] = useState(Boolean(channel.avatarSrc))
+
+  return (
+    <Link
+      href={channel.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/30"
+    >
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+        {hasImage && channel.avatarSrc ? (
+          <img
+            src={channel.avatarSrc}
+            alt=""
+            className="h-full w-full object-cover"
+            onError={() => setHasImage(false)}
+          />
+        ) : (
+          <span className="text-lg font-bold">{channel.name.charAt(0)}</span>
+        )}
+      </div>
+      <h3 className="min-w-0 truncate text-sm font-semibold text-card-foreground sm:text-base">
+        {channel.name}
+      </h3>
+    </Link>
+  )
+}
 
 type AffiliateCaseDetailProps = {
   caseItem: AffiliateCaseDetailUi
@@ -304,11 +334,11 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         <div className="min-w-0 space-y-6">
           <header className="flex items-center gap-4">
             {showAvatar ? (
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border/70 bg-muted sm:h-16 sm:w-16">
+              <div className="size-14 shrink-0 flex items-center sm:size-16">
                 <img
                   src={coverSrc}
                   alt=""
-                  className="h-full w-full object-contain p-1"
+                  className="object-contain h-auto w-full rounded-xl"
                   loading="eager"
                   decoding="async"
                 />
@@ -390,6 +420,17 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
                 </Card>
               ) : null}
             </div>
+          ) : null}
+
+          {c.channels.length > 0 ? (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-foreground">{cp.publishedInChannels}</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {c.channels.map((channel) => (
+                  <CaseChannelMiniCard key={channel.id} channel={channel} />
+                ))}
+              </div>
+            </section>
           ) : null}
         </div>
       </div>

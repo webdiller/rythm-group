@@ -61,4 +61,7 @@ export function runMigrations(sqlite: Database.Database): void {
       "ALTER TABLE partners ADD COLUMN show_logo_on_case_detail INTEGER NOT NULL DEFAULT 1",
     )
   }
+  if (!partnerNames.has("related_channel_ids")) {
+    sqlite.exec("ALTER TABLE partners ADD COLUMN related_channel_ids TEXT")
+  }
 }
