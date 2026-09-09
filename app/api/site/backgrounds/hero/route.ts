@@ -3,8 +3,8 @@ import { createBackgroundRouteHandlers } from "@/lib/server/background-route-han
 export const runtime = "nodejs"
 
 export const { POST, DELETE } = createBackgroundRouteHandlers({
-	kind: "hero",
-	requireLandscape: true,
-	orientationError: "Изображение для hero должно быть горизонтальным (16:9)",
-	resize: { width: 1920, height: 1080 },
+  kind: "hero",
+  requireLandscape: true,
+  orientationError: "Изображение для hero должно быть горизонтальным (16:9)",
+  resize: { width: 1920, height: 1080 },
 })

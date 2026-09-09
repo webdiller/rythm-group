@@ -39,18 +39,18 @@ A new module that runs `ALTER TABLE` statements idempotently at application star
 import type Database from "better-sqlite3"
 
 export function runMigrations(sqlite: Database.Database): void {
-	// Each migration is guarded by a column-existence check
-	const columns = sqlite.prepare("PRAGMA table_info(site_settings)").all() as Array<{
-		name: string
-	}>
-	const names = new Set(columns.map((c) => c.name))
+  // Each migration is guarded by a column-existence check
+  const columns = sqlite.prepare("PRAGMA table_info(site_settings)").all() as Array<{
+    name: string
+  }>
+  const names = new Set(columns.map((c) => c.name))
 
-	if (!names.has("page_blog_enabled")) {
-		sqlite.exec("ALTER TABLE site_settings ADD COLUMN page_blog_enabled INTEGER NOT NULL DEFAULT 1")
-	}
-	if (!names.has("page_affiliate_enabled")) {
-		sqlite.exec("ALTER TABLE site_settings ADD COLUMN page_affiliate_enabled INTEGER NOT NULL DEFAULT 1")
-	}
+  if (!names.has("page_blog_enabled")) {
+    sqlite.exec("ALTER TABLE site_settings ADD COLUMN page_blog_enabled INTEGER NOT NULL DEFAULT 1")
+  }
+  if (!names.has("page_affiliate_enabled")) {
+    sqlite.exec("ALTER TABLE site_settings ADD COLUMN page_affiliate_enabled INTEGER NOT NULL DEFAULT 1")
+  }
 }
 ```
 
@@ -115,23 +115,23 @@ import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 
 export function getPageVisibilityFlags(): {
-	pageBlogEnabled: boolean
-	pageAffiliateEnabled: boolean
+  pageBlogEnabled: boolean
+  pageAffiliateEnabled: boolean
 } {
-	const db = getDb()
-	const row = db
-		.select({
-			page_blog_enabled: tableSiteSettings.page_blog_enabled,
-			page_affiliate_enabled: tableSiteSettings.page_affiliate_enabled,
-		})
-		.from(tableSiteSettings)
-		.limit(1)
-		.get()
+  const db = getDb()
+  const row = db
+    .select({
+      page_blog_enabled: tableSiteSettings.page_blog_enabled,
+      page_affiliate_enabled: tableSiteSettings.page_affiliate_enabled,
+    })
+    .from(tableSiteSettings)
+    .limit(1)
+    .get()
 
-	return {
-		pageBlogEnabled: row?.page_blog_enabled ?? true,
-		pageAffiliateEnabled: row?.page_affiliate_enabled ?? true,
-	}
+  return {
+    pageBlogEnabled: row?.page_blog_enabled ?? true,
+    pageAffiliateEnabled: row?.page_affiliate_enabled ?? true,
+  }
 }
 ```
 
@@ -155,11 +155,11 @@ Two new optional props are added:
 
 ```typescript
 type HeaderProps = {
-	sectionHrefPrefix?: "" | "/"
-	navOrder?: HeaderNavItemId[]
-	logoText?: string | null
-	pageBlogEnabled?: boolean // new
-	pageAffiliateEnabled?: boolean // new
+  sectionHrefPrefix?: "" | "/"
+  navOrder?: HeaderNavItemId[]
+  logoText?: string | null
+  pageBlogEnabled?: boolean // new
+  pageAffiliateEnabled?: boolean // new
 }
 ```
 
@@ -167,12 +167,12 @@ The `navItems` array is filtered before rendering:
 
 ```typescript
 const navItems = resolvedNavOrder
-	.filter((id) => {
-		if (id === "blog" && pageBlogEnabled === false) return false
-		if (id === "affiliate" && pageAffiliateEnabled === false) return false
-		return true
-	})
-	.map((id) => navById[id])
+  .filter((id) => {
+    if (id === "blog" && pageBlogEnabled === false) return false
+    if (id === "affiliate" && pageAffiliateEnabled === false) return false
+    return true
+  })
+  .map((id) => navById[id])
 ```
 
 Default values for both props are `true` (undefined = enabled), preserving backward compatibility with all existing call sites (home page layout, etc.) that do not pass these props.
@@ -225,34 +225,34 @@ A new Card section "Видимость страниц" is added (placed before t
 
 ```tsx
 <Card>
-	<CardHeader>
-		<CardTitle>Видимость страниц</CardTitle>
-		<CardDescription>Главная страница (/) всегда доступна и не может быть отключена.</CardDescription>
-	</CardHeader>
-	<CardContent className="space-y-4">
-		<div className="flex items-center justify-between gap-4">
-			<div className="space-y-1">
-				<Label htmlFor="page_blog_enabled">Страница /blog</Label>
-				<p className="text-xs text-muted-foreground">При отключении страница вернёт 404 и исчезнет из навигации.</p>
-			</div>
-			<Switch
-				id="page_blog_enabled"
-				checked={pageBlogEnabled}
-				onCheckedChange={setPageBlogEnabled}
-			/>
-		</div>
-		<div className="flex items-center justify-between gap-4">
-			<div className="space-y-1">
-				<Label htmlFor="page_affiliate_enabled">Страница /affiliate</Label>
-				<p className="text-xs text-muted-foreground">При отключении страница вернёт 404 и исчезнет из навигации.</p>
-			</div>
-			<Switch
-				id="page_affiliate_enabled"
-				checked={pageAffiliateEnabled}
-				onCheckedChange={setPageAffiliateEnabled}
-			/>
-		</div>
-	</CardContent>
+  <CardHeader>
+    <CardTitle>Видимость страниц</CardTitle>
+    <CardDescription>Главная страница (/) всегда доступна и не может быть отключена.</CardDescription>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    <div className="flex items-center justify-between gap-4">
+      <div className="space-y-1">
+        <Label htmlFor="page_blog_enabled">Страница /blog</Label>
+        <p className="text-xs text-muted-foreground">При отключении страница вернёт 404 и исчезнет из навигации.</p>
+      </div>
+      <Switch
+        id="page_blog_enabled"
+        checked={pageBlogEnabled}
+        onCheckedChange={setPageBlogEnabled}
+      />
+    </div>
+    <div className="flex items-center justify-between gap-4">
+      <div className="space-y-1">
+        <Label htmlFor="page_affiliate_enabled">Страница /affiliate</Label>
+        <p className="text-xs text-muted-foreground">При отключении страница вернёт 404 и исчезнет из навигации.</p>
+      </div>
+      <Switch
+        id="page_affiliate_enabled"
+        checked={pageAffiliateEnabled}
+        onCheckedChange={setPageAffiliateEnabled}
+      />
+    </div>
+  </CardContent>
 </Card>
 ```
 

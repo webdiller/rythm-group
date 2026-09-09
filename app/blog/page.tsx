@@ -7,21 +7,21 @@ import { getPageVisibilityFlags } from "@/lib/db/page-visibility"
 export const dynamic = "force-dynamic"
 
 export default function BlogIndexPage() {
-	const { pageBlogEnabled } = getPageVisibilityFlags()
-	if (!pageBlogEnabled) notFound()
-	const categories = getBlogCategoriesSorted()
-	const posts = getPublishedPosts()
-	const showDates = getBlogShowDatesEnabled()
+  const { pageBlogEnabled } = getPageVisibilityFlags()
+  if (!pageBlogEnabled) notFound()
+  const categories = getBlogCategoriesSorted()
+  const posts = getPublishedPosts()
+  const showDates = getBlogShowDatesEnabled()
 
-	return (
-		<>
-			<BlogListingHeader />
-			<BlogListingScreen
-				posts={posts}
-				categories={categories}
-				activeCategorySlug={null}
-				showDates={showDates}
-			/>
-		</>
-	)
+  return (
+    <>
+      <BlogListingHeader />
+      <BlogListingScreen
+        posts={posts}
+        categories={categories}
+        activeCategorySlug={null}
+        showDates={showDates}
+      />
+    </>
+  )
 }

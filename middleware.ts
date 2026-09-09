@@ -2,9 +2,9 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export function maintenanceHtml(telegramUrl: string | null): string {
-	const telegramButton = telegramUrl && telegramUrl.trim().length > 0 ? `<a href="${telegramUrl}" style="display:inline-block;padding:12px 28px;background:#E61B00;color:#FAFAFA;text-decoration:none;border-radius:8px;font-size:0.95rem;font-weight:600;">Telegram</a>` : ""
+  const telegramButton = telegramUrl && telegramUrl.trim().length > 0 ? `<a href="${telegramUrl}" style="display:inline-block;padding:12px 28px;background:#E61B00;color:#FAFAFA;text-decoration:none;border-radius:8px;font-size:0.95rem;font-weight:600;">Telegram</a>` : ""
 
-	return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
@@ -47,41 +47,41 @@ export function maintenanceHtml(telegramUrl: string | null): string {
 }
 
 export function middleware(request: NextRequest) {
-	const { pathname } = request.nextUrl
+  const { pathname } = request.nextUrl
 
-	// Protect /dashboard routes (except /dashboard/login)
-	if (pathname.startsWith("/dashboard") && pathname !== "/dashboard/login") {
-		const token = request.cookies.get("auth_token")?.value
+  // Protect /dashboard routes (except /dashboard/login)
+  if (pathname.startsWith("/dashboard") && pathname !== "/dashboard/login") {
+    const token = request.cookies.get("auth_token")?.value
 
-		if (!token) {
-			const url = new URL("/dashboard/login", request.url)
-			return NextResponse.redirect(url)
-		}
-	}
+    if (!token) {
+      const url = new URL("/dashboard/login", request.url)
+      return NextResponse.redirect(url)
+    }
+  }
 
-	// Pass through protected routes without maintenance check
-	if (pathname.startsWith("/dashboard") || pathname.startsWith("/api")) {
-		return NextResponse.next()
-	}
+  // Pass through protected routes without maintenance check
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/api")) {
+    return NextResponse.next()
+  }
 
-	// Public routes: check maintenance mode
-	return fetch(`${request.nextUrl.origin}/api/internal/site-status`)
-		.then((res) => res.json())
-		.then((data: { site_published: boolean; telegram_url: string | null }) => {
-			if (data.site_published === false) {
-				return new Response(maintenanceHtml(data.telegram_url), {
-					status: 503,
-					headers: {
-						"Retry-After": "3600",
-						"Content-Type": "text/html; charset=utf-8",
-					},
-				})
-			}
-			return NextResponse.next()
-		})
-		.catch(() => NextResponse.next())
+  // Public routes: check maintenance mode
+  return fetch(`${request.nextUrl.origin}/api/internal/site-status`)
+    .then((res) => res.json())
+    .then((data: { site_published: boolean; telegram_url: string | null }) => {
+      if (data.site_published === false) {
+        return new Response(maintenanceHtml(data.telegram_url), {
+          status: 503,
+          headers: {
+            "Retry-After": "3600",
+            "Content-Type": "text/html; charset=utf-8",
+          },
+        })
+      }
+      return NextResponse.next()
+    })
+    .catch(() => NextResponse.next())
 }
 
 export const config = {
-	matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/wishlists/:path*", "/affiliate/:path*"],
+  matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/wishlists/:path*", "/affiliate/:path*"],
 }

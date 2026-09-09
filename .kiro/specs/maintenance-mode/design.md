@@ -52,7 +52,7 @@ Add an idempotent migration for the `site_published` column, following the exist
 
 ```typescript
 if (!names.has("site_published")) {
-	sqlite.exec("ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1")
+  sqlite.exec("ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1")
 }
 ```
 
@@ -77,14 +77,14 @@ site_published: integer("site_published", { mode: "boolean" }).default(true),
 export const runtime = "nodejs"
 
 export async function GET() {
-	const db = getDb()
-	const settings = db.select().from(tableSiteSettings).limit(1).all()[0]
-	const contact = db.select().from(tableContacts).where(eq(tableContacts.scope, "landing")).limit(1).all()[0]
+  const db = getDb()
+  const settings = db.select().from(tableSiteSettings).limit(1).all()[0]
+  const contact = db.select().from(tableContacts).where(eq(tableContacts.scope, "landing")).limit(1).all()[0]
 
-	return NextResponse.json({
-		site_published: settings?.site_published ?? true,
-		telegram_url: contact?.telegram_url ?? null,
-	})
+  return NextResponse.json({
+    site_published: settings?.site_published ?? true,
+    telegram_url: contact?.telegram_url ?? null,
+  })
 }
 ```
 
@@ -94,7 +94,7 @@ Updated to intercept public routes and check the maintenance flag:
 
 ```typescript
 export const config = {
-	matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/affiliate/:path*"],
+  matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/affiliate/:path*"],
 }
 ```
 
@@ -155,8 +155,8 @@ Include `site_published` in both `updateValues` and the `insert` fallback values
 
 ```typescript
 type SiteStatusResponse = {
-	site_published: boolean
-	telegram_url: string | null
+  site_published: boolean
+  telegram_url: string | null
 }
 ```
 
@@ -164,8 +164,8 @@ type SiteStatusResponse = {
 
 ```typescript
 type SiteSettingsPayload = {
-	// ... existing fields ...
-	site_published?: boolean | null // new
+  // ... existing fields ...
+  site_published?: boolean | null // new
 }
 ```
 

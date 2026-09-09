@@ -6,343 +6,343 @@
 /* Dark theme (default) */
 :root,
 .dark {
-	--background: #0a0a0f;
-	--foreground: #f0f0f5;
-	--card: #12121a;
-	--card-foreground: #f0f0f5;
-	--popover: #12121a;
-	--popover-foreground: #f0f0f5;
-	--primary: #e61b00;
-	--primary-foreground: #0a0a0f;
-	--secondary: #1a1a28;
-	--secondary-foreground: #f0f0f5;
-	--muted: #1a1a28;
-	--muted-foreground: #8888a0;
-	--accent: #e61b00;
-	--accent-foreground: #0a0a0f;
-	--destructive: #ff4444;
-	--destructive-foreground: #f0f0f5;
-	--border: #2a2a3a;
-	--input: #1a1a28;
-	--ring: #e61b00;
-	--chart-1: #e61b00;
-	--chart-2: #ff4444;
-	--chart-3: #e61b00;
-	--chart-4: #cc1600;
-	--chart-5: #991100;
-	--radius: 0.5rem;
-	--glow: #e61b00;
-	/* Типографика тела статьи блога: мягче контраст body ↔ bold */
-	--blog-body: #b8b8cc;
-	--blog-emphasis: #d8d8e4;
+  --background: #0a0a0f;
+  --foreground: #f0f0f5;
+  --card: #12121a;
+  --card-foreground: #f0f0f5;
+  --popover: #12121a;
+  --popover-foreground: #f0f0f5;
+  --primary: #e61b00;
+  --primary-foreground: #0a0a0f;
+  --secondary: #1a1a28;
+  --secondary-foreground: #f0f0f5;
+  --muted: #1a1a28;
+  --muted-foreground: #8888a0;
+  --accent: #e61b00;
+  --accent-foreground: #0a0a0f;
+  --destructive: #ff4444;
+  --destructive-foreground: #f0f0f5;
+  --border: #2a2a3a;
+  --input: #1a1a28;
+  --ring: #e61b00;
+  --chart-1: #e61b00;
+  --chart-2: #ff4444;
+  --chart-3: #e61b00;
+  --chart-4: #cc1600;
+  --chart-5: #991100;
+  --radius: 0.5rem;
+  --glow: #e61b00;
+  /* Типографика тела статьи блога: мягче контраст body ↔ bold */
+  --blog-body: #b8b8cc;
+  --blog-emphasis: #d8d8e4;
 }
 
 /* Light theme */
 .light {
-	--background: #fafafc;
-	--foreground: #0a0a0f;
-	--card: #ffffff;
-	--card-foreground: #0a0a0f;
-	--popover: #ffffff;
-	--popover-foreground: #0a0a0f;
-	--primary: #e61b00;
-	--primary-foreground: #ffffff;
-	--secondary: #f0f0f5;
-	--secondary-foreground: #0a0a0f;
-	--muted: #e8e8ee;
-	--muted-foreground: #5a5a70;
-	--accent: #e61b00;
-	--accent-foreground: #ffffff;
-	--destructive: #dc2626;
-	--destructive-foreground: #ffffff;
-	--border: #e0e0e8;
-	--input: #e8e8ee;
-	--ring: #e61b00;
-	--chart-1: #e61b00;
-	--chart-2: #dc2626;
-	--chart-3: #e61b00;
-	--chart-4: #cc1600;
-	--chart-5: #991100;
-	--glow: #e61b00;
-	--blog-body: #3d3d52;
-	--blog-emphasis: #1c1c28;
+  --background: #fafafc;
+  --foreground: #0a0a0f;
+  --card: #ffffff;
+  --card-foreground: #0a0a0f;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0f;
+  --primary: #e61b00;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f5;
+  --secondary-foreground: #0a0a0f;
+  --muted: #e8e8ee;
+  --muted-foreground: #5a5a70;
+  --accent: #e61b00;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e0e0e8;
+  --input: #e8e8ee;
+  --ring: #e61b00;
+  --chart-1: #e61b00;
+  --chart-2: #dc2626;
+  --chart-3: #e61b00;
+  --chart-4: #cc1600;
+  --chart-5: #991100;
+  --glow: #e61b00;
+  --blog-body: #3d3d52;
+  --blog-emphasis: #1c1c28;
 }
 
 @theme inline {
-	--font-sans: "Inter", "Inter Fallback", sans-serif;
-	--font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--color-card: var(--card);
-	--color-card-foreground: var(--card-foreground);
-	--color-popover: var(--popover);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-primary: var(--primary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-muted: var(--muted);
-	--color-muted-foreground: var(--muted-foreground);
-	--color-accent: var(--accent);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-destructive: var(--destructive);
-	--color-destructive-foreground: var(--destructive-foreground);
-	--color-border: var(--border);
-	--color-input: var(--input);
-	--color-ring: var(--ring);
-	--color-chart-1: var(--chart-1);
-	--color-chart-2: var(--chart-2);
-	--color-chart-3: var(--chart-3);
-	--color-chart-4: var(--chart-4);
-	--color-chart-5: var(--chart-5);
-	--color-glow: var(--glow);
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Inter", "Inter Fallback", sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-glow: var(--glow);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
-	* {
-		@apply border-border outline-ring/50;
-	}
-	html,
-	body {
-		background-color: #0a0a0f;
-	}
-	body {
-		@apply bg-background text-foreground;
-	}
-	button,
-	a {
-		@apply cursor-pointer;
-	}
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body {
+    background-color: #0a0a0f;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button,
+  a {
+    @apply cursor-pointer;
+  }
 }
 
 html {
-	scroll-behavior: smooth;
-	@apply scroll-pt-24;
+  scroll-behavior: smooth;
+  @apply scroll-pt-24;
 }
 
 @keyframes glow-pulse {
-	0%,
-	100% {
-		opacity: 0.4;
-	}
-	50% {
-		opacity: 1;
-	}
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes float-up {
-	from {
-		opacity: 0;
-		transform: translateY(30px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes count-up {
-	from {
-		opacity: 0;
-		transform: scale(0.8);
-	}
-	to {
-		opacity: 1;
-		transform: scale(1);
-	}
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-glow-pulse {
-	animation: glow-pulse 3s ease-in-out infinite;
+  animation: glow-pulse 3s ease-in-out infinite;
 }
 
 .animate-float-up {
-	animation: float-up 0.8s ease-out forwards;
+  animation: float-up 0.8s ease-out forwards;
 }
 
 .animate-count-up {
-	animation: count-up 0.6s ease-out forwards;
+  animation: count-up 0.6s ease-out forwards;
 }
 
 /* Вход на страницу (affiliate / blog): тёмный экран → исчезновение + проявление контента */
 .page-enter-reveal-root {
-	--page-enter-duration: 0.85s;
-	--page-enter-ease: cubic-bezier(0.33, 1, 0.68, 1);
+  --page-enter-duration: 0.85s;
+  --page-enter-ease: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 @keyframes page-enter-overlay {
-	from {
-		opacity: 1;
-		pointer-events: auto;
-	}
-	to {
-		opacity: 0;
-		pointer-events: none;
-	}
+  from {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  to {
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 @keyframes page-enter-content {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .page-enter-reveal-overlay {
-	animation: page-enter-overlay var(--page-enter-duration) var(--page-enter-ease) forwards;
+  animation: page-enter-overlay var(--page-enter-duration) var(--page-enter-ease) forwards;
 }
 
 .page-enter-reveal-content {
-	opacity: 0;
-	animation: page-enter-content var(--page-enter-duration) var(--page-enter-ease) forwards;
+  opacity: 0;
+  animation: page-enter-content var(--page-enter-duration) var(--page-enter-ease) forwards;
 }
 
 /* Плавный переход между /, /blog и /affiliate через мягкое затемнение (без swipe). */
 .route-fade-transition-overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 110;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: rgba(10, 10, 15, 1);
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 300ms cubic-bezier(0.33, 1, 0.68, 1);
-	will-change: opacity;
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms cubic-bezier(0.33, 1, 0.68, 1);
+  will-change: opacity;
 }
 
 .route-fade-transition-overlay.is-visible {
-	pointer-events: auto;
+  pointer-events: auto;
 }
 
 .route-fade-transition-overlay.is-covering {
-	opacity: 1;
+  opacity: 1;
 }
 
 .route-fade-transition-overlay.is-revealing {
-	opacity: 0;
-	transition-duration: 420ms;
+  opacity: 0;
+  transition-duration: 420ms;
 }
 
 .glow-border {
-	box-shadow:
-		0 0 15px -3px rgba(230, 27, 0, 0.15),
-		inset 0 0 15px -3px rgba(230, 27, 0, 0.05);
+  box-shadow:
+    0 0 15px -3px rgba(230, 27, 0, 0.15),
+    inset 0 0 15px -3px rgba(230, 27, 0, 0.05);
 }
 
 .glow-border:hover {
-	box-shadow:
-		0 0 25px -3px rgba(230, 27, 0, 0.3),
-		inset 0 0 25px -3px rgba(230, 27, 0, 0.1);
+  box-shadow:
+    0 0 25px -3px rgba(230, 27, 0, 0.3),
+    inset 0 0 25px -3px rgba(230, 27, 0, 0.1);
 }
 
 .text-glow {
-	text-shadow:
-		0 0 20px rgba(230, 27, 0, 0.5),
-		0 0 40px rgba(230, 27, 0, 0.2);
+  text-shadow:
+    0 0 20px rgba(230, 27, 0, 0.5),
+    0 0 40px rgba(230, 27, 0, 0.2);
 }
 
 /* Radial gradient background for layout */
 .radial-gradient-bg {
-	background: radial-gradient(125% 125% at 50% 10%, rgba(230, 27, 0, 0.2) 0%, rgba(230, 27, 0, 0.12) 20%, rgba(230, 27, 0, 0.06) 35%, rgba(10, 10, 15, 0.98) 55%, var(--background) 100%);
+  background: radial-gradient(125% 125% at 50% 10%, rgba(230, 27, 0, 0.2) 0%, rgba(230, 27, 0, 0.12) 20%, rgba(230, 27, 0, 0.06) 35%, rgba(10, 10, 15, 0.98) 55%, var(--background) 100%);
 }
 
 .light .radial-gradient-bg {
-	background: radial-gradient(125% 125% at 50% 10%, rgba(230, 27, 0, 0.12) 0%, rgba(230, 27, 0, 0.08) 20%, rgba(230, 27, 0, 0.04) 35%, rgba(250, 250, 252, 0.98) 55%, var(--background) 100%);
+  background: radial-gradient(125% 125% at 50% 10%, rgba(230, 27, 0, 0.12) 0%, rgba(230, 27, 0, 0.08) 20%, rgba(230, 27, 0, 0.04) 35%, rgba(250, 250, 252, 0.98) 55%, var(--background) 100%);
 }
 
 /* Rich text из блога (TipTap HTML); на проде контент санитизировать перед сохранением/выводом. */
 .blog-article-body {
-	@apply text-base leading-relaxed;
-	color: var(--blog-body);
+  @apply text-base leading-relaxed;
+  color: var(--blog-body);
 }
 .blog-article-body > * + * {
-	margin-top: 1rem;
+  margin-top: 1rem;
 }
 .blog-article-body h1 {
-	@apply mt-10 mb-4 text-2xl font-bold tracking-tight;
-	color: var(--blog-emphasis);
+  @apply mt-10 mb-4 text-2xl font-bold tracking-tight;
+  color: var(--blog-emphasis);
 }
 .blog-article-body h2 {
-	@apply mt-10 mb-3 text-xl font-semibold tracking-tight;
-	color: var(--blog-emphasis);
+  @apply mt-10 mb-3 text-xl font-semibold tracking-tight;
+  color: var(--blog-emphasis);
 }
 .blog-article-body h3 {
-	@apply mt-8 mb-2 text-lg font-semibold;
-	color: var(--blog-emphasis);
+  @apply mt-8 mb-2 text-lg font-semibold;
+  color: var(--blog-emphasis);
 }
 .blog-article-body p {
-	color: var(--blog-body);
+  color: var(--blog-body);
 }
 .blog-article-body blockquote {
-	@apply my-4 border-l-4 border-primary/35 pl-4 italic;
-	color: color-mix(in srgb, var(--blog-body) 88%, var(--blog-emphasis));
+  @apply my-4 border-l-4 border-primary/35 pl-4 italic;
+  color: color-mix(in srgb, var(--blog-body) 88%, var(--blog-emphasis));
 }
 .blog-article-body a {
-	@apply font-medium text-primary underline-offset-4 hover:underline;
+  @apply font-medium text-primary underline-offset-4 hover:underline;
 }
 .blog-article-body ul,
 .blog-article-body ol {
-	@apply my-4 pl-6;
-	color: var(--blog-body);
+  @apply my-4 pl-6;
+  color: var(--blog-body);
 }
 .blog-article-body ul {
-	list-style-type: disc;
+  list-style-type: disc;
 }
 .blog-article-body ol {
-	list-style-type: decimal;
+  list-style-type: decimal;
 }
 .blog-article-body li {
-	@apply my-1.5;
+  @apply my-1.5;
 }
 .blog-article-body ul[data-type="taskList"] {
-	list-style: none;
-	padding-left: 0;
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+  list-style: none;
+  padding-left: 0;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 .blog-article-body li[data-type="taskItem"] {
-	display: flex;
-	gap: 0.5rem;
-	align-items: flex-start;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
 }
 .blog-article-body li[data-type="taskItem"] > label {
-	display: inline-flex;
-	align-items: flex-start;
-	gap: 0.5rem;
-	cursor: default;
-	user-select: none;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: default;
+  user-select: none;
 }
 .blog-article-body li[data-type="taskItem"] input[type="checkbox"] {
-	margin-top: 0.2rem;
-	flex-shrink: 0;
-	width: 1rem;
-	height: 1rem;
-	accent-color: hsl(var(--primary));
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  accent-color: hsl(var(--primary));
 }
 .blog-article-body li[data-type="taskItem"] > div {
-	flex: 1;
-	min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 .blog-article-body strong,
 .blog-article-body b {
-	@apply font-semibold;
-	color: var(--blog-emphasis);
+  @apply font-semibold;
+  color: var(--blog-emphasis);
 }
 .blog-article-body em,
 .blog-article-body i {
-	@apply italic;
-	color: color-mix(in srgb, var(--blog-emphasis) 70%, var(--blog-body));
+  @apply italic;
+  color: color-mix(in srgb, var(--blog-emphasis) 70%, var(--blog-body));
 }
 .blog-article-body .blog-video-embed,
 .blog-article-body video[data-video-embed] {
-	margin-top: 1.5rem;
-	margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }

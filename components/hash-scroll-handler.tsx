@@ -6,13 +6,13 @@ import { scrollToHashWhenReady } from "@/lib/anchor-nav"
 
 /** Скролл к якорю после загрузки/навигации (прямые ссылки вида /#contact). */
 export function HashScrollHandler() {
-	const pathname = usePathname()
+  const pathname = usePathname()
 
-	useEffect(() => {
-		const hash = window.location.hash
-		if (!hash || hash.length <= 1) return
-		return scrollToHashWhenReady(hash, "auto")
-	}, [pathname])
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash || hash.length <= 1) return
+    return scrollToHashWhenReady(hash, "auto")
+  }, [pathname])
 
-	return null
+  return null
 }

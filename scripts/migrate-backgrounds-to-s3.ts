@@ -16,66 +16,66 @@ import { BACKGROUND_SLOTS, backgroundSlotToFilename, isBackgroundS3Key, parseBac
 import { legacyBackgroundDiskPath } from "@/lib/server/site-backgrounds"
 
 async function main() {
-	const env = getYaStorageEnv()
-	console.log(`[migrate-backgrounds] bucket=${env.YA_BUCKET_NAME} region=${env.YA_REGION} endpoint=${env.YA_ENDPOINT}`)
+  const env = getYaStorageEnv()
+  console.log(`[migrate-backgrounds] bucket=${env.YA_BUCKET_NAME} region=${env.YA_REGION} endpoint=${env.YA_ENDPOINT}`)
 
-	const db = getDb()
-	let row = db.select().from(tableSiteSettings).limit(1).all()[0]
+  const db = getDb()
+  let row = db.select().from(tableSiteSettings).limit(1).all()[0]
 
-	if (!row) {
-		db.insert(tableSiteSettings).values({ backgrounds: "{}" }).run()
-		row = db.select().from(tableSiteSettings).limit(1).all()[0]
-	}
+  if (!row) {
+    db.insert(tableSiteSettings).values({ backgrounds: "{}" }).run()
+    row = db.select().from(tableSiteSettings).limit(1).all()[0]
+  }
 
-	if (!row) {
-		console.error("[migrate-backgrounds] failed to ensure site_settings row")
-		process.exit(1)
-	}
+  if (!row) {
+    console.error("[migrate-backgrounds] failed to ensure site_settings row")
+    process.exit(1)
+  }
 
-	const map: BackgroundsMap = parseBackgroundsJson(row.backgrounds)
-	let migrated = 0
-	let skipped = 0
-	let failed = 0
+  const map: BackgroundsMap = parseBackgroundsJson(row.backgrounds)
+  let migrated = 0
+  let skipped = 0
+  let failed = 0
 
-	for (const slot of BACKGROUND_SLOTS) {
-		const existing = map[slot]
-		if (existing && isBackgroundS3Key(existing)) {
-			skipped += 1
-			console.log(`[migrate-backgrounds] ${slot}: already S3 key — skip`)
-			continue
-		}
+  for (const slot of BACKGROUND_SLOTS) {
+    const existing = map[slot]
+    if (existing && isBackgroundS3Key(existing)) {
+      skipped += 1
+      console.log(`[migrate-backgrounds] ${slot}: already S3 key — skip`)
+      continue
+    }
 
-		const diskPath = legacyBackgroundDiskPath(slot)
-		let buffer: Buffer
-		try {
-			buffer = await fs.readFile(diskPath)
-		} catch {
-			skipped += 1
-			console.log(`[migrate-backgrounds] ${slot}: no file ${backgroundSlotToFilename(slot)} — skip`)
-			continue
-		}
+    const diskPath = legacyBackgroundDiskPath(slot)
+    let buffer: Buffer
+    try {
+      buffer = await fs.readFile(diskPath)
+    } catch {
+      skipped += 1
+      console.log(`[migrate-backgrounds] ${slot}: no file ${backgroundSlotToFilename(slot)} — skip`)
+      continue
+    }
 
-		try {
-			const key = await uploadBackgroundWebp(slot, buffer)
-			map[slot] = key
-			migrated += 1
-			console.log(`[migrate-backgrounds] ${slot} ok → ${key}`)
-		} catch (error) {
-			failed += 1
-			console.error(`[migrate-backgrounds] ${slot} FAIL`, error)
-		}
-	}
+    try {
+      const key = await uploadBackgroundWebp(slot, buffer)
+      map[slot] = key
+      migrated += 1
+      console.log(`[migrate-backgrounds] ${slot} ok → ${key}`)
+    } catch (error) {
+      failed += 1
+      console.error(`[migrate-backgrounds] ${slot} FAIL`, error)
+    }
+  }
 
-	db.update(tableSiteSettings)
-		.set({ backgrounds: serializeBackgroundsMap(map) })
-		.where(eq(tableSiteSettings.id, row.id))
-		.run()
+  db.update(tableSiteSettings)
+    .set({ backgrounds: serializeBackgroundsMap(map) })
+    .where(eq(tableSiteSettings.id, row.id))
+    .run()
 
-	console.log(`[migrate-backgrounds] done. migrated=${migrated} skipped=${skipped} failed=${failed}`)
-	if (failed > 0) process.exitCode = 1
+  console.log(`[migrate-backgrounds] done. migrated=${migrated} skipped=${skipped} failed=${failed}`)
+  if (failed > 0) process.exitCode = 1
 }
 
 main().catch((error) => {
-	console.error("[migrate-backgrounds] fatal", error)
-	process.exit(1)
+  console.error("[migrate-backgrounds] fatal", error)
+  process.exit(1)
 })
