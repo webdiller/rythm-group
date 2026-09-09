@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+# Локальная разработка: hot reload через docker-compose.dev.yml
+# (production — Dockerfile + docker-compose.yml)
+
+FROM node:22-bookworm-slim
+
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=development
+
+# better-sqlite3 / sharp — native build
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Исходники при `compose up` монтируются volume'ом; COPY нужен для первого слоя / CI без mount
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "-H", "0.0.0.0", "-p", "3000"]

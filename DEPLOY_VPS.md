@@ -1,401 +1,427 @@
-## Развертывание проекта на VPS (Ubuntu + nginx + PM2)
+# Развёртывание на VPS (Docker + nginx + Let’s Encrypt)
 
-### 1. Требования к серверу
+Инструкция для программиста. Стек production:
 
-- **OS**: Ubuntu  (рекомендовано 22.04+)
-- **Rесурсы**: от 1 vCPU, 1–2 ГБ RAM
-- **Доступ**: SSH-доступ под пользователем с `sudo`
+| Компонент | Роль |
+|-----------|------|
+| **Docker Compose** | Сборка и запуск Next.js |
+| **nginx** | Reverse proxy, HTTPS, редиректы www ↔ apex |
+| **SQLite** | Файл `./data/cms.db` на volume (не уничтожается при redeploy) |
+| **Yandex Object Storage** | Медиа CMS + бэкапы БД |
+| **GitHub Actions** | `git pull` → бэкап БД в S3 → `docker compose up -d --build` |
 
-На сервере будем использовать:
+Схема миграций БД: при старте приложения `getDb()` вызывает `runMigrations()` — отдельно `drizzle-kit push` на проде обычно не нужен. **Каталог `data/` не удалять** при обновлениях.
 
-- **Node.js** (LTS/текущая 22+)
-- **PM2** для управления процессом
-- **nginx** в роли reverse proxy
-- **SQLite** (через `better-sqlite3`, путь задаётся в `.env`)
+Канонический путь на сервере: `/var/www/rythm-group`.
+
+Локальный hot reload в Docker: `Dockerfile.dev` + `docker-compose.dev.yml` (см. раздел **E** и [README.md](./README.md)) — на VPS не применять.
 
 ---
 
-### 2. Первичная настройка VPS
+## A. Чистый VPS (с нуля)
+
+### A1. Базовая подготовка
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-
-# Базовые пакеты
-sudo apt install -y git build-essential nginx nano unzip
+sudo apt install -y git curl ca-certificates nginx certbot python3-certbot-nginx
 ```
 
-#### Установка Node.js (через nvm)
+### A2. Docker Engine + Compose plugin
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
-source ~/.bashrc
-nvm install 22
-nvm use 22
+# Официальный репозиторий Docker (Ubuntu)
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+sudo usermod -aG docker "$USER"
+# Перелогиньтесь по SSH, затем:
+docker version
+docker compose version
 ```
 
-Проверьте:
-
-```bash
-node -v
-npm -v
-```
-
-#### Установка PM2
-
-```bash
-npm install -g pm2
-```
-
----
-
-### 3. Клонирование проекта
-
-Рекомендуемая директория:
+### A3. Каталог проекта и SSH к GitHub
 
 ```bash
 sudo mkdir -p /var/www/rythm-group
-sudo chown $USER:$USER /var/www/rythm-group
+sudo chown "$USER:$USER" /var/www/rythm-group
 cd /var/www/rythm-group
 ```
 
-#### Настройка SSH для GitHub
-
-Чтобы клонировать и обновлять репозиторий по SSH (`git@github.com:...`), на VPS нужен ключ и привязка к аккаунту GitHub.
-
-1. **Создайте ключ** (если на сервере ещё нет подходящего):
-
-   ```bash
-   ssh-keygen -t ed25519 -C "ваш_email@example.com" -f ~/.ssh/id_ed25519
-   ```
-
-   На вопросы можно нажать Enter (пустая passphrase допустима на выделенном сервере; с passphrase безопаснее, но `git pull` будет запрашивать её, если не использовать ssh-agent).
-
-2. **Запустите агент и добавьте ключ** (для текущей сессии; после перезагрузки при необходимости повторите `eval` и `ssh-add`):
-
-   ```bash
-   eval "$(ssh-agent -s)"
-   ssh-add ~/.ssh/id_ed25519
-   ```
-
-3. **Добавьте публичный ключ в GitHub**: скопируйте содержимое `~/.ssh/id_ed25519.pub` и в GitHub откройте **Settings → SSH and GPG keys → New SSH key**, вставьте ключ и сохраните.
-
-   ```bash
-   cat ~/.ssh/id_ed25519.pub
-   ```
-
-4. **Проверьте соединение**:
-
-   ```bash
-   ssh -T git@github.com
-   ```
-
-   Ожидается сообщение вроде `Hi <username>! You've successfully authenticated...`.
-
-5. **Клонируйте репозиторий** в текущую директорию (URL берите на GitHub: **Code → SSH** или **HTTPS**):
-
-   ```bash
-   # SSH (после настройки ключей выше)
-   git clone git@github.com:OWNER/REPO.git .
-
-   # или HTTPS (без SSH-ключа; для приватного репо — [Personal Access Token](https://github.com/settings/tokens) вместо пароля)
-   # git clone https://github.com/OWNER/REPO.git .
-   ```
-
-Установите зависимости:
+SSH-ключ для приватного репо (если ещё нет):
 
 ```bash
-npm install
-# или при строгом CI
-# npm ci
+ssh-keygen -t ed25519 -C "vps-rythm" -f ~/.ssh/id_ed25519 -N ""
+eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub
+# → GitHub → Settings → SSH and GPG keys → New SSH key
+ssh -T git@github.com
 ```
 
----
-
-### 4. Переменные окружения и база данных
-
-Создайте файл `.env` в корне проекта (ориентируясь на `.env.example`):
-
-```env
-# Секрет для подписи JWT-токенов авторизации дашборда
-# Сгенерируйте случайную строку: openssl rand -base64 32
-JWT_SECRET=замените-на-случайную-строку-минимум-32-символа
-
-# Путь к SQLite-базе данных
-# Оставьте как есть — папка data/ создастся автоматически
-DB_PATH=./data/cms.db
-
-# Логин и пароль для первого входа в /dashboard
-# Формат: логин:пароль (можно несколько через запятую: admin:pass1,editor:pass2)
-ADMIN_USERS=admin:ваш-пароль
-
-# SMTP для отправки заявок с контактной формы
-SMTP_HOST=smtp.yandex.ru        # или smtp.gmail.com и т.д.
-SMTP_PORT=465                    # 465 для SSL, 587 для TLS
-SMTP_USER=ваш@email.ru
-SMTP_PASS=пароль-приложения
-SMTP_FROM=ваш@email.ru
-
-# Публичный URL сайта — ОБЯЗАТЕЛЬНО для production
-# Используется для серверных fetch к собственным API
-# Укажите ваш домен или IP с портом
-NEXT_PUBLIC_SITE_URL=https://ваш-домен.ru
-```
-
-Создайте директорию под SQLite, если используете путь по умолчанию:
+Клонирование:
 
 ```bash
-mkdir -p data
+git clone git@github.com:OWNER/REPO.git .
+# или: git clone https://github.com/OWNER/REPO.git .
+mkdir -p data public/uploads
 ```
 
-При необходимости создайте/обновите структуру БД и данные (если предусмотрено в проекте):
+### A4. Переменные окружения
 
 ```bash
-npm run db:push   # применить миграции Drizzle
-npm run db:seed   # начальные данные (опционально)
+cp .env.example .env
+nano .env
 ```
 
----
+Обязательно заполнить:
 
-### 5. Сборка и запуск приложения
+- `JWT_SECRET` — `openssl rand -base64 32`
+- `ADMIN_USERS` — `логин:пароль`
+- `NEXT_PUBLIC_SITE_URL` — `https://example.com` (без `/` в конце)
+- SMTP-поля
+- **Yandex Object Storage:** `YA_STORAGE_ID`, `YA_STORAGE_SECRET`, `YA_BUCKET_NAME`, `YA_REGION`, `YA_ENDPOINT`, `NEXT_PUBLIC_YA_PUBLIC_BASE`
 
-#### Production-сборка
+Опционально для бэкапов: `BACKUP_S3_PREFIX=backups/cms`, `BACKUP_KEEP_DAYS=14`.
+
+> `NEXT_PUBLIC_*` передаются в Docker **как build args**. После смены домена или публичного URL бакета нужен **rebuild** (`docker compose up -d --build`), не только restart.
+
+### A5. Первый запуск контейнера
 
 ```bash
-npm run build
+cd /var/www/rythm-group
+docker compose up -d --build
+docker compose ps
+docker compose logs -f --tail=100 app
 ```
 
-#### Запуск через PM2
+Проверка с сервера: `curl -I http://127.0.0.1:3000` → ожидается ответ Next.js.
 
-Запустим Next.js на порту `3000`:
+База появится в `./data/cms.db` после первого обращения к приложению (миграции на старте).
 
-```bash
-pm2 start npm --name "rythm-group" -- start -- -p 3000
-```
+### A6. nginx + домен + редиректы www
 
-Проверьте статус:
+Пока DNS ещё не настроен, можно открыть сайт по IP (HTTP). Для продакшена:
 
-```bash
-pm2 status
-pm2 logs rythm-group
-```
+1. В DNS создайте **A**-записи `@` и `www` на **IP этого VPS**.
+2. Дождитесь резолва (`dig +short example.com`).
 
-Настройте автозапуск PM2 после перезагрузки сервера:
-
-```bash
-pm2 startup systemd
-# выполните команду, которую выведет предыдущая строка (с sudo)
-pm2 save
-```
-
----
-
-### 6. Настройка nginx как reverse proxy
-
-Создайте конфиг для сайта:
+Конфиг nginx:
 
 ```bash
 sudo nano /etc/nginx/sites-available/rythm-group
 ```
 
-Пример минимальной конфигурации (HTTP):
-
 ```nginx
+# HTTP → приложение (certbot позже добавит HTTPS и редирект на https)
 server {
     listen 80;
-    server_name file-lab.ru www.file-lab.ru; # замените на свой домен или IP
+    listen [::]:80;
+    server_name example.com www.example.com;
 
-    # По умолчанию nginx режет тела запросов (~1 MB) → 413 при загрузке изображений в админке.
-    # API блога принимает до 10 MB; запас по размеру не помешает.
     client_max_body_size 20M;
 
     location / {
         proxy_pass         http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header   Upgrade $http_upgrade;
-        proxy_set_header   Connection 'upgrade';
+        proxy_set_header   Connection "upgrade";
         proxy_set_header   Host $host;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
     }
 }
 ```
 
-Активируйте конфиг и перезапустите nginx:
+```bash
+sudo ln -sf /etc/nginx/sites-available/rythm-group /etc/nginx/sites-enabled/rythm-group
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+HTTPS и редиректы (apex ↔ www):
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/rythm-group /etc/nginx/sites-enabled/rythm-group
-sudo nginx -t
-sudo systemctl reload nginx
+# Выберите канонический хост. Пример: apex канонический, www → apex
+sudo certbot --nginx -d example.com -d www.example.com
 ```
 
----
-
-### 7. HTTPS (Let’s Encrypt, опционально, рекомендовано)
-
-Установите certbot:
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-```
-
-Запустите получение сертификата:
-
-```bash
-sudo certbot --nginx -d file-lab.ru -d www.file-lab.ru
-```
-
-Certbot автоматически пропишет HTTPS-конфиг и настроит автообновление сертификата.
-
----
-
-### 8. Обновление приложения (release-цикл)
-
-При выкатывании новой версии:
-
-```bash
-cd /var/www/rythm-group
-git pull
-npm install         # или npm ci
-npm run build
-pm2 restart rythm-group
-```
-
-При необходимости – примените миграции:
-
-```bash
-npm run db:push
-```
-
----
-
-### 9. Быстрая проверка
-
-- Приложение отвечает по `http://example.com` или по IP
-- `pm2 status` показывает процесс `rythm-group` в состоянии `online`
-- Логи без критичных ошибок:
-
-```bash
-pm2 logs rythm-group
-sudo journalctl -u nginx -n 100 --no-pager
-```
-
-При ошибках проверьте:
-
-- корректность `.env` (особенно `JWT_SECRET`, `DB_PATH`, SMTP и `NEXT_PUBLIC_SITE_URL`)
-- права на директорию проекта и `data/`
-- что порт 3000 не занят другим процессом
-- **413 Request Entity Too Large** при загрузке файлов: в `server { }` для сайта нужен `client_max_body_size` (см. раздел 6); при необходимости увеличьте значение и выполните `sudo nginx -t && sudo systemctl reload nginx`
-- **404 у превью `/uploads/blog/...` после загрузки**: в проекте обложки отдаются через маршрут `app/uploads/blog/[name]` (чтение с диска); после обновления кода выполните `npm run build` и `pm2 restart`. При желании можно отдавать каталог напрямую из nginx: `location /uploads/ { alias /var/www/rythm-group/public/uploads/; }`
-
-
----
-
-### 10. Смена домена (сервер уже работает)
-
-Если вы купили новый домен и хотите перевести сайт на него — следуйте шагам ниже по порядку. Каждый шаг выполняется один раз, занимает 1–2 минуты.
-
-> **Замените** `new-domain.ru` на ваш реальный домен во всех командах ниже.
-
----
-
-#### Шаг 1 — Направьте домен на сервер
-
-Зайдите в панель управления вашего регистратора домена (где вы его покупали — например, reg.ru, nic.ru, namecheap и т.д.) и создайте **A-запись**:
-
-| Поле | Значение |
-|---|---|
-| Тип | A |
-| Имя / Host | `@` (означает корневой домен) |
-| Значение / Value | IP-адрес вашего VPS |
-| TTL | 3600 (или оставьте по умолчанию) |
-
-Если хотите чтобы работал и `www.new-domain.ru` — создайте такую же запись с именем `www`.
-
-После сохранения подождите **от 10 минут до нескольких часов** — DNS обновляется не мгновенно. Можно проверить на сайте [dnschecker.org](https://dnschecker.org), введя ваш домен.
-
----
-
-#### Шаг 2 — Обновите адрес сайта в настройках
-
-Подключитесь к серверу по SSH и выполните:
-
-```bash
-nano /var/www/rythm-group/.env
-```
-
-Найдите строку `NEXT_PUBLIC_SITE_URL` и замените старый адрес на новый:
-
-```
-NEXT_PUBLIC_SITE_URL=https://new-domain.ru
-```
-
-Сохраните файл: `Ctrl+O` → Enter → `Ctrl+X`.
-
----
-
-#### Шаг 3 — Пересоберите и перезапустите сайт
-
-```bash
-cd /var/www/rythm-group
-npm run build
-pm2 restart rythm-group
-```
-
-> Пересборка нужна обязательно — адрес сайта встраивается в код при сборке.
-
----
-
-#### Шаг 4 — Обновите настройки веб-сервера
-
-```bash
-sudo nano /etc/nginx/sites-available/rythm-group
-```
-
-Найдите строку `server_name` и замените старый домен на новый:
+Certbot предложит редирект HTTP→HTTPS. Явный редирект `www` → apex (если certbot не сделал сам) — отдельный `server` блок:
 
 ```nginx
-server_name new-domain.ru www.new-domain.ru;
+server {
+    listen 80;
+    listen [::]:80;
+    server_name www.example.com;
+    return 301 https://example.com$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name www.example.com;
+
+    # ssl_certificate / ssl_certificate_key — как прописал certbot для www
+
+    return 301 https://example.com$request_uri;
+}
 ```
 
-Сохраните (`Ctrl+O` → Enter → `Ctrl+X`) и примените изменения:
+После правок: `sudo nginx -t && sudo systemctl reload nginx`.
+
+### A7. Бэкапы SQLite → Yandex Object Storage
+
+Разовый бэкап:
 
 ```bash
-sudo nginx -t
-sudo systemctl reload nginx
+cd /var/www/rythm-group
+docker compose exec app node scripts/backup-sqlite-to-s3.mjs
+# или с хоста (если есть .env и node_modules): npm run db:backup-s3
 ```
 
-Если команда `nginx -t` выдала `syntax is ok` — всё хорошо.
+Cron (ежедневно в 03:15 UTC+0; поправьте TZ при необходимости):
+
+```bash
+crontab -e
+```
+
+```cron
+15 3 * * * cd /var/www/rythm-group && docker compose exec -T app node scripts/backup-sqlite-to-s3.mjs >> /var/log/rythm-db-backup.log 2>&1
+```
+
+Объекты кладутся в бакет по ключу вида `backups/cms/cms-<timestamp>.db` (приватные). Старые чистятся по `BACKUP_KEEP_DAYS`.
+
+### A8. GitHub Actions (автодеплой)
+
+В репозитории: **Settings → Secrets and variables → Actions**:
+
+| Secret | Значение |
+|--------|----------|
+| `VPS_HOST` | IP или hostname VPS |
+| `VPS_USER` | SSH-пользователь |
+| `VPS_SSH_KEY` | Приватный ключ (целиком) |
+
+На VPS публичный ключ должен быть в `~/.ssh/authorized_keys`. Пользователь — в группе `docker`.
+
+Workflow (`.github/workflows/deploy.yml`): push в `main` → `git pull` → бэкап БД в S3 → `docker compose up -d --build`.
+
+### A9. Чеклист чистого VPS
+
+- [ ] `docker compose ps` — `app` Up
+- [ ] `https://example.com` открывается, замок в браузере
+- [ ] `https://www.example.com` редиректит на канонический хост
+- [ ] `/dashboard` — вход по `ADMIN_USERS`
+- [ ] Загрузка картинки в админке уходит в Yandex Object Storage
+- [ ] Бэкап: объект появился в бакете под `backups/cms/`
 
 ---
 
-#### Шаг 5 — Получите HTTPS-сертификат для нового домена
+## B. Текущий VPS (старая версия на PM2, без S3)
+
+Цель: перейти на Docker, не потерять `cms.db`, подключить Yandex Object Storage, сохранить домен/IP.
+
+### B1. Снимок БД и (по желанию) uploads
 
 ```bash
-sudo certbot --nginx -d new-domain.ru -d www.new-domain.ru
+# Путь старого деплоя может отличаться — подставьте свой
+cd /var/www/rythm-group   # или где лежит проект
+
+pm2 stop rythm-group      # или другое имя процесса: pm2 list
+cp -a data/cms.db "data/cms.db.bak-$(date +%Y%m%d-%H%M%S)"
+# если есть локальные медиа:
+tar -czf "/tmp/uploads-backup-$(date +%Y%m%d).tgz" public/uploads 2>/dev/null || true
 ```
 
-Certbot сам всё настроит и добавит замок в браузере. Сертификат бесплатный и обновляется автоматически.
+Скопируйте `cms.db.bak-*` себе на рабочую машину (scp) — страховка вне сервера.
 
-Если старый домен больше не нужен, можно удалить его сертификат:
+### B2. Установить Docker (не трогая nginx)
+
+Выполните **A2**. nginx и домен оставляем: они уже смотрят на `127.0.0.1:3000`.
+
+### B3. Обновить код и `.env`
 
 ```bash
-sudo certbot delete --cert-name old-domain.ru
+cd /var/www/rythm-group
+git fetch origin
+git checkout main
+git pull
+
+cp .env .env.pre-docker.bak
+nano .env
 ```
+
+Добавьте блок Yandex Object Storage (см. `.env.example`):
+
+```env
+YA_STORAGE_ID=...
+YA_STORAGE_SECRET=...
+YA_BUCKET_NAME=...
+YA_REGION=ru-central1
+YA_ENDPOINT=https://storage.yandexcloud.net
+NEXT_PUBLIC_YA_PUBLIC_BASE=https://storage.yandexcloud.net/ВАШ_БАКЕТ
+```
+
+Убедитесь, что `DB_PATH=./data/cms.db` (в compose внутри контейнера принудительно `/app/data/cms.db` на том же volume).
+
+В nginx должен быть `client_max_body_size 20M;` (иначе 413 на загрузках).
+
+### B4. Остановить PM2, поднять Docker
+
+Порт 3000 должен освободиться:
+
+```bash
+pm2 stop rythm-group
+# при необходимости: pm2 delete rythm-group && pm2 save
+
+mkdir -p data public/uploads
+# cms.db уже в data/ — volume подхватит его
+
+docker compose up -d --build
+docker compose ps
+docker compose logs --tail=80 app
+curl -I http://127.0.0.1:3000
+```
+
+Сайт по старому домену должен открываться без смены DNS (nginx без изменений или только reload).
+
+Отключить автозапуск PM2 для этого приложения:
+
+```bash
+pm2 unstartup   # если больше ничего на PM2 не крутится
+# или просто не держать процесс в pm2 save
+```
+
+### B5. Миграция локальных/base64 медиа в S3
+
+После того как бакет и ключи рабочие, из каталога проекта:
+
+```bash
+# Env уже в контейнере через env_file
+docker compose exec app npx tsx scripts/migrate-partner-logos-to-s3.ts
+docker compose exec app npx tsx scripts/migrate-channel-avatars-to-s3.ts
+docker compose exec app npx tsx scripts/migrate-about-icons-to-s3.ts
+docker compose exec app npx tsx scripts/migrate-site-branding-to-s3.ts
+docker compose exec app npx tsx scripts/migrate-backgrounds-to-s3.ts
+docker compose exec app npx tsx scripts/migrate-blog-uploads-to-s3.ts
+docker compose exec app npx tsx scripts/rewrite-blog-html-upload-urls.ts
+```
+
+Перед миграцией сделайте бэкап БД (`B1` + `A7`).
+
+### B6. Бэкапы и CI
+
+- Настройте cron как в **A7**.
+- Подключите GitHub Secrets как в **A8** (путь `/var/www/rythm-group` или fallback в workflow).
+
+### B7. Чеклист миграции со старого VPS
+
+- [ ] Есть копия `cms.db` вне сервера
+- [ ] PM2 остановлен, Docker слушает 3000
+- [ ] Домен открывается как раньше (HTTPS не сломан)
+- [ ] Медиа в админке/на сайте с URL бакета Yandex
+- [ ] `docker compose exec app node scripts/backup-sqlite-to-s3.mjs` успешен
+- [ ] Автодеплой с `main` не затирает `./data`
 
 ---
 
-#### Шаг 6 — Проверьте результат
+## C. Перенос на новый VPS (домен был на старом)
 
-Откройте `https://new-domain.ru` в браузере и убедитесь:
+Когда новый сервер настроен по **разделу A**, а старый ещё отвечает по домену:
 
-- Сайт открывается
-- В адресной строке есть замок (HTTPS)
-- Страница `/dashboard` открывает панель управления
-- На главной странице отображается контент (партнёры, каналы и т.д.)
+### C1. Подготовка
+
+1. На новом VPS — полный стек (A1–A7), временный доступ по IP.
+2. Заранее снизьте TTL DNS до 300 с (за сутки).
+3. Со старого VPS скопируйте актуальную БД:
+
+```bash
+# на старом
+pm2 stop ...   # или docker compose stop app — чтобы файл не писался
+scp user@OLD_IP:/var/www/rythm-group/data/cms.db ./cms.db
+
+# на новый
+scp ./cms.db user@NEW_IP:/var/www/rythm-group/data/cms.db
+ssh user@NEW_IP 'cd /var/www/rythm-group && docker compose restart app'
+```
+
+Медиа уже в S3 — копировать `public/uploads` не обязательно, если миграция в S3 сделана.
+
+### C2. DNS cutover
+
+В панели домена смените **A** (`@` и `www`) на **IP нового VPS**.
+
+На новом VPS получите сертификат (**A6**), если ещё не получали по домену.
+
+### C3. Редиректы на старом VPS (опционально, на время пропагации DNS)
+
+Пока часть клиентов ходит на старый IP, отдавайте 301 на канонический HTTPS-домен:
+
+```nginx
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 301 https://example.com$request_uri;
+}
+
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+    # можно оставить старые ssl_certificate для прежнего домена
+    return 301 https://example.com$request_uri;
+}
+```
+
+После стабилизации DNS старый VPS можно выключить.
+
+### C4. Что не трогать при переносе
+
+- Содержимое SQLite (кроме бэкапа/копирования файла)
+- Секреты `JWT_SECRET` / `ADMIN_USERS` (можно оставить те же)
+- Объекты в Yandex Object Storage
 
 ---
 
-#### Что трогать не нужно
+## D. Операции после деплоя
 
-- **Базу данных** — весь контент сохранится, он не привязан к домену
-- **Пароли и секреты** (`JWT_SECRET`, `ADMIN_USERS`) — менять не нужно
-- **Код сайта** — домен нигде не зашит в коде, только в файле `.env`
+| Задача | Команда |
+|--------|---------|
+| Логи | `docker compose logs -f --tail=200 app` |
+| Рестарт | `docker compose restart app` |
+| Обновление вручную | `git pull && docker compose up -d --build` |
+| Бэкап БД | `docker compose exec app node scripts/backup-sqlite-to-s3.mjs` |
+| Восстановление из S3 | скачать `.db` из бакета → положить в `./data/cms.db` → `docker compose restart app` |
+
+### Важно
+
+1. **Volume `./data`** — единственный источник правды для контента CMS. Не монтируйте пустой named volume поверх существующей БД без бэкапа.
+2. Смена `NEXT_PUBLIC_SITE_URL` или `NEXT_PUBLIC_YA_PUBLIC_BASE` → обязательный **rebuild**.
+3. При ошибке **413** — увеличьте `client_max_body_size` в nginx.
+4. Схема БД обновляется кодом при старте контейнера; не удаляйте `data/` «для чистоты».
+
+---
+
+## E. Локальная разработка в Docker
+
+На VPS это **не** используется. Для разработки на машине программиста:
+
+```bash
+cp .env.example .env   # или .env.local
+mkdir -p data public/uploads
+npm run dev:docker
+# = docker compose -f docker-compose.dev.yml up --build
+```
+
+Файлы: `Dockerfile.dev`, `docker-compose.dev.yml`. Подробнее — [README.md](./README.md).

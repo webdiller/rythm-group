@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:docker": "docker compose -f docker-compose.dev.yml up --build",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -15,7 +16,8 @@
     "db:migrate-site-branding-s3": "tsx --env-file=.env.local scripts/migrate-site-branding-to-s3.ts",
     "db:migrate-backgrounds-s3": "tsx --env-file=.env.local scripts/migrate-backgrounds-to-s3.ts",
     "db:migrate-blog-uploads-s3": "tsx --env-file=.env.local scripts/migrate-blog-uploads-to-s3.ts",
-    "db:rewrite-blog-html-s3-urls": "tsx --env-file=.env.local scripts/rewrite-blog-html-upload-urls.ts"
+    "db:rewrite-blog-html-s3-urls": "tsx --env-file=.env.local scripts/rewrite-blog-html-upload-urls.ts",
+    "db:backup-s3": "node --env-file=.env.local scripts/backup-sqlite-to-s3.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1014.0",

@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        # Передаются из .env на хосте при `docker compose build/up --build`
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_YA_PUBLIC_BASE: ${NEXT_PUBLIC_YA_PUBLIC_BASE}
+    # Только localhost: снаружи доступ через nginx
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
+    environment:
+      # В контейнере всегда абсолютный путь на volume
+      DB_PATH: /app/data/cms.db
+    volumes:
+      # SQLite: сохраняется между пересборками и редеплоями
+      - ./data:/app/data
+      # Локальные upload'ы (legacy до полной миграции в S3)
+      - ./public/uploads:/app/public/uploads
+    restart: unless-stopped

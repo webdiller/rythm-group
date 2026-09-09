@@ -15,6 +15,28 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /var/www/project-kwork-landing || cd ~/project-kwork-landing || exit 1
+            set -e
+            # Канонический путь (см. DEPLOY_VPS.md). Fallback — старые имена каталогов.
+            if [ -d /var/www/rythm-group ]; then
+              cd /var/www/rythm-group
+            elif [ -d /var/www/project-kwork-landing ]; then
+              cd /var/www/project-kwork-landing
+            elif [ -d ~/project-kwork-landing ]; then
+              cd ~/project-kwork-landing
+            else
+              echo "Project directory not found" >&2
+              exit 1
+            fi
+
             git pull
-            docker compose up -d --build
+
+            docker compose build
+
+            # Бэкап SQLite в Yandex Object Storage новым образом (volume ./data сохраняется)
+            if [ -f data/cms.db ]; then
+              docker compose run --rm --no-deps app node scripts/backup-sqlite-to-s3.mjs \
+                || echo "WARN: pre-deploy backup skipped"
+            fi
+
+            docker compose up -d
+            docker compose ps
