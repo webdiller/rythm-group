@@ -52,9 +52,7 @@ Add an idempotent migration for the `site_published` column, following the exist
 
 ```typescript
 if (!names.has("site_published")) {
-  sqlite.exec(
-    "ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1"
-  )
+	sqlite.exec("ALTER TABLE site_settings ADD COLUMN site_published INTEGER NOT NULL DEFAULT 1")
 }
 ```
 
@@ -79,19 +77,14 @@ site_published: integer("site_published", { mode: "boolean" }).default(true),
 export const runtime = "nodejs"
 
 export async function GET() {
-  const db = getDb()
-  const settings = db.select().from(tableSiteSettings).limit(1).all()[0]
-  const contact = db
-    .select()
-    .from(tableContacts)
-    .where(eq(tableContacts.scope, "landing"))
-    .limit(1)
-    .all()[0]
+	const db = getDb()
+	const settings = db.select().from(tableSiteSettings).limit(1).all()[0]
+	const contact = db.select().from(tableContacts).where(eq(tableContacts.scope, "landing")).limit(1).all()[0]
 
-  return NextResponse.json({
-    site_published: settings?.site_published ?? true,
-    telegram_url: contact?.telegram_url ?? null,
-  })
+	return NextResponse.json({
+		site_published: settings?.site_published ?? true,
+		telegram_url: contact?.telegram_url ?? null,
+	})
 }
 ```
 
@@ -101,11 +94,12 @@ Updated to intercept public routes and check the maintenance flag:
 
 ```typescript
 export const config = {
-  matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/affiliate/:path*"],
+	matcher: ["/dashboard/:path*", "/", "/blog/:path*", "/affiliate/:path*"],
 }
 ```
 
 Logic:
+
 1. If the path starts with `/dashboard` or `/api`, pass through (existing auth logic for dashboard).
 2. For all other matched paths (public routes), `fetch()` the internal status route.
 3. If fetch fails or `site_published` is `true`, pass through.
@@ -153,16 +147,16 @@ Include `site_published` in both `updateValues` and the `insert` fallback values
 
 ### `site_settings` table (updated)
 
-| Column | Type | Default | Notes |
-|--------|------|---------|-------|
+| Column           | Type                | Default    | Notes                                         |
+| ---------------- | ------------------- | ---------- | --------------------------------------------- |
 | `site_published` | `INTEGER` (boolean) | `1` (true) | New column. `false` = maintenance mode active |
 
 ### Internal API response
 
 ```typescript
 type SiteStatusResponse = {
-  site_published: boolean
-  telegram_url: string | null
+	site_published: boolean
+	telegram_url: string | null
 }
 ```
 
@@ -170,8 +164,8 @@ type SiteStatusResponse = {
 
 ```typescript
 type SiteSettingsPayload = {
-  // ... existing fields ...
-  site_published?: boolean | null  // new
+	// ... existing fields ...
+	site_published?: boolean | null // new
 }
 ```
 
@@ -179,41 +173,41 @@ type SiteSettingsPayload = {
 
 ## Correctness Properties
 
-*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
+_A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees._
 
 ### Property 1: Migration idempotency
 
-*For any* SQLite database state (whether `site_published` column is present or absent), running `runMigrations` should result in the column existing, and running it a second time should not throw an error.
+_For any_ SQLite database state (whether `site_published` column is present or absent), running `runMigrations` should result in the column existing, and running it a second time should not throw an error.
 
 **Validates: Requirements 1.2**
 
 ### Property 2: Middleware blocks all public routes when unpublished
 
-*For any* request path matching the public route patterns (`/`, `/blog/*`, `/affiliate/*`), when `site_published` is `false`, the middleware SHALL return a response with status `503` and a `Retry-After: 3600` header.
+_For any_ request path matching the public route patterns (`/`, `/blog/*`, `/affiliate/*`), when `site_published` is `false`, the middleware SHALL return a response with status `503` and a `Retry-After: 3600` header.
 
 **Validates: Requirements 2.1, 2.4**
 
 ### Property 3: Middleware passes all protected routes regardless of flag
 
-*For any* request path matching `/dashboard/*` or `/api/*`, regardless of the `site_published` value (true or false), the middleware SHALL pass the request through without returning a 503.
+_For any_ request path matching `/dashboard/*` or `/api/*`, regardless of the `site_published` value (true or false), the middleware SHALL pass the request through without returning a 503.
 
 **Validates: Requirements 2.2**
 
 ### Property 4: Maintenance HTML conditionally includes Telegram link
 
-*For any* `telegram_url` value — when it is a non-empty string, the generated maintenance HTML SHALL contain a link to that URL; when it is `null` or empty, the HTML SHALL NOT contain a Telegram link element.
+_For any_ `telegram_url` value — when it is a non-empty string, the generated maintenance HTML SHALL contain a link to that URL; when it is `null` or empty, the HTML SHALL NOT contain a Telegram link element.
 
 **Validates: Requirements 3.3**
 
 ### Property 5: Settings API round-trip preserves site_published
 
-*For any* boolean value of `site_published` sent in a PUT request to `/api/site/settings`, a subsequent GET request SHALL return the same value in the `data.site_published` field.
+_For any_ boolean value of `site_published` sent in a PUT request to `/api/site/settings`, a subsequent GET request SHALL return the same value in the `data.site_published` field.
 
 **Validates: Requirements 4.1, 4.2, 4.4**
 
 ### Property 6: Settings API preserve-if-absent for site_published
 
-*For any* existing `site_published` value in the database, a PUT request to `/api/site/settings` that does not include the `site_published` field SHALL leave the stored value unchanged.
+_For any_ existing `site_published` value in the database, a PUT request to `/api/site/settings` that does not include the `site_published` field SHALL leave the stored value unchanged.
 
 **Validates: Requirements 4.3**
 
@@ -221,13 +215,13 @@ type SiteSettingsPayload = {
 
 ## Error Handling
 
-| Scenario | Behavior |
-|----------|----------|
-| `fetch('/api/internal/site-status')` throws or returns non-2xx | Middleware treats `site_published` as `true` and passes through (fail-open) |
-| No row in `site_settings` | Internal API returns `{ site_published: true, telegram_url: null }` |
-| No row in `contacts` for `scope='landing'` | Internal API returns `telegram_url: null`; maintenance page omits Telegram link |
-| `site_published` absent from PUT body | Settings API preserves existing value |
-| PUT without valid JWT | Settings API returns 401 |
+| Scenario                                                       | Behavior                                                                        |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `fetch('/api/internal/site-status')` throws or returns non-2xx | Middleware treats `site_published` as `true` and passes through (fail-open)     |
+| No row in `site_settings`                                      | Internal API returns `{ site_published: true, telegram_url: null }`             |
+| No row in `contacts` for `scope='landing'`                     | Internal API returns `telegram_url: null`; maintenance page omits Telegram link |
+| `site_published` absent from PUT body                          | Settings API preserves existing value                                           |
+| PUT without valid JWT                                          | Settings API returns 401                                                        |
 
 The fail-open strategy for middleware ensures that a misconfigured or temporarily unavailable internal API never locks out all visitors — the site stays accessible rather than going into an unintended maintenance mode.
 

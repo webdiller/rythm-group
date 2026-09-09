@@ -2,48 +2,48 @@ import { z } from "zod"
 import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/types"
 
 export const GetAllQueryParams = z.object({
-  locale: z.string().optional(),
-  section: z.string().optional(),
+	locale: z.string().optional(),
+	section: z.string().optional(),
 })
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select.array(),
+	data: allZodSchemas.tableTranslations.select.array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select.nullable(),
+	data: allZodSchemas.tableTranslations.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tableTranslations.insert.pick({
-  locale: true,
-  section: true,
-  key: true,
-  value: true,
+	locale: true,
+	section: true,
+	key: true,
+	value: true,
 })
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select,
+	data: allZodSchemas.tableTranslations.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
 
 export const UpdateOneBody = z.object({
-  locale: z.string().optional(),
-  section: z.string().optional(),
-  key: z.string().optional(),
-  value: z.string().optional(),
+	locale: z.string().optional(),
+	section: z.string().optional(),
+	key: z.string().optional(),
+	value: z.string().optional(),
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tableTranslations.select,
+	data: allZodSchemas.tableTranslations.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams
 
 export const DeleteOneResponse = SharedDefaultResponse.extend({
-  data: z.boolean(),
+	data: z.boolean(),
 })
 
 export type GetAllQueryParams = z.infer<typeof GetAllQueryParams>

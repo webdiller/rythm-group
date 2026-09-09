@@ -8,30 +8,28 @@ import { SiteShell } from "@/components/SiteShell"
 import type { Translations } from "@/lib/i18n"
 
 type RootShellProvidersProps = {
-  children: ReactNode
-  hasAnyCustomBackgrounds: boolean
-  prefetchBackgroundSrcs?: string[]
-  initialTranslations: Translations
+	children: ReactNode
+	hasAnyCustomBackgrounds: boolean
+	prefetchBackgroundSrcs?: string[]
+	initialTranslations: Translations
 }
 
 /** Один раз на всё приложение: локаль + предзагрузка фонов без перемонтирования при навигации. */
-export function RootShellProviders({
-  children,
-  hasAnyCustomBackgrounds,
-  prefetchBackgroundSrcs,
-  initialTranslations,
-}: RootShellProvidersProps) {
-  return (
-    <LocaleProvider initialLocale="ru" initialTranslations={initialTranslations}>
-      <PageRouteTransitionProvider>
-        <HashScrollHandler />
-        <SiteShell
-          hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}
-          prefetchBackgroundSrcs={prefetchBackgroundSrcs}
-        >
-          {children}
-        </SiteShell>
-      </PageRouteTransitionProvider>
-    </LocaleProvider>
-  )
+export function RootShellProviders({ children, hasAnyCustomBackgrounds, prefetchBackgroundSrcs, initialTranslations }: RootShellProvidersProps) {
+	return (
+		<LocaleProvider
+			initialLocale="ru"
+			initialTranslations={initialTranslations}
+		>
+			<PageRouteTransitionProvider>
+				<HashScrollHandler />
+				<SiteShell
+					hasAnyCustomBackgrounds={hasAnyCustomBackgrounds}
+					prefetchBackgroundSrcs={prefetchBackgroundSrcs}
+				>
+					{children}
+				</SiteShell>
+			</PageRouteTransitionProvider>
+		</LocaleProvider>
+	)
 }

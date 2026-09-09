@@ -8,20 +8,20 @@ let client: S3Client | null = null
  * forcePathStyle — рекомендуемый режим для Yandex.
  */
 export function getS3Client(): S3Client {
-  if (client) return client
-  const env = getYaStorageEnv()
-  client = new S3Client({
-    region: env.YA_REGION,
-    endpoint: env.YA_ENDPOINT,
-    credentials: {
-      accessKeyId: env.YA_STORAGE_ID,
-      secretAccessKey: env.YA_STORAGE_SECRET,
-    },
-    forcePathStyle: true,
-  })
-  return client
+	if (client) return client
+	const env = getYaStorageEnv()
+	client = new S3Client({
+		region: env.YA_REGION,
+		endpoint: env.YA_ENDPOINT,
+		credentials: {
+			accessKeyId: env.YA_STORAGE_ID,
+			secretAccessKey: env.YA_STORAGE_SECRET,
+		},
+		forcePathStyle: true,
+	})
+	return client
 }
 
 export function getS3Bucket(): string {
-  return getYaStorageEnv().YA_BUCKET_NAME
+	return getYaStorageEnv().YA_BUCKET_NAME
 }

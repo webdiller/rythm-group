@@ -10,230 +10,216 @@ import { StaggerItem } from "@/components/ui/stagger-item"
 import LightRays from "@/components/LightRays"
 
 const LIGHT_RAYS_DARK = {
-  raysColor: "#ffffff",
-  saturation: 2,
+	raysColor: "#ffffff",
+	saturation: 2,
 }
 const LIGHT_RAYS_LIGHT = {
-  raysColor: "#fef2f0",
-  saturation: 1.2,
+	raysColor: "#fef2f0",
+	saturation: 1.2,
 }
 
 type HeroProps = {
-  animationEnabled?: boolean
-  backgroundLightSrc?: string
-  backgroundDarkSrc?: string
+	animationEnabled?: boolean
+	backgroundLightSrc?: string
+	backgroundDarkSrc?: string
 }
 
-export function Hero({
-  animationEnabled = true,
-  backgroundLightSrc = "/backgrounds/hero-light.webp",
-  backgroundDarkSrc = "/backgrounds/hero-dark.webp",
-}: HeroProps) {
-  const { t } = useLocale()
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  const [heroImageLoaded, setHeroImageLoaded] = useState(false)
-  const [heroContentVisible, setHeroContentVisible] = useState(false)
+export function Hero({ animationEnabled = true, backgroundLightSrc = "/backgrounds/hero-light.webp", backgroundDarkSrc = "/backgrounds/hero-dark.webp" }: HeroProps) {
+	const { t } = useLocale()
+	const { resolvedTheme } = useTheme()
+	const [mounted, setMounted] = useState(false)
+	const [heroImageLoaded, setHeroImageLoaded] = useState(false)
+	const [heroContentVisible, setHeroContentVisible] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+	useEffect(() => {
+		setMounted(true)
+	}, [])
 
-  useEffect(() => {
-    if (!mounted) return
-    const src = resolvedTheme === "light" ? backgroundLightSrc : backgroundDarkSrc
-    setHeroImageLoaded(false)
-    setHeroContentVisible(false)
+	useEffect(() => {
+		if (!mounted) return
+		const src = resolvedTheme === "light" ? backgroundLightSrc : backgroundDarkSrc
+		setHeroImageLoaded(false)
+		setHeroContentVisible(false)
 
-    const img = new Image()
-    img.src = src
-    img.onload = () => setHeroImageLoaded(true)
-    img.onerror = () => {
-      // Если фон недоступен, не держим тёмную подложку бесконечно.
-      setHeroImageLoaded(true)
-    }
-  }, [mounted, resolvedTheme, backgroundLightSrc, backgroundDarkSrc])
+		const img = new Image()
+		img.src = src
+		img.onload = () => setHeroImageLoaded(true)
+		img.onerror = () => {
+			// Если фон недоступен, не держим тёмную подложку бесконечно.
+			setHeroImageLoaded(true)
+		}
+	}, [mounted, resolvedTheme, backgroundLightSrc, backgroundDarkSrc])
 
-  useEffect(() => {
-    if (!mounted) return
-    // Прогреваем dark-версию заранее, чтобы при переключении темы не ждать загрузки.
-    const darkImg = new Image()
-    darkImg.src = backgroundDarkSrc
-  }, [mounted, backgroundDarkSrc])
+	useEffect(() => {
+		if (!mounted) return
+		// Прогреваем dark-версию заранее, чтобы при переключении темы не ждать загрузки.
+		const darkImg = new Image()
+		darkImg.src = backgroundDarkSrc
+	}, [mounted, backgroundDarkSrc])
 
-  useEffect(() => {
-    if (!heroImageLoaded) return
-    const timer = window.setTimeout(() => {
-      setHeroContentVisible(true)
-    }, 200)
-    return () => window.clearTimeout(timer)
-  }, [heroImageLoaded])
+	useEffect(() => {
+		if (!heroImageLoaded) return
+		const timer = window.setTimeout(() => {
+			setHeroContentVisible(true)
+		}, 200)
+		return () => window.clearTimeout(timer)
+	}, [heroImageLoaded])
 
-  const isLight = mounted && resolvedTheme === "light"
-  const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
-  const handleAnchorClick = createAnchorClickHandler({ rawHref: "#contact", sectionHrefPrefix: "" })
-  const handleChannelsClick = createAnchorClickHandler({ rawHref: "#channels", sectionHrefPrefix: "" })
+	const isLight = mounted && resolvedTheme === "light"
+	const raysProps = isLight ? LIGHT_RAYS_LIGHT : LIGHT_RAYS_DARK
+	const handleAnchorClick = createAnchorClickHandler({ rawHref: "#contact", sectionHrefPrefix: "" })
+	const handleChannelsClick = createAnchorClickHandler({
+		rawHref: "#channels",
+		sectionHrefPrefix: "",
+	})
 
-  return (
-    <div className="relative">
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-8 pb-10 md:pt-10 md:pb-12">
-        <div className="absolute inset-0 z-0" aria-hidden="true">
-          <div
-            className="absolute inset-0 bg-cover bg-center dark:hidden"
-            style={{ backgroundImage: `url('${backgroundLightSrc}')` }}
-          />
-          <div
-            className="absolute inset-0 hidden bg-cover bg-center dark:block"
-            style={{ backgroundImage: `url('${backgroundDarkSrc}')` }}
-          />
-          <div
-            className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`}
-          />
-        </div>
-        <div className="absolute inset-x-0 top-0 h-full w-full pt-16 lg:pt-18">
-          {animationEnabled && (
-            <LightRays
-              raysOrigin="top-center"
-              raysColor={raysProps.raysColor}
-              raysSpeed={1}
-              lightSpread={0.6}
-              rayLength={3}
-              followMouse={true}
-              mouseInfluence={0.1}
-              noiseAmount={0}
-              distortion={0}
-              className="custom-rays"
-              pulsating={false}
-              fadeDistance={1.4}
-              saturation={raysProps.saturation}
-            />
-          )}
-        </div>
-        <div
-          className={`relative z-10 mx-auto max-w-5xl text-center transition-opacity duration-300 ${heroContentVisible ? "opacity-100" : "opacity-0"}`}
-        >
-          {animationEnabled ? (
-            <StaggerItem
-              index={0}
-              delayStart={100}
-              delayStep={50}
-              visibleClassName="translate-y-0 opacity-100"
-              hiddenClassName="translate-y-4 opacity-0"
-              durationClassName="duration-700"
-            >
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
-                <span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
-                <span className="text-xs font-medium text-muted-foreground tracking-wider uppercase">
-                  {(t.hero as any).badge}
-                </span>
-              </div>
-            </StaggerItem>
-          ) : (
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
-              <span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
-              <span className="text-xs font-medium text-muted-foreground tracking-wider uppercase">
-                {(t.hero as any).badge}
-              </span>
-            </div>
-          )}
+	return (
+		<div className="relative">
+			<section className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-8 pb-10 md:pt-10 md:pb-12">
+				<div
+					className="absolute inset-0 z-0"
+					aria-hidden="true"
+				>
+					<div
+						className="absolute inset-0 bg-cover bg-center dark:hidden"
+						style={{ backgroundImage: `url('${backgroundLightSrc}')` }}
+					/>
+					<div
+						className="absolute inset-0 hidden bg-cover bg-center dark:block"
+						style={{ backgroundImage: `url('${backgroundDarkSrc}')` }}
+					/>
+					<div className={`absolute inset-0 transition-opacity duration-500 ${heroImageLoaded ? "opacity-0" : "opacity-100"}`} />
+				</div>
+				<div className="absolute inset-x-0 top-0 h-full w-full pt-16 lg:pt-18">
+					{animationEnabled && (
+						<LightRays
+							raysOrigin="top-center"
+							raysColor={raysProps.raysColor}
+							raysSpeed={1}
+							lightSpread={0.6}
+							rayLength={3}
+							followMouse={true}
+							mouseInfluence={0.1}
+							noiseAmount={0}
+							distortion={0}
+							className="custom-rays"
+							pulsating={false}
+							fadeDistance={1.4}
+							saturation={raysProps.saturation}
+						/>
+					)}
+				</div>
+				<div className={`relative z-10 mx-auto max-w-5xl text-center transition-opacity duration-300 ${heroContentVisible ? "opacity-100" : "opacity-0"}`}>
+					{animationEnabled ? (
+						<StaggerItem
+							index={0}
+							delayStart={100}
+							delayStep={50}
+							visibleClassName="translate-y-0 opacity-100"
+							hiddenClassName="translate-y-4 opacity-0"
+							durationClassName="duration-700"
+						>
+							<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
+								<span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
+								<span className="text-xs font-medium text-muted-foreground tracking-wider uppercase">{(t.hero as any).badge}</span>
+							</div>
+						</StaggerItem>
+					) : (
+						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5">
+							<span className="h-2 w-2 rounded-full bg-primary animate-glow-pulse" />
+							<span className="text-xs font-medium text-muted-foreground tracking-wider uppercase">{(t.hero as any).badge}</span>
+						</div>
+					)}
 
-          {animationEnabled ? (
-            <StaggerItem
-              index={1}
-              delayStart={100}
-              delayStep={50}
-              visibleClassName="translate-y-0 opacity-100"
-              hiddenClassName="translate-y-6 opacity-0"
-              durationClassName="duration-700"
-            >
-              <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl text-balance">
-                {t.hero.title}
-              </h1>
-            </StaggerItem>
-          ) : (
-            <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl text-balance">
-              {t.hero.title}
-            </h1>
-          )}
+					{animationEnabled ? (
+						<StaggerItem
+							index={1}
+							delayStart={100}
+							delayStep={50}
+							visibleClassName="translate-y-0 opacity-100"
+							hiddenClassName="translate-y-6 opacity-0"
+							durationClassName="duration-700"
+						>
+							<h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl text-balance">{t.hero.title}</h1>
+						</StaggerItem>
+					) : (
+						<h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl text-balance">{t.hero.title}</h1>
+					)}
 
-          {animationEnabled ? (
-            <StaggerItem
-              index={2}
-              delayStart={100}
-              delayStep={50}
-              visibleClassName="translate-y-0 opacity-100"
-              hiddenClassName="translate-y-4 opacity-0"
-              durationClassName="duration-700"
-            >
-              <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">
-                {t.hero.subtitle}
-              </p>
-            </StaggerItem>
-          ) : (
-            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">
-              {t.hero.subtitle}
-            </p>
-          )}
+					{animationEnabled ? (
+						<StaggerItem
+							index={2}
+							delayStart={100}
+							delayStep={50}
+							visibleClassName="translate-y-0 opacity-100"
+							hiddenClassName="translate-y-4 opacity-0"
+							durationClassName="duration-700"
+						>
+							<p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">{t.hero.subtitle}</p>
+						</StaggerItem>
+					) : (
+						<p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed md:text-xl text-pretty">{t.hero.subtitle}</p>
+					)}
 
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            {animationEnabled ? (
-              <StaggerItem
-                index={3}
-                delayStart={100}
-                delayStep={50}
-                visibleClassName="translate-y-0 opacity-100 scale-100"
-                hiddenClassName="translate-y-4 opacity-0 scale-95"
-                durationClassName="duration-700"
-              >
-                <Link
-                  href="#contact"
-                  onClick={handleAnchorClick}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
-                >
-                  {t.hero.cta}
-                </Link>
-              </StaggerItem>
-            ) : (
-              <Link
-                href="#contact"
-                onClick={handleAnchorClick}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
-              >
-                {t.hero.cta}
-              </Link>
-            )}
+					<div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+						{animationEnabled ? (
+							<StaggerItem
+								index={3}
+								delayStart={100}
+								delayStep={50}
+								visibleClassName="translate-y-0 opacity-100 scale-100"
+								hiddenClassName="translate-y-4 opacity-0 scale-95"
+								durationClassName="duration-700"
+							>
+								<Link
+									href="#contact"
+									onClick={handleAnchorClick}
+									className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
+								>
+									{t.hero.cta}
+								</Link>
+							</StaggerItem>
+						) : (
+							<Link
+								href="#contact"
+								onClick={handleAnchorClick}
+								className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 hover:shadow-[0_0_30px_rgba(230,27,0,0.3)] sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
+							>
+								{t.hero.cta}
+							</Link>
+						)}
 
-            {animationEnabled ? (
-              <StaggerItem
-                index={4}
-                delayStart={100}
-                delayStep={50}
-                visibleClassName="translate-y-0 opacity-100 scale-100"
-                hiddenClassName="translate-y-4 opacity-0 scale-95"
-                durationClassName="duration-700"
-              >
-                <Link
-                  href="#channels"
-                  onClick={handleChannelsClick}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
-                >
-                  {t.hero.scroll}
-                  <ArrowDown className="h-4 w-4" />
-                </Link>
-              </StaggerItem>
-            ) : (
-              <Link
-                href="#channels"
-                onClick={handleChannelsClick}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
-              >
-                {t.hero.scroll}
-                <ArrowDown className="h-4 w-4" />
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
+						{animationEnabled ? (
+							<StaggerItem
+								index={4}
+								delayStart={100}
+								delayStep={50}
+								visibleClassName="translate-y-0 opacity-100 scale-100"
+								hiddenClassName="translate-y-4 opacity-0 scale-95"
+								durationClassName="duration-700"
+							>
+								<Link
+									href="#channels"
+									onClick={handleChannelsClick}
+									className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
+								>
+									{t.hero.scroll}
+									<ArrowDown className="h-4 w-4" />
+								</Link>
+							</StaggerItem>
+						) : (
+							<Link
+								href="#channels"
+								onClick={handleChannelsClick}
+								className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-6 py-3 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary sm:px-7 sm:py-3.5 sm:text-sm md:px-8 md:py-4 md:text-base"
+							>
+								{t.hero.scroll}
+								<ArrowDown className="h-4 w-4" />
+							</Link>
+						)}
+					</div>
+				</div>
+			</section>
+		</div>
+	)
 }

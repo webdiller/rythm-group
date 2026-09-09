@@ -2,42 +2,42 @@ import { z } from "zod"
 import { allZodSchemas, SharedDefaultResponse, SharedGetOneParams } from "@/lib/types"
 
 export const GetAllResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartnerCategories.select.array(),
+	data: allZodSchemas.tablePartnerCategories.select.array(),
 })
 
 export const GetOneParams = SharedGetOneParams
 
 export const GetOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartnerCategories.select.nullable(),
+	data: allZodSchemas.tablePartnerCategories.select.nullable(),
 })
 
 export const CreateOneBody = allZodSchemas.tablePartnerCategories.insert.pick({
-  name_ru: true,
-  name_en: true,
-  order_index: true,
+	name_ru: true,
+	name_en: true,
+	order_index: true,
 })
 
 export const CreateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartnerCategories.select,
+	data: allZodSchemas.tablePartnerCategories.select,
 })
 
 export const UpdateOneParams = SharedGetOneParams
 
 export const UpdateOneBody = allZodSchemas.tablePartnerCategories.update.pick({
-  id: true,
-  name_ru: true,
-  name_en: true,
-  order_index: true,
+	id: true,
+	name_ru: true,
+	name_en: true,
+	order_index: true,
 })
 
 export const UpdateOneResponse = SharedDefaultResponse.extend({
-  data: allZodSchemas.tablePartnerCategories.select,
+	data: allZodSchemas.tablePartnerCategories.select,
 })
 
 export const DeleteOneParams = SharedGetOneParams
 
 export const DeleteOneResponse = SharedDefaultResponse.extend({
-  data: z.boolean(),
+	data: z.boolean(),
 })
 
 export type GetAllResponse = z.infer<typeof GetAllResponse>

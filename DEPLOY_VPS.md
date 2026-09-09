@@ -2,13 +2,13 @@
 
 Инструкция для программиста. Стек production:
 
-| Компонент | Роль |
-|-----------|------|
-| **Docker Compose** | Сборка и запуск Next.js |
-| **nginx** | Reverse proxy, HTTPS, редиректы www ↔ apex |
-| **SQLite** | Файл `./data/cms.db` на volume (не уничтожается при redeploy) |
-| **Yandex Object Storage** | Медиа CMS + бэкапы БД |
-| **GitHub Actions** | `git pull` → бэкап БД в S3 → `docker compose up -d --build` |
+| Компонент                 | Роль                                                          |
+| ------------------------- | ------------------------------------------------------------- |
+| **Docker Compose**        | Сборка и запуск Next.js                                       |
+| **nginx**                 | Reverse proxy, HTTPS, редиректы www ↔ apex                    |
+| **SQLite**                | Файл `./data/cms.db` на volume (не уничтожается при redeploy) |
+| **Yandex Object Storage** | Медиа CMS + бэкапы БД                                         |
+| **GitHub Actions**        | `git pull` → бэкап БД в S3 → `docker compose up -d --build`   |
 
 Схема миграций БД: при старте приложения `getDb()` вызывает `runMigrations()` — отдельно `drizzle-kit push` на проде обычно не нужен. **Каталог `data/` не удалять** при обновлениях.
 
@@ -206,10 +206,10 @@ crontab -e
 
 В репозитории: **Settings → Secrets and variables → Actions**:
 
-| Secret | Значение |
-|--------|----------|
-| `VPS_HOST` | IP или hostname VPS |
-| `VPS_USER` | SSH-пользователь |
+| Secret        | Значение                 |
+| ------------- | ------------------------ |
+| `VPS_HOST`    | IP или hostname VPS      |
+| `VPS_USER`    | SSH-пользователь         |
 | `VPS_SSH_KEY` | Приватный ключ (целиком) |
 
 На VPS публичный ключ должен быть в `~/.ssh/authorized_keys`. Пользователь — в группе `docker`.
@@ -396,12 +396,12 @@ server {
 
 ## D. Операции после деплоя
 
-| Задача | Команда |
-|--------|---------|
-| Логи | `docker compose logs -f --tail=200 app` |
-| Рестарт | `docker compose restart app` |
-| Обновление вручную | `git pull && docker compose up -d --build` |
-| Бэкап БД | `docker compose exec app node scripts/backup-sqlite-to-s3.mjs` |
+| Задача               | Команда                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| Логи                 | `docker compose logs -f --tail=200 app`                                             |
+| Рестарт              | `docker compose restart app`                                                        |
+| Обновление вручную   | `git pull && docker compose up -d --build`                                          |
+| Бэкап БД             | `docker compose exec app node scripts/backup-sqlite-to-s3.mjs`                      |
 | Восстановление из S3 | скачать `.db` из бакета → положить в `./data/cms.db` → `docker compose restart app` |
 
 ### Важно

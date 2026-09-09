@@ -1,0 +1,13 @@
+{
+	"useTabs": true,
+	"printWidth": 300,
+	"semi": false,
+	"singleQuote": false,
+	"trailingComma": "all",
+	"jsxBracketSameLine": true,
+	"tabWidth": 2,
+	"singleAttributePerLine": true,
+	"svelteBracketNewLine": true,
+	"svelteAllowShorthand": false,
+	"svelteStrictMode": false
+}

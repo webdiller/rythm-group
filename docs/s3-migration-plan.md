@@ -41,17 +41,17 @@
 
 ### 2.2. Соглашения по ключам
 
-| Тип | Префикс ключа | Пример |
-|---|---|---|
-| Логотип партнёра | `partners/{id}/` | `partners/12/logo-{uuid}.webp` |
-| Аватар канала | `channels/{id}/` | `channels/3/avatar-{uuid}.webp` |
-| Иконка about-card | `about-cards/{id}/` | `about-cards/1/icon-{uuid}.webp` |
-| Логотип сайта | `site/` | `site/logo-{uuid}.webp` |
-| Favicon | `site/` | `site/favicon-{uuid}.webp` |
-| Фон hero | `site/backgrounds/hero/` | `site/backgrounds/hero/light-{uuid}.webp` |
-| Фон global | `site/backgrounds/global/` | `site/backgrounds/global/affiliate-dark-{uuid}.webp` |
-| Обложка блога | `blog/images/` | `blog/images/{ts}-{uuid}.webp` |
-| Видео блога | `blog/videos/` | `blog/videos/{ts}-{uuid}.mp4` |
+| Тип               | Префикс ключа              | Пример                                               |
+| ----------------- | -------------------------- | ---------------------------------------------------- |
+| Логотип партнёра  | `partners/{id}/`           | `partners/12/logo-{uuid}.webp`                       |
+| Аватар канала     | `channels/{id}/`           | `channels/3/avatar-{uuid}.webp`                      |
+| Иконка about-card | `about-cards/{id}/`        | `about-cards/1/icon-{uuid}.webp`                     |
+| Логотип сайта     | `site/`                    | `site/logo-{uuid}.webp`                              |
+| Favicon           | `site/`                    | `site/favicon-{uuid}.webp`                           |
+| Фон hero          | `site/backgrounds/hero/`   | `site/backgrounds/hero/light-{uuid}.webp`            |
+| Фон global        | `site/backgrounds/global/` | `site/backgrounds/global/affiliate-dark-{uuid}.webp` |
+| Обложка блога     | `blog/images/`             | `blog/images/{ts}-{uuid}.webp`                       |
+| Видео блога       | `blog/videos/`             | `blog/videos/{ts}-{uuid}.mp4`                        |
 
 Правила:
 
@@ -107,15 +107,15 @@ lib/s3/
 
 ## 3. Инвентаризация «как есть»
 
-| Медиа | Хранение сейчас | Отдача | Приоритет |
-|---|---|---|---|
-| Partner logo | S3 key (+ legacy base64) | `/api/content/partners/[id]/logo` | P0 — дочистить URL + миграция остатков |
-| Channel avatar | base64 SQLite | `/api/content/channels/[id]/avatar` | P1 |
-| About card icon | base64 SQLite | `/api/content/about-cards/[id]/icon` | P1 |
-| Site logo / favicon | base64 SQLite (`site_settings`) | `/api/site/logo`, `/api/site/favicon` | P2 |
-| Hero / global backgrounds | файлы `public/backgrounds/*.webp` | `/api/site/backgrounds/*` | P2 |
-| Blog images / video | `public/uploads/blog/**` | `/uploads/blog/...` | P3 |
-| TipTap inline images | зависят от upload блога | URL в HTML | P3 (вместе с блогом) |
+| Медиа                     | Хранение сейчас                   | Отдача                                | Приоритет                              |
+| ------------------------- | --------------------------------- | ------------------------------------- | -------------------------------------- |
+| Partner logo              | S3 key (+ legacy base64)          | `/api/content/partners/[id]/logo`     | P0 — дочистить URL + миграция остатков |
+| Channel avatar            | base64 SQLite                     | `/api/content/channels/[id]/avatar`   | P1                                     |
+| About card icon           | base64 SQLite                     | `/api/content/about-cards/[id]/icon`  | P1                                     |
+| Site logo / favicon       | base64 SQLite (`site_settings`)   | `/api/site/logo`, `/api/site/favicon` | P2                                     |
+| Hero / global backgrounds | файлы `public/backgrounds/*.webp` | `/api/site/backgrounds/*`             | P2                                     |
+| Blog images / video       | `public/uploads/blog/**`          | `/uploads/blog/...`                   | P3                                     |
+| TipTap inline images      | зависят от upload блога           | URL в HTML                            | P3 (вместе с блогом)                   |
 
 ---
 
@@ -156,7 +156,7 @@ lib/s3/
 2. `POST/DELETE` `app/api/content/channels/avatar` → Sharp → S3 → в `channels.avatar` писать key.
 3. При delete channel — удалять объект S3.
 4. UI (`channels.tsx`, `ChannelsEditor`) → public URL.
-5. Миграция: `scripts/migrate-channel-avatars-to-s3.ts`  
+5. Миграция: `scripts/migrate-channel-avatars-to-s3.ts`
    - читать base64 → upload → update row → идемпотентно skip если уже key.
 6. npm script: `db:migrate-channel-avatars-s3`.
 7. Удалить/свести к 302 GET `[id]/avatar`.
@@ -297,31 +297,31 @@ lib/s3/
 
 ## 6. Рекомендуемый порядок внедрения (сводка)
 
-| # | Этап | Риск | Зависимости |
-|---|---|---|---|
-| 0 | Env + shared URL helpers | Низкий | — |
-| 1 | Partners URL cleanup + migrate leftovers | Низкий | 0 |
-| 2 | Channels avatars | Средний | 0 |
-| 3 | About icons | Низкий | 0 |
-| 4 | Site logo/favicon | Средний (header везде) | 0 |
-| 5 | Backgrounds | Средний | 0, желательно 4 |
-| 6 | Blog uploads + HTML rewrite | Высокий | 0 |
-| 7 | Cleanup API proxies | Низкий | 1–6 |
-| 8 | Harden | — | 7 |
+| #   | Этап                                     | Риск                   | Зависимости     |
+| --- | ---------------------------------------- | ---------------------- | --------------- |
+| 0   | Env + shared URL helpers                 | Низкий                 | —               |
+| 1   | Partners URL cleanup + migrate leftovers | Низкий                 | 0               |
+| 2   | Channels avatars                         | Средний                | 0               |
+| 3   | About icons                              | Низкий                 | 0               |
+| 4   | Site logo/favicon                        | Средний (header везде) | 0               |
+| 5   | Backgrounds                              | Средний                | 0, желательно 4 |
+| 6   | Blog uploads + HTML rewrite              | Высокий                | 0               |
+| 7   | Cleanup API proxies                      | Низкий                 | 1–6             |
+| 8   | Harden                                   | —                      | 7               |
 
 ---
 
 ## 7. Риски и митигации
 
-| Риск | Митигация |
-|---|---|
-| Бакет не публичный → 403 на img | Чеклист этапа 0: открыть тестовый object URL |
-| Миграция оборвалась | Идемпотентные скрипты; не удалять base64/файлы до `failed=0` |
-| Кеш браузера старых `/api/...` | 302 redirect 1–2 релиза или cache-bust |
-| HTML блога со старыми `/uploads/...` | rewrite-скрипт + временный rewrite в Next redirects |
-| Раздувание SQLite до миграции | Приоритет P1 каналы/about |
-| Случайный commit секретов | Только `.env.example` без значений; `.env.local` в gitignore |
-| Смена bucket/endpoint | Keys в БД стабильны; меняется только `YA_*` / `NEXT_PUBLIC_YA_PUBLIC_BASE` |
+| Риск                                 | Митигация                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| Бакет не публичный → 403 на img      | Чеклист этапа 0: открыть тестовый object URL                               |
+| Миграция оборвалась                  | Идемпотентные скрипты; не удалять base64/файлы до `failed=0`               |
+| Кеш браузера старых `/api/...`       | 302 redirect 1–2 релиза или cache-bust                                     |
+| HTML блога со старыми `/uploads/...` | rewrite-скрипт + временный rewrite в Next redirects                        |
+| Раздувание SQLite до миграции        | Приоритет P1 каналы/about                                                  |
+| Случайный commit секретов            | Только `.env.example` без значений; `.env.local` в gitignore               |
+| Смена bucket/endpoint                | Keys в БД стабильны; меняется только `YA_*` / `NEXT_PUBLIC_YA_PUBLIC_BASE` |
 
 ---
 
