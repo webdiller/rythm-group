@@ -36,3 +36,5 @@ npm run dev:docker
 ## Production / VPS
 
 Полная инструкция (чистый VPS, миграция с PM2, бэкапы в Object Storage, CI): **[DEPLOY_VPS.md](./DEPLOY_VPS.md)**.
+
+Быстрая подготовка Ubuntu VPS: `scripts/vps-bootstrap.sh` (только на сервере; см. раздел «Быстрый старт» в DEPLOY_VPS.md).

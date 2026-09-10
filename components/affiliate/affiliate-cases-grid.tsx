@@ -53,11 +53,11 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
       >
         <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
           {showImage ? (
-            <div className="relative aspect-3/2 w-full overflow-hidden bg-muted">
+            <div className="relative mt-2 aspect-3/2 w-full bg-muted">
               <img
                 src={imageSrc}
                 alt=""
-                className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.02]"
+                className="h-full w-auto mx-auto rounded-2xl object-contain transition-transform duration-300"
                 loading="lazy"
                 decoding="async"
                 onError={() =>

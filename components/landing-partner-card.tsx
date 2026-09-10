@@ -45,7 +45,7 @@ export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: Lan
             src={logoSrc}
             alt={partner.name}
             title={partner.name}
-            className="relative z-10 h-full w-full rounded-lg object-contain"
+            className="relative z-10 h-full w-auto rounded-lg object-contain"
             loading="lazy"
             decoding="async"
           />

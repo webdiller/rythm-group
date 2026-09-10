@@ -17,6 +17,7 @@ import { useLocale } from "@/lib/locale-context"
 import { fallbackTranslations } from "@/lib/i18n"
 import { getSiteFaviconSrc, getSiteLogoSrc } from "@/lib/s3/site-asset-url"
 import { getBackgroundSrc, parseBackgroundsJson, resolveBackgroundSlot, type BackgroundSlot, type BackgroundsMap } from "@/lib/s3/background-slots"
+import { DemoSeedPanel } from "@/components/dashboard/DemoSeedPanel"
 
 function SortableNavList({ items, children }: { items: HeaderNavItemId[]; children: ReactNode }) {
   return (
@@ -1732,6 +1733,8 @@ export function SiteSettingsEditor() {
           </div>
         </CardContent>
       </Card>
+
+      <DemoSeedPanel />
 
       <div className="sticky bottom-2 inset-x-0 bg-background p-2 rounded-lg z-10 border border-muted shadow">
         <div className="flex justify-between *:flex-1 md:justify-end md:*:flex-none gap-2">

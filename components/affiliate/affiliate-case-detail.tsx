@@ -295,7 +295,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
                 />
               </div>
             ) : null}
-            <h1 className="font-(family-name:--font-space-grotesk) text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{title}</h1>
+            <h1 className="font-(family-name:--font-space-grotesk) text-xl font-bold tracking-tight text-foreground sm:text-2xl lg:text-3xl">{title}</h1>
           </header>
 
           <Card className="border-border/80 bg-card/85 py-0 shadow-none backdrop-blur-sm">

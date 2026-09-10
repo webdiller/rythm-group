@@ -8,7 +8,7 @@
 | **nginx**                 | Reverse proxy, HTTPS, редиректы www ↔ apex                    |
 | **SQLite**                | Файл `./data/cms.db` на volume (не уничтожается при redeploy) |
 | **Yandex Object Storage** | Медиа CMS + бэкапы БД                                         |
-| **GitHub Actions**        | `git pull` → бэкап БД в S3 → `docker compose up -d --build`   |
+| **GitHub Actions**        | Push в `main` → SSH на VPS → `git pull` → бэкап → Docker (см. **A8**) |
 
 Схема миграций БД: при старте приложения `getDb()` вызывает `runMigrations()` — отдельно `drizzle-kit push` на проде обычно не нужен. **Каталог `data/` не удалять** при обновлениях.
 
@@ -19,6 +19,42 @@
 ---
 
 ## A. Чистый VPS (с нуля)
+
+### Быстрый старт (опционально): `scripts/vps-bootstrap.sh`
+
+> **Где выполнять:** на **VPS** (Ubuntu), пользователь с `sudo`. Не на локальной Windows/macOS.
+
+Скрипт ставит пакеты, Docker, готовит `/var/www/rythm-group`, копирует `.env.example` → `.env` (без секретов), пишет базовый nginx → `:3000`.  
+**Не** подставляет JWT/S3/SMTP и **не** выпускает HTTPS сам — это остаётся ручным шагом.
+
+```bash
+# Вариант 1: уже склонировали репозиторий
+cd /var/www/rythm-group   # или куда клонировали
+bash scripts/vps-bootstrap.sh
+
+# Вариант 2: клон + bootstrap одной командой (публичный репо — HTTPS)
+REPO_URL=https://github.com/OWNER/REPO.git \
+DOMAIN=example.com \
+bash -c 'curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/scripts/vps-bootstrap.sh | bash'
+
+# После заполнения .env можно сразу поднять приложение:
+# START_APP=1 bash scripts/vps-bootstrap.sh
+```
+
+Переменные: `APP_DIR`, `REPO_URL`, `DOMAIN`, `DEPLOY_USER`, `SKIP_APT=1`, `SKIP_DOCKER_INSTALL=1`, `START_APP=1`.
+
+Если на VPS вы вошли как **root** (часто так по умолчанию):
+
+```bash
+# Рекомендуется — одной командой создаст пользователя deploy и продолжит от него:
+DEPLOY_USER=deploy REPO_URL=https://github.com/OWNER/REPO.git bash vps-bootstrap.sh
+
+# Или вручную:
+adduser deploy && usermod -aG sudo deploy && su - deploy
+bash /path/to/vps-bootstrap.sh
+```
+
+Дальше всё равно выполните заполнение `.env`, DNS, certbot и при необходимости **A8** (автодеплой). Ниже — те же шаги вручную (A1–A9).
 
 ### A1. Базовая подготовка
 
@@ -51,33 +87,60 @@ docker version
 docker compose version
 ```
 
-### A3. Каталог проекта и SSH к GitHub
+### A3. Каталог проекта и SSH к GitHub (ключ «VPS → GitHub»)
+
+> **Где выполнять:** шаги ниже — на **VPS** (по SSH), кроме добавления публичного ключа в веб-интерфейс GitHub (это в браузере на любой машине).
+
+Нужен отдельный ключ, чтобы на сервере работал `git pull` / `git clone` из **приватного** репозитория.  
+Это **не** тот же ключ, что `VPS_SSH_KEY` для GitHub Actions (см. **A8**).
+
+**На VPS:**
 
 ```bash
 sudo mkdir -p /var/www/rythm-group
 sudo chown "$USER:$USER" /var/www/rythm-group
 cd /var/www/rythm-group
+
+# Создать ключ только для доступа к GitHub (если ещё нет подходящего)
+ssh-keygen -t ed25519 -C "vps-git-github" -f ~/.ssh/id_ed25519_github -N ""
+eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519_github
+
+# Показать публичный ключ — его нужно скопировать
+cat ~/.ssh/id_ed25519_github.pub
 ```
 
-SSH-ключ для приватного репо (если ещё нет):
+**В браузере (GitHub)** — один из вариантов:
+
+1. **Deploy key репозитория** (рекомендуется для одного проекта):  
+   репозиторий → **Settings → Deploy keys → Add deploy key** → вставить содержимое `.pub`, доступ **Read-only** достаточно для `git pull`.
+2. Или **SSH key аккаунта**: GitHub → **Settings → SSH and GPG keys → New SSH key**.
+
+Если у пользователя на VPS несколько ключей, в `~/.ssh/config` укажите:
+
+```text
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+```
+
+**На VPS — проверка и клон:**
 
 ```bash
-ssh-keygen -t ed25519 -C "vps-rythm" -f ~/.ssh/id_ed25519 -N ""
-eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
-cat ~/.ssh/id_ed25519.pub
-# → GitHub → Settings → SSH and GPG keys → New SSH key
 ssh -T git@github.com
-```
+# Ожидается: Hi <user/repo>! You've successfully authenticated...
 
-Клонирование:
-
-```bash
 git clone git@github.com:OWNER/REPO.git .
-# или: git clone https://github.com/OWNER/REPO.git .
+# HTTPS для приватного репо без токена обычно неудобен — предпочтителен SSH
 mkdir -p data public/uploads
 ```
 
+> Приватный файл `~/.ssh/id_ed25519_github` **не** кладите в GitHub Secrets и **не** коммитьте в репозиторий. Он остаётся только на VPS.
+
 ### A4. Переменные окружения
+
+> **Где выполнять:** на **VPS**, в каталоге проекта.
 
 ```bash
 cp .env.example .env
@@ -98,6 +161,8 @@ nano .env
 
 ### A5. Первый запуск контейнера
 
+> **Где выполнять:** на **VPS**.
+
 ```bash
 cd /var/www/rythm-group
 docker compose up -d --build
@@ -110,6 +175,8 @@ docker compose logs -f --tail=100 app
 База появится в `./data/cms.db` после первого обращения к приложению (миграции на старте).
 
 ### A6. nginx + домен + редиректы www
+
+> **Где выполнять:** DNS — в панели регистратора; конфиг nginx и certbot — на **VPS**.
 
 Пока DNS ещё не настроен, можно открыть сайт по IP (HTTP). Для продакшена:
 
@@ -182,6 +249,8 @@ server {
 
 ### A7. Бэкапы SQLite → Yandex Object Storage
 
+> **Где выполнять:** на **VPS**.
+
 Разовый бэкап:
 
 ```bash
@@ -202,19 +271,110 @@ crontab -e
 
 Объекты кладутся в бакет по ключу вида `backups/cms/cms-<timestamp>.db` (приватные). Старые чистятся по `BACKUP_KEEP_DAYS`.
 
-### A8. GitHub Actions (автодеплой)
+### A8. GitHub Actions (автодеплой) — ключ «GitHub Actions → VPS»
 
-В репозитории: **Settings → Secrets and variables → Actions**:
+При **push в ветку `main`** workflow `.github/workflows/deploy.yml` по SSH заходит на VPS и выполняет: `git pull` → `docker compose build` → бэкап БД в S3 → `docker compose up -d`.
 
-| Secret        | Значение                 |
-| ------------- | ------------------------ |
-| `VPS_HOST`    | IP или hostname VPS      |
-| `VPS_USER`    | SSH-пользователь         |
-| `VPS_SSH_KEY` | Приватный ключ (целиком) |
+Нужны **два разных** SSH-ключа:
 
-На VPS публичный ключ должен быть в `~/.ssh/authorized_keys`. Пользователь — в группе `docker`.
+| Назначение | Кто → куда | Где лежит приватный ключ |
+| ---------- | ---------- | ------------------------ |
+| `git pull` на сервере | **VPS → GitHub** | только на VPS (раздел **A3**) |
+| Автодеплой | **GitHub Actions → VPS** | Secret `VPS_SSH_KEY` в GitHub (этот раздел) |
 
-Workflow (`.github/workflows/deploy.yml`): push в `main` → `git pull` → бэкап БД в S3 → `docker compose up -d --build`.
+---
+
+#### A8.1. Создать ключ для деплоя
+
+> **Где выполнять:** на **локальной машине** разработчика (не обязательно на VPS). Так приватный ключ не смешивается с ключом git на сервере.
+
+```bash
+# Локально (Windows Git Bash / macOS / Linux)
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ./vps_deploy_ed25519 -N ""
+```
+
+Появятся два файла в текущей папке:
+
+| Файл | Что это | Куда |
+| ---- | ------- | ---- |
+| `vps_deploy_ed25519` | **приватный** ключ | Secret `VPS_SSH_KEY` в GitHub |
+| `vps_deploy_ed25519.pub` | **публичный** ключ | `~/.ssh/authorized_keys` на VPS |
+
+> Файлы `vps_deploy_ed25519*` **не коммитить** в репозиторий. После настройки приватный ключ можно удалить с диска локальной машины (он уже сохранён в GitHub Secret) или хранить в менеджере секретов команды.
+
+---
+
+#### A8.2. Публичный ключ на VPS
+
+> **Где выполнять:** на **VPS**, под тем же пользователем, который указан в `VPS_USER` (владелец `/var/www/rythm-group`, доступ к Docker).
+
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# Вставить ОДНУ строку из vps_deploy_ed25519.pub (скопированную с локальной машины)
+echo "ssh-ed25519 AAAA... github-actions-deploy" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+# Пользователь должен уметь запускать docker без sudo
+sudo usermod -aG docker "$USER"
+# После usermod — перелогиниться по SSH
+```
+
+---
+
+#### A8.3. Проверить вход ключом
+
+> **Где выполнять:** на **локальной машине**.
+
+```bash
+ssh -i ./vps_deploy_ed25519 USER@VPS_IP
+# Подставьте реальные USER и IP. Вход должен пройти без пароля.
+```
+
+Если зашли — ключ подходит для Actions.
+
+---
+
+#### A8.4. Secrets в GitHub
+
+> **Где выполнять:** в **браузере** → репозиторий → **Settings → Secrets and variables → Actions → New repository secret**.
+
+| Secret | Значение | Откуда взять |
+| ------ | -------- | ------------ |
+| `VPS_HOST` | IP или hostname VPS | панель хостинга / `hostname -I` на VPS |
+| `VPS_USER` | SSH-логин на VPS | тот же, под которым настроены `authorized_keys` и Docker |
+| `VPS_SSH_KEY` | **весь** текст приватного файла `vps_deploy_ed25519` | локальный файл: от `-----BEGIN` до `-----END` включительно |
+
+Как скопировать приватный ключ для Secret:
+
+```bash
+# Локально
+cat ./vps_deploy_ed25519
+# Выделить всё содержимое файла и вставить в Value секрета VPS_SSH_KEY
+```
+
+На Windows (PowerShell): `Get-Content .\vps_deploy_ed25519 -Raw` — скопировать вывод целиком.
+
+---
+
+#### A8.5. Проверка автодеплоя
+
+> **Где выполнять:** push — с **локальной машины** (или в GitHub UI); логи — в браузере GitHub.
+
+1. Убедитесь, что на VPS проект уже склонирован (A3), есть `.env` (A4), контейнер когда-то успешно собирался.
+2. Сделайте commit и `git push origin main`.
+3. GitHub → **Actions** → workflow **Deploy to VPS** — статус должен быть зелёным.
+4. На VPS: `cd /var/www/rythm-group && docker compose ps` и при необходимости `docker compose logs --tail=50 app`.
+
+Типичные ошибки:
+
+| Симптом | Что проверить |
+| ------- | ------------- |
+| Actions: Permission denied (publickey) | На VPS нет `.pub` в `authorized_keys`, или в Secret попал публичный ключ / обрезанный приватный |
+| Actions: Project directory not found | Нет каталога `/var/www/rythm-group` (и fallback-путей из workflow) |
+| `git pull` failed на VPS | Не настроен ключ **A3** (VPS → GitHub) для приватного репо |
+| `docker: permission denied` | Пользователь `VPS_USER` не в группе `docker`, сессия не перелогинена |
 
 ### A9. Чеклист чистого VPS
 
@@ -224,6 +384,8 @@ Workflow (`.github/workflows/deploy.yml`): push в `main` → `git pull` → б�
 - [ ] `/dashboard` — вход по `ADMIN_USERS`
 - [ ] Загрузка картинки в админке уходит в Yandex Object Storage
 - [ ] Бэкап: объект появился в бакете под `backups/cms/`
+- [ ] Deploy key / SSH для git на VPS (A3) и Secrets `VPS_*` (A8) настроены
+- [ ] Push в `main` успешно проходит в GitHub Actions
 
 ---
 
@@ -322,7 +484,7 @@ docker compose exec app npx tsx scripts/rewrite-blog-html-upload-urls.ts
 ### B6. Бэкапы и CI
 
 - Настройте cron как в **A7**.
-- Подключите GitHub Secrets как в **A8** (путь `/var/www/rythm-group` или fallback в workflow).
+- Подключите GitHub Secrets и ключ деплоя пошагово как в **A8** (локально создать ключ → `.pub` на VPS → Secrets в GitHub). Путь проекта: `/var/www/rythm-group` или fallback в workflow.
 
 ### B7. Чеклист миграции со старого VPS
 
