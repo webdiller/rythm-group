@@ -1,12 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import type { ContactIconItem } from "@/lib/schemas/contact-icons"
+import {
+  DEFAULT_ICON_FILTERS,
+  iconFiltersToCss,
+  type IconCssFilters,
+} from "@/lib/contact-icons/filters"
+import {
+  parseDirectContactLinks,
+  serializeDirectContactLinks,
+  type DirectContactLink,
+} from "@/lib/contact-icons/direct-contact"
+import { getContactIconSrc } from "@/lib/s3/contact-icon-url"
+import { IconFilterEditor } from "@/components/dashboard/icon-filter-editor"
 
 interface Contact {
   id: number
@@ -19,29 +39,11 @@ interface Contact {
 }
 type ContactContext = "landing" | "affiliate"
 
-type DirectContactLink = {
-  id: string
-  url: string
-  type: "telegram" | "email" | "instagram" | "max" | "other"
-  icon?: string | null
-  label_ru: string
-  label_en: string
-  description_ru?: string
-  description_en?: string
-}
-
 type MiniStatItem = {
   id: "fastResponse" | "support"
   value: string
   label_ru: string
   label_en: string
-}
-
-const MAX_ICON_SIZE_BYTES = 500 * 1024
-const ACCEPTED_ICON_TYPES = ["image/png", "image/svg+xml"]
-
-function isCustomIcon(icon: string | null | undefined): boolean {
-  return typeof icon === "string" && (icon.startsWith("data:") || icon === "custom")
 }
 
 export function ContactsEditor() {
@@ -54,6 +56,10 @@ export function ContactsEditor() {
   })
   const [initialContact, setInitialContact] = useState<Contact | null>(null)
   const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
+  const [icons, setIcons] = useState<ContactIconItem[]>([])
+  const [iconQuery, setIconQuery] = useState("")
+  const [pickerIndex, setPickerIndex] = useState<number | null>(null)
+  const [filterIndex, setFilterIndex] = useState<number | null>(null)
   const [miniStats, setMiniStats] = useState<MiniStatItem[]>([
     { id: "fastResponse", value: "", label_ru: "", label_en: "" },
     { id: "support", value: "", label_ru: "", label_en: "" },
@@ -62,9 +68,34 @@ export function ContactsEditor() {
   const [saving, setSaving] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
 
+  const iconsById = useMemo(() => {
+    const map = new Map<number, ContactIconItem>()
+    for (const icon of icons) map.set(icon.id, icon)
+    return map
+  }, [icons])
+
+  const filteredIcons = useMemo(() => {
+    const q = iconQuery.trim().toLowerCase()
+    if (!q) return icons
+    return icons.filter((i) => i.name.toLowerCase().includes(q))
+  }, [icons, iconQuery])
+
   useEffect(() => {
     void loadContact(context)
   }, [context])
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/content/contact-icons")
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: ContactIconItem[] }
+        setIcons(json.data ?? [])
+      } catch {
+        /* ignore */
+      }
+    })()
+  }, [])
 
   const loadContact = async (nextContext: ContactContext) => {
     setLoading(true)
@@ -83,102 +114,58 @@ export function ContactsEditor() {
 
         setContact(loaded)
         setInitialContact(loaded)
-
-        // Parse configurable direct contact links from JSON
-        if (loaded.direct_contacts) {
-          try {
-            const parsed = JSON.parse(loaded.direct_contacts) as unknown
-            if (Array.isArray(parsed)) {
-              const links = (parsed as unknown[])
-                .map((item): DirectContactLink | null => {
-                  if (!item || typeof item !== "object") return null
-                  const raw = item as Record<string, unknown>
-                  const url = typeof raw.url === "string" ? raw.url : ""
-                  const labelRu = typeof raw.label_ru === "string" ? raw.label_ru : typeof raw.label === "string" ? raw.label : ""
-                  const labelEn = typeof raw.label_en === "string" ? raw.label_en : ""
-                  if (!url || (!labelRu && !labelEn && typeof (raw as { label?: string }).label !== "string")) return null
-                  const id = typeof raw.id === "string" && raw.id.length > 0 ? raw.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                  const descriptionRu = typeof raw.description_ru === "string" ? raw.description_ru : typeof raw.description === "string" ? raw.description : ""
-                  const descriptionEn = typeof raw.description_en === "string" ? raw.description_en : ""
-                  const typeValue = typeof raw.type === "string" ? raw.type : "other"
-                  const type: DirectContactLink["type"] = typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max" ? typeValue : "other"
-                  const icon = typeof raw.icon === "string" ? raw.icon : null
-                  return {
-                    id,
-                    url,
-                    type,
-                    icon,
-                    label_ru: labelRu,
-                    label_en: labelEn,
-                    description_ru: descriptionRu || undefined,
-                    description_en: descriptionEn || undefined,
-                  }
-                })
-                .filter((v): v is DirectContactLink => v !== null)
-
-              setDirectContacts(links)
-            } else {
-              setDirectContacts([])
-            }
-          } catch {
-            setDirectContacts([])
-          }
-        } else {
-          setDirectContacts([])
-        }
+        setDirectContacts(parseDirectContactLinks(loaded.direct_contacts))
 
         if (loaded.mini_stats) {
           try {
             const parsed = JSON.parse(loaded.mini_stats) as unknown
-            if (Array.isArray(parsed)) {
-              const parsedStats = (parsed as unknown[])
-                .map((item): MiniStatItem | null => {
-                  if (!item || typeof item !== "object") return null
+            if (Array.isArray(parsed) && parsed.length >= 2) {
+              setMiniStats(
+                parsed.slice(0, 2).map((item, i) => {
                   const raw = item as Record<string, unknown>
-                  const id = raw.id === "support" ? "support" : raw.id === "fastResponse" ? "fastResponse" : null
-                  if (!id) return null
                   return {
-                    id,
+                    id: i === 0 ? "fastResponse" : "support",
                     value: typeof raw.value === "string" ? raw.value : "",
                     label_ru: typeof raw.label_ru === "string" ? raw.label_ru : "",
                     label_en: typeof raw.label_en === "string" ? raw.label_en : "",
                   }
-                })
-                .filter((v): v is MiniStatItem => v !== null)
-              const byId = new Map(parsedStats.map((s) => [s.id, s]))
-              setMiniStats([
-                byId.get("fastResponse") ?? {
-                  id: "fastResponse",
-                  value: "",
-                  label_ru: "",
-                  label_en: "",
-                },
-                byId.get("support") ?? { id: "support", value: "", label_ru: "", label_en: "" },
-              ])
-            } else {
-              setMiniStats([
-                { id: "fastResponse", value: "", label_ru: "", label_en: "" },
-                { id: "support", value: "", label_ru: "", label_en: "" },
-              ])
+                }) as MiniStatItem[],
+              )
             }
           } catch {
-            setMiniStats([
-              { id: "fastResponse", value: "", label_ru: "", label_en: "" },
-              { id: "support", value: "", label_ru: "", label_en: "" },
-            ])
+            /* keep defaults */
           }
-        } else {
-          setMiniStats([
-            { id: "fastResponse", value: "", label_ru: "", label_en: "" },
-            { id: "support", value: "", label_ru: "", label_en: "" },
-          ])
         }
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load contacts")
     } finally {
       setLoading(false)
     }
+  }
+
+  const assignIcon = (linkIndex: number, icon: ContactIconItem | null) => {
+    setDirectContacts((prev) => {
+      const next = [...prev]
+      if (!icon) {
+        next[linkIndex] = {
+          ...next[linkIndex],
+          icon_id: null,
+          filter_light: null,
+          filter_dark: null,
+        }
+      } else {
+        next[linkIndex] = {
+          ...next[linkIndex],
+          icon_id: icon.id,
+          filter_light: { ...icon.filter_light },
+          filter_dark: icon.filter_dark ? { ...icon.filter_dark } : null,
+        }
+      }
+      return next
+    })
+    setPickerIndex(null)
+    setIconQuery("")
   }
 
   const handleSave = async () => {
@@ -200,14 +187,7 @@ export function ContactsEditor() {
       const payload: Contact = {
         ...contact,
         scope: context,
-        direct_contacts: directContacts.length
-          ? JSON.stringify(
-              directContacts.map(({ icon, ...rest }) => ({
-                ...rest,
-                icon: icon === "custom" ? null : (icon ?? null),
-              })),
-            )
-          : null,
+        direct_contacts: serializeDirectContactLinks(directContacts),
         mini_stats: JSON.stringify(miniStats),
       }
       const response = await fetch("/api/content/contacts", {
@@ -229,7 +209,7 @@ export function ContactsEditor() {
       } else {
         toast.error("Failed to save contacts")
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to save contacts")
     } finally {
       setSaving(false)
@@ -237,8 +217,17 @@ export function ContactsEditor() {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>
+    return <div className="py-8 text-center">Loading...</div>
   }
+
+  const filterLink = filterIndex != null ? directContacts[filterIndex] : null
+  const filterLibIcon =
+    filterLink?.icon_id != null ? iconsById.get(filterLink.icon_id) : undefined
+  const filterSrc = filterLibIcon
+    ? getContactIconSrc(filterLibIcon.s3_key, {
+        cacheBust: filterLibIcon.updated_at ?? filterLibIcon.id,
+      })
+    : null
 
   return (
     <div className="space-y-6">
@@ -259,7 +248,9 @@ export function ContactsEditor() {
               <option value="landing">Главная страница</option>
               <option value="affiliate">Affiliate</option>
             </select>
-            <p className="text-xs text-muted-foreground">Контакты для главной и страницы Affiliate редактируются отдельно.</p>
+            <p className="text-xs text-muted-foreground">
+              Контакты для главной и страницы Affiliate редактируются отдельно.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email(s)</Label>
@@ -271,7 +262,10 @@ export function ContactsEditor() {
               placeholder="admin1@example.com, admin2@example.com"
               required
             />
-            <p className="text-xs text-muted-foreground">Укажите одну или несколько почт через запятую — на них будут приходить заявки с формы контактов.</p>
+            <p className="text-xs text-muted-foreground">
+              Укажите одну или несколько почт через запятую — на них будут приходить заявки с формы
+              контактов.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="telegram_url">Telegram URL</Label>
@@ -294,216 +288,163 @@ export function ContactsEditor() {
           </div>
           <div className="space-y-2">
             <Label>Direct contact links (socials)</Label>
-            <p className="text-xs text-muted-foreground">Добавьте ссылки на социальные сети, которые будут отображаться в блоке &quot;Связаться напрямую&quot;: Telegram, email, Instagram, MAX и любые другие.</p>
+            <p className="text-xs text-muted-foreground">
+              Иконки выбираются из библиотеки (вкладка «Иконки»). Можно задать фильтры для светлой и
+              тёмной темы.
+            </p>
             <div className="space-y-3">
-              {directContacts.map((link, index) => (
-                <div
-                  key={link.id}
-                  className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 md:grid-cols-[1fr,1fr,1.5fr,auto]"
-                >
-                  <div className="space-y-1">
-                    <Label className="text-xs">Label (RU)</Label>
-                    <Input
-                      value={link.label_ru}
-                      onChange={(e) => {
-                        const next = [...directContacts]
-                        next[index] = { ...next[index], label_ru: e.target.value }
-                        setDirectContacts(next)
-                      }}
-                      placeholder="Написать в Telegram"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Label (EN)</Label>
-                    <Input
-                      value={link.label_en}
-                      onChange={(e) => {
-                        const next = [...directContacts]
-                        next[index] = { ...next[index], label_en: e.target.value }
-                        setDirectContacts(next)
-                      }}
-                      placeholder="Message on Telegram"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">URL</Label>
-                    <Input
-                      value={link.url}
-                      onChange={(e) => {
-                        const next = [...directContacts]
-                        next[index] = { ...next[index], url: e.target.value }
-                        setDirectContacts(next)
-                      }}
-                      placeholder="https://t.me/RythmGroup"
-                    />
-                  </div>
-                  <div className="space-y-1 md:col-span-1">
-                    <Label className="text-xs">Иконка</Label>
-                    {/*
-                      "none" = без иконки; "custom" = своя (файл или data URL в link.icon).
-                      Select.Item не поддерживает пустой value.
-                    */}
-                    <Select
-                      value={link.icon == null ? "none" : link.icon === "custom" || link.icon.startsWith("data:") ? "custom" : link.icon}
-                      onValueChange={(value) => {
-                        const next = [...directContacts]
-                        next[index] = {
-                          ...next[index],
-                          icon: value === "none" ? null : value === "custom" ? "custom" : value,
-                        }
-                        setDirectContacts(next)
-                      }}
-                    >
-                      <SelectTrigger className="h-8 px-2 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted text-[10px]">—</span>
-                            <span>Без иконки</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="icon-phone.svg">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="/icon-phone.svg"
-                              alt=""
-                              className="h-6 w-6 object-contain"
-                            />
-                            <span>Телефон</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="icon-telegram.svg">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="/icon-telegram.svg"
-                              alt=""
-                              className="h-6 w-6 object-contain"
-                            />
-                            <span>Telegram</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="icon-viber.svg">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="/icon-viber.svg"
-                              alt=""
-                              className="h-6 w-6 object-contain"
-                            />
-                            <span>Viber</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="icon-whatsapp.svg">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="/icon-whatsapp.svg"
-                              alt=""
-                              className="h-6 w-6 object-contain"
-                            />
-                            <span>WhatsApp</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="custom">
-                          <div className="flex items-center gap-2">
-                            {link.icon?.startsWith("data:") ? (
+              {directContacts.map((link, index) => {
+                const lib = link.icon_id != null ? iconsById.get(link.icon_id) : undefined
+                const src = lib
+                  ? getContactIconSrc(lib.s3_key, { cacheBust: lib.updated_at ?? lib.id })
+                  : null
+                const lightF = link.filter_light ?? lib?.filter_light ?? DEFAULT_ICON_FILTERS
+                const darkF =
+                  link.filter_dark ?? lib?.filter_dark ?? link.filter_light ?? lib?.filter_light ?? DEFAULT_ICON_FILTERS
+
+                return (
+                  <div
+                    key={link.id}
+                    className="grid gap-3 rounded-lg border border-border bg-muted/30 p-3 md:grid-cols-2"
+                  >
+                    <div className="space-y-1">
+                      <Label className="text-xs">Label (RU)</Label>
+                      <Input
+                        value={link.label_ru}
+                        onChange={(e) => {
+                          const next = [...directContacts]
+                          next[index] = { ...next[index], label_ru: e.target.value }
+                          setDirectContacts(next)
+                        }}
+                        placeholder="Написать в Telegram"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Label (EN)</Label>
+                      <Input
+                        value={link.label_en}
+                        onChange={(e) => {
+                          const next = [...directContacts]
+                          next[index] = { ...next[index], label_en: e.target.value }
+                          setDirectContacts(next)
+                        }}
+                        placeholder="Message on Telegram"
+                      />
+                    </div>
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-xs">URL</Label>
+                      <Input
+                        value={link.url}
+                        onChange={(e) => {
+                          const next = [...directContacts]
+                          next[index] = { ...next[index], url: e.target.value }
+                          setDirectContacts(next)
+                        }}
+                        placeholder="https://t.me/RythmGroup"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-xs">Иконка</Label>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-muted">
+                            {src ? (
                               <img
-                                src={link.icon}
+                                src={src}
                                 alt=""
-                                className="h-6 w-6 object-contain"
+                                className="h-8 w-8 object-contain"
+                                style={{ filter: iconFiltersToCss(lightF) }}
                               />
                             ) : (
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted text-[10px]">+</span>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
-                            <span>Своя иконка</span>
                           </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {isCustomIcon(link.icon) && (
-                      <div className="mt-1.5 flex flex-col gap-1.5">
-                        <Input
-                          type="file"
-                          accept="image/png,image/svg+xml"
-                          className="h-8 text-xs"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0]
-                            if (!file) return
-                            if (file.size > MAX_ICON_SIZE_BYTES) {
-                              toast.error(`Файл не должен превышать ${MAX_ICON_SIZE_BYTES / 1024} КБ`)
-                              e.target.value = ""
-                              return
-                            }
-                            if (!ACCEPTED_ICON_TYPES.includes(file.type)) {
-                              toast.error("Допустимы только PNG и SVG")
-                              e.target.value = ""
-                              return
-                            }
-                            const dataUrl = await new Promise<string>((resolve, reject) => {
-                              const reader = new FileReader()
-                              reader.onload = () => resolve(reader.result as string)
-                              reader.onerror = reject
-                              reader.readAsDataURL(file)
-                            })
-                            const next = [...directContacts]
-                            next[index] = { ...next[index], icon: dataUrl }
-                            setDirectContacts(next)
-                            e.target.value = ""
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => {
-                            const next = [...directContacts]
-                            next[index] = { ...next[index], icon: null }
-                            setDirectContacts(next)
-                          }}
-                        >
-                          Удалить иконку
-                        </Button>
-                        <p className="text-[10px] text-muted-foreground">PNG или SVG, до 500 КБ</p>
+                          <span className="text-[10px] text-muted-foreground">Светлая</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-muted">
+                            {src ? (
+                              <img
+                                src={src}
+                                alt=""
+                                className="h-8 w-8 object-contain"
+                                style={{ filter: iconFiltersToCss(darkF) }}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">Тёмная</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPickerIndex(index)}
+                          >
+                            {lib ? lib.name : "Выбрать из библиотеки"}
+                          </Button>
+                          {link.icon_id != null ? (
+                            <>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setFilterIndex(index)}
+                              >
+                                Фильтры светлая/тёмная
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => assignIcon(index, null)}
+                              >
+                                Сбросить
+                              </Button>
+                            </>
+                          ) : null}
+                        </div>
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description (RU)</Label>
+                      <Input
+                        value={link.description_ru ?? ""}
+                        onChange={(e) => {
+                          const next = [...directContacts]
+                          next[index] = { ...next[index], description_ru: e.target.value }
+                          setDirectContacts(next)
+                        }}
+                        placeholder="@RythmGroup"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Description (EN)</Label>
+                      <Input
+                        value={link.description_en ?? ""}
+                        onChange={(e) => {
+                          const next = [...directContacts]
+                          next[index] = { ...next[index], description_en: e.target.value }
+                          setDirectContacts(next)
+                        }}
+                        placeholder="@RythmGroup"
+                      />
+                    </div>
+                    <div className="flex justify-end md:col-span-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDirectContacts((prev) => prev.filter((_, i) => i !== index))}
+                      >
+                        Удалить
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Description (RU)</Label>
-                    <Input
-                      value={link.description_ru ?? ""}
-                      onChange={(e) => {
-                        const next = [...directContacts]
-                        next[index] = { ...next[index], description_ru: e.target.value }
-                        setDirectContacts(next)
-                      }}
-                      placeholder="@RythmGroup"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Description (EN)</Label>
-                    <Input
-                      value={link.description_en ?? ""}
-                      onChange={(e) => {
-                        const next = [...directContacts]
-                        next[index] = { ...next[index], description_en: e.target.value }
-                        setDirectContacts(next)
-                      }}
-                      placeholder="@RythmGroup"
-                    />
-                  </div>
-                  <div className="flex items-end justify-end md:col-start-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDirectContacts((prev) => prev.filter((_, i) => i !== index))}
-                    >
-                      Удалить
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
               <Button
                 type="button"
                 variant="outline"
@@ -517,7 +458,9 @@ export function ContactsEditor() {
                       label_en: "",
                       url: "",
                       type: "telegram",
-                      icon: "icon-telegram.svg",
+                      icon_id: null,
+                      filter_light: null,
+                      filter_dark: null,
                     },
                   ])
                 }
@@ -574,10 +517,7 @@ export function ContactsEditor() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {validationError && (
-              <p
-                className="w-full text-sm text-destructive"
-                role="alert"
-              >
+              <p className="w-full text-sm text-destructive" role="alert">
                 {validationError}
               </p>
             )}
@@ -593,17 +533,176 @@ export function ContactsEditor() {
               >
                 Отменить
               </Button>
-              <Button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-              >
+              <Button type="button" onClick={handleSave} disabled={saving}>
                 {saving ? "Сохранение…" : "Сохранить"}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={pickerIndex != null} onOpenChange={(open) => !open && setPickerIndex(null)}>
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Выбор иконки</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={iconQuery}
+            onChange={(e) => setIconQuery(e.target.value)}
+            placeholder="Поиск по названию…"
+          />
+          {filteredIcons.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Библиотека пуста. Загрузите иконки во вкладке «Иконки».
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {filteredIcons.map((icon) => {
+                const src = getContactIconSrc(icon.s3_key, {
+                  cacheBust: icon.updated_at ?? icon.id,
+                })
+                return (
+                  <button
+                    key={icon.id}
+                    type="button"
+                    className="flex flex-col items-center gap-1 rounded-lg border border-border p-2 hover:border-primary"
+                    onClick={() => pickerIndex != null && assignIcon(pickerIndex, icon)}
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded bg-muted">
+                      {src ? (
+                        <img
+                          src={src}
+                          alt=""
+                          className="h-10 w-10 object-contain"
+                          style={{ filter: iconFiltersToCss(icon.filter_light) }}
+                        />
+                      ) : null}
+                    </div>
+                    <span className="w-full truncate text-center text-[11px]">{icon.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPickerIndex(null)}>
+              Закрыть
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={filterIndex != null} onOpenChange={(open) => !open && setFilterIndex(null)}>
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Фильтры иконки</DialogTitle>
+          </DialogHeader>
+          {filterLink && filterIndex != null ? (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Меняется только сама иконка. Фон превью одинаковый.
+              </p>
+              <div className="flex items-end justify-center gap-6">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-md bg-muted">
+                    {filterSrc ? (
+                      <img
+                        src={filterSrc}
+                        alt=""
+                        className="h-12 w-12 object-contain"
+                        style={{
+                          filter: iconFiltersToCss(
+                            filterLink.filter_light ??
+                              filterLibIcon?.filter_light ??
+                              DEFAULT_ICON_FILTERS,
+                          ),
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                  <span className="text-xs font-medium">Светлая</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-md bg-muted">
+                    {filterSrc ? (
+                      <img
+                        src={filterSrc}
+                        alt=""
+                        className="h-12 w-12 object-contain"
+                        style={{
+                          filter: iconFiltersToCss(
+                            filterLink.filter_dark ??
+                              filterLibIcon?.filter_dark ??
+                              filterLink.filter_light ??
+                              filterLibIcon?.filter_light ??
+                              DEFAULT_ICON_FILTERS,
+                          ),
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                  <span className="text-xs font-medium">Тёмная</span>
+                  {filterLink.filter_dark == null ? (
+                    <span className="text-[10px] text-muted-foreground">= как светлая</span>
+                  ) : null}
+                </div>
+              </div>
+              <Tabs defaultValue="light">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="light">Фильтры: светлая</TabsTrigger>
+                  <TabsTrigger value="dark">Фильтры: тёмная</TabsTrigger>
+                </TabsList>
+                <TabsContent value="light" className="mt-3">
+                  <IconFilterEditor
+                    value={
+                      filterLink.filter_light ?? filterLibIcon?.filter_light ?? DEFAULT_ICON_FILTERS
+                    }
+                    onChange={(next: IconCssFilters) => {
+                      const copy = [...directContacts]
+                      copy[filterIndex] = { ...copy[filterIndex], filter_light: next }
+                      setDirectContacts(copy)
+                    }}
+                  />
+                </TabsContent>
+                <TabsContent value="dark" className="mt-3 space-y-2">
+                  <IconFilterEditor
+                    value={
+                      filterLink.filter_dark ??
+                      filterLink.filter_light ??
+                      filterLibIcon?.filter_light ??
+                      DEFAULT_ICON_FILTERS
+                    }
+                    onChange={(next: IconCssFilters) => {
+                      const copy = [...directContacts]
+                      copy[filterIndex] = { ...copy[filterIndex], filter_dark: next }
+                      setDirectContacts(copy)
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={filterLink.filter_dark == null}
+                    onClick={() => {
+                      const copy = [...directContacts]
+                      copy[filterIndex] = { ...copy[filterIndex], filter_dark: null }
+                      setDirectContacts(copy)
+                    }}
+                  >
+                    Использовать те же фильтры, что у светлой
+                  </Button>
+                </TabsContent>
+              </Tabs>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" onClick={() => setFilterIndex(null)}>
+              Готово
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

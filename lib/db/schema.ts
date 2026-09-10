@@ -156,6 +156,25 @@ export const tableContacts = sqliteTable("contacts", {
 export const relationsContacts = relations(tableContacts, () => ({}))
 
 // ---------------------------------------------------------------------------
+// contact_icons — библиотека иконок для прямых контактов (файл в S3 + CSS-фильтры)
+// ---------------------------------------------------------------------------
+export const tableContactIcons = sqliteTable("contact_icons", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  /** S3 key: contact-icons/... */
+  s3_key: text("s3_key").notNull(),
+  /** JSON IconCssFilters для светлой темы */
+  filter_light: text("filter_light"),
+  /** JSON IconCssFilters для тёмной темы; null = использовать filter_light */
+  filter_dark: text("filter_dark"),
+  order_index: integer("order_index").notNull().default(0),
+  created_at: created_at("created_at"),
+  updated_at: updated_at("updated_at"),
+})
+
+export const relationsContactIcons = relations(tableContactIcons, () => ({}))
+
+// ---------------------------------------------------------------------------
 // site_settings
 // ---------------------------------------------------------------------------
 export const tableSiteSettings = sqliteTable("site_settings", {

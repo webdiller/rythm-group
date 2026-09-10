@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useTheme } from "next-themes"
 import { useLocale } from "@/lib/locale-context"
 import { fallbackTranslations } from "@/lib/i18n"
 import { getContactFormMessage, mapContactApiError } from "@/lib/contact-form-messages"
@@ -8,17 +9,17 @@ import { Send, MessageCircle, Mail, Instagram, Globe } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/scroll-reveal"
 import { ScrollStagger } from "@/components/ui/scroll-stagger"
 import Link from "next/link"
-
-type DirectContactLink = {
-  id: string
-  url: string
-  type: "telegram" | "email" | "instagram" | "max" | "other"
-  icon?: string | null
-  label_ru: string
-  label_en: string
-  description_ru?: string
-  description_en?: string
-}
+import {
+  parseDirectContactLinks,
+  type DirectContactLink,
+} from "@/lib/contact-icons/direct-contact"
+import type { ContactIconItem } from "@/lib/schemas/contact-icons"
+import {
+  DEFAULT_ICON_FILTERS,
+  iconFiltersToCss,
+  resolveThemeFilters,
+} from "@/lib/contact-icons/filters"
+import { getContactIconSrc } from "@/lib/s3/contact-icon-url"
 
 type ContactLayout = "formFirst" | "contactsFirst"
 type ContactScope = "landing" | "affiliate"
@@ -31,6 +32,7 @@ type MiniStatItem = {
 
 export function ContactForm({ animationsEnabled = true, layout = "formFirst", hideForm = false, scope = "landing" }: { animationsEnabled?: boolean; layout?: ContactLayout; hideForm?: boolean; scope?: ContactScope }) {
   const { locale, t } = useLocale()
+  const { resolvedTheme } = useTheme()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -41,6 +43,7 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [directContacts, setDirectContacts] = useState<DirectContactLink[]>([])
+  const [icons, setIcons] = useState<ContactIconItem[]>([])
   const [miniStats, setMiniStats] = useState<MiniStatItem[]>([
     {
       id: "fastResponse",
@@ -55,6 +58,27 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
       label_en: fallbackTranslations.en.contact.miniStats.supportLabel,
     },
   ])
+
+  const iconsById = useMemo(() => {
+    const map = new Map<number, ContactIconItem>()
+    for (const icon of icons) map.set(icon.id, icon)
+    return map
+  }, [icons])
+
+  const themeMode: "light" | "dark" = resolvedTheme === "light" ? "light" : "dark"
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/content/contact-icons")
+        if (!res.ok) return
+        const json = (await res.json()) as { data?: ContactIconItem[] }
+        setIcons(json.data ?? [])
+      } catch {
+        /* ignore */
+      }
+    })()
+  }, [])
 
   useEffect(() => {
     const loadDirectContacts = async () => {
@@ -107,43 +131,7 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
         }
         if (!row) return
 
-        let links: DirectContactLink[] = []
-
-        if (row.direct_contacts) {
-          try {
-            const parsed = JSON.parse(row.direct_contacts) as unknown
-            if (Array.isArray(parsed)) {
-              links = (parsed as unknown[])
-                .map((item): DirectContactLink | null => {
-                  if (!item || typeof item !== "object") return null
-                  const raw = item as Record<string, unknown>
-                  const url = typeof raw.url === "string" ? raw.url : ""
-                  const labelRu = typeof raw.label_ru === "string" ? raw.label_ru : typeof raw.label === "string" ? raw.label : ""
-                  const labelEn = typeof raw.label_en === "string" ? raw.label_en : ""
-                  if (!url || (!labelRu && !labelEn && typeof (raw as { label?: string }).label !== "string")) return null
-                  const id = typeof raw.id === "string" && raw.id.length > 0 ? raw.id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-                  const descriptionRu = typeof raw.description_ru === "string" ? raw.description_ru : typeof raw.description === "string" ? raw.description : ""
-                  const descriptionEn = typeof raw.description_en === "string" ? raw.description_en : ""
-                  const typeValue = typeof raw.type === "string" ? raw.type : "other"
-                  const type: DirectContactLink["type"] = typeValue === "telegram" || typeValue === "email" || typeValue === "instagram" || typeValue === "max" ? typeValue : "other"
-                  const icon = typeof raw.icon === "string" ? raw.icon : null
-                  return {
-                    id,
-                    url,
-                    type,
-                    icon,
-                    label_ru: labelRu,
-                    label_en: labelEn,
-                    description_ru: descriptionRu || undefined,
-                    description_en: descriptionEn || undefined,
-                  }
-                })
-                .filter((v): v is DirectContactLink => v !== null)
-            }
-          } catch {
-            // ignore and fall back to defaults
-          }
-        }
+        let links = parseDirectContactLinks(row.direct_contacts)
 
         if (links.length === 0) {
           const fallback: DirectContactLink[] = []
@@ -154,6 +142,7 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
               label_ru: "",
               label_en: "",
               url: row.telegram_url,
+              icon_id: null,
               description_ru: row.telegram_username ?? undefined,
               description_en: row.telegram_username ?? undefined,
             })
@@ -167,6 +156,7 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
                 label_ru: "",
                 label_en: "",
                 url: `mailto:${firstEmail}`,
+                icon_id: null,
                 description_ru: row.email,
                 description_en: row.email,
               })
@@ -440,19 +430,39 @@ export function ContactForm({ animationsEnabled = true, layout = "formFirst", hi
                             rel="noopener noreferrer"
                             className="flex items-center gap-4 rounded-lg border border-border bg-secondary/50 p-4 transition-all hover:border-primary/30 hover:bg-secondary"
                           >
-                            {link.icon ? (
-                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-secondary-foreground overflow-hidden">
-                                <img
-                                  src={link.icon.startsWith("data:") ? link.icon : `/${link.icon}`}
-                                  alt={label}
-                                  className="h-10 w-10 object-contain"
-                                />
-                              </div>
-                            ) : (
-                              <div className={`flex h-11 w-11 items-center justify-center rounded-lg ${iconClasses}`}>
-                                <Icon className="h-5 w-5" />
-                              </div>
-                            )}
+                            {(() => {
+                              const lib =
+                                link.icon_id != null ? iconsById.get(link.icon_id) : undefined
+                              const src = lib
+                                ? getContactIconSrc(lib.s3_key, {
+                                    cacheBust: lib.updated_at ?? lib.id,
+                                  })
+                                : null
+                              const filters = resolveThemeFilters(
+                                themeMode,
+                                link.filter_light ?? lib?.filter_light ?? DEFAULT_ICON_FILTERS,
+                                link.filter_dark ?? lib?.filter_dark ?? null,
+                              )
+                              if (src) {
+                                return (
+                                  <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-secondary text-secondary-foreground">
+                                    <img
+                                      src={src}
+                                      alt={label}
+                                      className="h-10 w-10 object-contain"
+                                      style={{ filter: iconFiltersToCss(filters) }}
+                                    />
+                                  </div>
+                                )
+                              }
+                              return (
+                                <div
+                                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${iconClasses}`}
+                                >
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                              )
+                            })()}
                             <div>
                               <span className="block text-sm font-semibold text-foreground">{label}</span>
                               {description && <span className="text-xs text-muted-foreground">{description}</span>}

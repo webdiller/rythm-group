@@ -4,9 +4,21 @@ import { ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import type { LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { LogOut, FileText, Tv, Users, Mail, Settings, Newspaper, IdCard } from "lucide-react"
+import { LogOut, FileText, Tv, Users, Mail, Settings, Newspaper, IdCard, Images } from "lucide-react"
 
-export type DashboardTabId = "translations" | "channels" | "partners" | "about-cards" | "affiliate-sections" | "affiliate-hero" | "affiliate-formats" | "affiliate-faq" | "blog" | "contacts" | "settings"
+export type DashboardTabId =
+  | "translations"
+  | "channels"
+  | "partners"
+  | "about-cards"
+  | "affiliate-sections"
+  | "affiliate-hero"
+  | "affiliate-formats"
+  | "affiliate-faq"
+  | "blog"
+  | "contacts"
+  | "icons"
+  | "settings"
 
 type DashboardTab = {
   id: DashboardTabId
@@ -35,6 +47,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
     { id: "about-cards", label: "О нас (карточки)", icon: IdCard },
     { id: "blog", label: "Блог", icon: Newspaper },
     { id: "contacts", label: "Контакты", icon: Mail },
+    { id: "icons", label: "Иконки", icon: Images },
     { id: "settings", label: "Настройки сайта", icon: Settings },
   ]
   const affiliateTabs: DashboardTab[] = [

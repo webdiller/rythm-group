@@ -14,8 +14,22 @@ import { AffiliateFormatsEditor } from "@/components/dashboard/AffiliateFormatsE
 import { AffiliateFaqEditor } from "@/components/dashboard/AffiliateFaqEditor"
 import { AffiliateSectionsEditor } from "@/components/dashboard/AffiliateSectionsEditor"
 import { AboutCardsEditor } from "@/components/dashboard/AboutCardsEditor"
+import { ContactIconsEditor } from "@/components/dashboard/ContactIconsEditor"
 
-const VALID_TABS = new Set<DashboardTabId>(["translations", "channels", "partners", "about-cards", "blog", "contacts", "settings", "affiliate-sections", "affiliate-hero", "affiliate-formats", "affiliate-faq"])
+const VALID_TABS = new Set<DashboardTabId>([
+  "translations",
+  "channels",
+  "partners",
+  "about-cards",
+  "blog",
+  "contacts",
+  "icons",
+  "settings",
+  "affiliate-sections",
+  "affiliate-hero",
+  "affiliate-formats",
+  "affiliate-faq",
+])
 
 function isDashboardTabId(value: string): value is DashboardTabId {
   return VALID_TABS.has(value as DashboardTabId)
@@ -99,6 +113,8 @@ function DashboardInner() {
         return <BlogEditor />
       case "contacts":
         return <ContactsEditor />
+      case "icons":
+        return <ContactIconsEditor />
       case "settings":
         return <SiteSettingsEditor />
       case "affiliate-sections":

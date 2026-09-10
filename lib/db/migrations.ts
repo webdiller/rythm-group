@@ -50,4 +50,17 @@ export function runMigrations(sqlite: Database.Database): void {
   if (!partnerNames.has("related_channel_ids")) {
     sqlite.exec("ALTER TABLE partners ADD COLUMN related_channel_ids TEXT")
   }
+
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS contact_icons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      name TEXT NOT NULL,
+      s3_key TEXT NOT NULL,
+      filter_light TEXT,
+      filter_dark TEXT,
+      order_index INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  `)
 }
