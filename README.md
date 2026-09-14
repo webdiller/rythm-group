@@ -31,10 +31,11 @@ npm run dev:docker
 
 Остановка: `Ctrl+C`, затем при необходимости `docker compose -f docker-compose.dev.yml down`.
 
-> Production на VPS — другие файлы: `Dockerfile` + `docker-compose.yml`. См. [DEPLOY_VPS.md](./DEPLOY_VPS.md).
+> Production на VPS — см. инструкции ниже (Docker или PM2).
 
 ## Production / VPS
 
-Полная инструкция (чистый VPS, миграция с PM2, бэкапы в Object Storage, CI): **[DEPLOY_VPS.md](./DEPLOY_VPS.md)**.
+- **Простой путь (публичный репо, Node + PM2, ручной `git pull`):** [DEPLOY_VPS_PM2.md](./DEPLOY_VPS_PM2.md)
+- **Docker + nginx + GitHub Actions:** [DEPLOY_VPS.md](./DEPLOY_VPS.md)
 
-Быстрая подготовка Ubuntu VPS: `scripts/vps-bootstrap.sh` (только на сервере; см. раздел «Быстрый старт» в DEPLOY_VPS.md).
+Быстрая подготовка Ubuntu под Docker: `scripts/vps-bootstrap.sh` (только на сервере; см. раздел «Быстрый старт» в DEPLOY_VPS.md).
