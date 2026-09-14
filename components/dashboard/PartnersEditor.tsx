@@ -1268,7 +1268,6 @@ function PartnerForm({
                   collisionDetection={closestCenter}
                   onDragEnd={handleRelatedChannelDragEnd}
                 >
-                  {/* @ts-expect-error — occasional TS2786 between @dnd-kit/sortable and React 19 type packages */}
                   <SortableContext
                     items={relatedChannelIds}
                     strategy={verticalListSortingStrategy}

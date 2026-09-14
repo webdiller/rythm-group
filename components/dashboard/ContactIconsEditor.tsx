@@ -437,7 +437,6 @@ export function ContactIconsEditor() {
           <div className="space-y-3">
             {filtered.length > 0 || uploadingCount > 0 ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                {/* @ts-expect-error — occasional TS2786 between @dnd-kit/sortable and React 19 type packages */}
                 <SortableContext items={filtered.map((i) => i.id)} strategy={rectSortingStrategy}>
                   <div
                     className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"

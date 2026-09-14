@@ -52,11 +52,13 @@ sudo mkdir -p /var/www/rythm-group
 sudo chown "$USER:$USER" /var/www/rythm-group
 cd /var/www/rythm-group
 
-git clone https://github.com/OWNER/REPO.git .
+# Только HTTPS — для публичного репо ключ не нужен.
+# URL вида git@github.com:... (SSH) без ключа на VPS даст Permission denied (publickey).
+git clone https://github.com/webdiller/rythm-group.git .
 mkdir -p data public/uploads
 ```
 
-SSH-ключ к GitHub для публичного репо **не нужен**.
+SSH-ключ к GitHub для публичного репо **не нужен** (клон только по HTTPS).
 
 ---
 

@@ -275,7 +275,6 @@ export function PartnerCaseGalleryEditor({ partnerId, initialGalleryJson, onGall
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              {/* @ts-expect-error — occasional TS2786 between @dnd-kit/sortable and React 19 type packages */}
               <SortableContext
                 items={images.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
