@@ -16,6 +16,8 @@ import { getDb } from "@/lib/db"
 import { tableSiteSettings } from "@/lib/db/schema"
 import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
 
+export const dynamic = "force-dynamic"
+
 type AffiliateSettings = {
   affiliate_show_hero?: boolean | null
   affiliate_show_formats?: boolean | null

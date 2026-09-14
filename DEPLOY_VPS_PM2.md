@@ -74,7 +74,7 @@ nano .env
 
 - `JWT_SECRET` — например `openssl rand -base64 32`
 - `ADMIN_USERS` — `логин:пароль` (можно несколько через запятую)
-- `NEXT_PUBLIC_SITE_URL` — `https://example.com` (без `/` в конце)
+- `NEXT_PUBLIC_SITE_URL` — `https://omnigrps.ru` (без `/` в конце)
 - SMTP: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
 - Yandex Object Storage: `YA_STORAGE_ID`, `YA_STORAGE_SECRET`, `YA_BUCKET_NAME`, `YA_REGION`, `YA_ENDPOINT`, `NEXT_PUBLIC_YA_PUBLIC_BASE`
 
@@ -86,13 +86,20 @@ nano .env
 
 ---
 
-## 4. Сборка и запуск через PM2
+## 4. Схема БД, сборка и запуск через PM2
+
+На этапе `next build` layout читает SQLite. Перед первой сборкой нужно создать таблицы:
 
 ```bash
 cd /var/www/rythm-group
 npm ci
+npm run db:push
+# опционально — стартовые настройки / демо-контент:
+# npm run db:seed
 npm run build
 ```
+
+Если сборка уже упала с `no such table: site_settings`, достаточно `npm run db:push` и снова `npm run build` (свежий код также поднимает схему сам при пустой БД).
 
 Запуск (в репозитории есть `ecosystem.config.cjs`):
 
@@ -111,7 +118,7 @@ pm2 logs rythm-group --lines 50
 curl -I http://127.0.0.1:3000
 ```
 
-База `./data/cms.db` появится после первого обращения к приложению.
+База: `./data/cms.db` (создаётся `db:push` / первым обращением). Каталог `data/` не удаляйте.
 
 Альтернатива без ecosystem-файла:
 
@@ -123,8 +130,18 @@ pm2 start npm --name rythm-group -- start
 
 ## 5. nginx + домен + HTTPS
 
+Каталоги `/etc/nginx/sites-available` и `sites-enabled` появляются **только после установки пакета nginx** (команда из раздела **1**). Инструкция рассчитана на **Ubuntu/Debian**.
+
+Если nano пишет `Directory '/etc/nginx/sites-available' does not exist`:
+
+```bash
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
+ls /etc/nginx/sites-available   # каталог должен существовать
+```
+
 1. В DNS создайте **A**-записи `@` и `www` на IP этого VPS.
-2. Дождитесь резолва (`dig +short example.com`).
+2. Дождитесь резолва (`dig +short omnigrps.ru`).
 
 Конфиг:
 
@@ -136,7 +153,7 @@ sudo nano /etc/nginx/sites-available/rythm-group
 server {
     listen 80;
     listen [::]:80;
-    server_name example.com www.example.com;
+    server_name omnigrps.ru www.omnigrps.ru;
 
     client_max_body_size 20M;
 
@@ -162,7 +179,7 @@ sudo nginx -t && sudo systemctl reload nginx
 HTTPS:
 
 ```bash
-sudo certbot --nginx -d example.com -d www.example.com
+sudo certbot --nginx -d omnigrps.ru -d www.omnigrps.ru
 ```
 
 Certbot предложит редирект HTTP→HTTPS. При необходимости добавьте явный редирект `www` → apex отдельным `server`-блоком и снова `sudo nginx -t && sudo systemctl reload nginx`.

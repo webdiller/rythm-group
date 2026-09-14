@@ -9,6 +9,8 @@ import { tableSiteSettings } from "@/lib/db/schema"
 import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
 import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
 
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Блог | Rythm Group",
   description: "Новости, кейсы и материалы Rythm Group для партнёров. News, case studies, and partner updates.",

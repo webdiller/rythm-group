@@ -7,6 +7,9 @@ import { getRootShellBackgroundFlags, getSiteFaviconHref } from "@/lib/server/ro
 import { getInitialTranslations } from "@/lib/server/initial-translations"
 import "./globals.css"
 
+/** CMS (SQLite) должен читаться на каждый запрос, не при сборке. */
+export const dynamic = "force-dynamic"
+
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
   variable: "--font-inter",

@@ -22,6 +22,8 @@ import { hasGlobalBackgroundThemes } from "@/lib/server/global-backgrounds"
 import { resolveBackgroundSrc } from "@/lib/server/site-backgrounds"
 import { isChannelAvatarS3Key } from "@/lib/s3/channel-avatar-url"
 
+export const dynamic = "force-dynamic"
+
 function getHomeData(): {
   channelCategories: ChannelCategory[]
   channels: Channel[]
