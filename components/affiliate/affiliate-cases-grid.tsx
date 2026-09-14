@@ -8,7 +8,6 @@ import { useLocale } from "@/lib/locale-context"
 import type { Partner, PartnerCategory } from "@/components/cases"
 import { mapPartnerToAffiliateCaseCard } from "@/lib/affiliate/cases-ui"
 import { wishlistsCasePath } from "@/lib/wishlists-path"
-import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight } from "lucide-react"
 import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
@@ -39,62 +38,105 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
   const renderCaseCard = (partner: Partner) => {
     const ui = mapPartnerToAffiliateCaseCard(partner)
     const parsedDate = ui.publishedAt ? new Date(ui.publishedAt) : null
-    const dateStr = parsedDate && !Number.isNaN(parsedDate.getTime()) ? format(parsedDate, "d MMM yyyy", { locale: dateLocale }) : locale === "en" ? "No date" : "Без даты"
+    const dateStr =
+      parsedDate && !Number.isNaN(parsedDate.getTime())
+        ? format(parsedDate, "d MMM yyyy", { locale: dateLocale })
+        : locale === "en"
+          ? "No date"
+          : "Без даты"
     const href = partner.target_url || wishlistsCasePath(ui.slug)
     const imageSrc = getPartnerLogoSrc(partner) || ui.coverImage?.trim() || ""
     const showImage = Boolean(imageSrc) && !brokenImageByPartner[partner.id]
     const title = locale === "en" ? partner.title_en || partner.name : partner.title_ru || partner.name
+    const description =
+      (locale === "en"
+        ? partner.short_description_en || partner.short_description_ru
+        : partner.short_description_ru || partner.short_description_en)?.trim() || ""
+    const showWishlists = partner.show_wishlists ?? true
+
+    const onImageError = () =>
+      setBrokenImageByPartner((prev) =>
+        prev[partner.id]
+          ? prev
+          : {
+              ...prev,
+              [partner.id]: true,
+            },
+      )
 
     return (
       <Link
         key={ui.slug}
         href={href}
-        className="group block h-full"
+        className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <Card className="h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-all hover:border-primary/40">
-          {showImage ? (
-            <div className="relative mt-2 aspect-3/2 w-full bg-muted">
-              <img
-                src={imageSrc}
-                alt=""
-                className="h-full w-auto mx-auto rounded-2xl object-contain transition-transform duration-300"
-                loading="lazy"
-                decoding="async"
-                onError={() =>
-                  setBrokenImageByPartner((prev) =>
-                    prev[partner.id]
-                      ? prev
-                      : {
-                          ...prev,
-                          [partner.id]: true,
-                        },
-                  )
-                }
-              />
-            </div>
-          ) : null}
-          <CardContent className="space-y-3 p-5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-              <span>
-                {t.affiliate.cases.publishedLabel}: {dateStr}
-              </span>
-            </div>
-            <h3 className="text-lg font-semibold leading-snug text-foreground group-hover:text-primary">{title}</h3>
-            <div className="flex items-center justify-between gap-2 pt-1">
-              {(partner.show_wishlists ?? true) ? (
-                <span className="text-sm font-medium text-primary">
-                  {t.affiliate.cases.wishlistsLabel}: {nf.format(ui.wishlists)}
+        <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/70 bg-card/70 shadow-none backdrop-blur-md transition-[border-color,box-shadow] duration-300 hover:border-primary/35 hover:shadow-[0_8px_28px_-18px_rgba(230,27,0,0.4)]">
+          <div className="relative aspect-2/1 w-full overflow-hidden bg-muted/50">
+            {showImage ? (
+              <>
+                <img
+                  src={imageSrc}
+                  alt=""
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-75 blur-xl saturate-125 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-card/70 via-card/15 to-transparent" />
+                <div className="relative z-10 flex h-full items-center justify-center p-2.5 sm:p-3">
+                  <img
+                    src={imageSrc}
+                    alt={title}
+                    className="p-2 w-auto h-full rounded-2xl object-contain drop-shadow-sm transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                    onError={onImageError}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center px-4">
+                <span className="line-clamp-2 text-center font-(family-name:--font-space-grotesk) text-lg font-semibold tracking-tight text-muted-foreground/80">
+                  {partner.name}
                 </span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-1 flex-col gap-3 p-5">
+            <time
+              dateTime={parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : undefined}
+              className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              {dateStr}
+            </time>
+
+            <h3 className="line-clamp-2 font-(family-name:--font-space-grotesk) text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+              {title}
+            </h3>
+
+            {description ? (
+              <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+            ) : null}
+
+            <div className="mt-auto flex items-end justify-between gap-3 border-t border-border/60 pt-3">
+              {showWishlists ? (
+                <div className="min-w-0">
+                  <p className="text-[11px] text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
+                  <p className="truncate text-sm font-semibold tabular-nums text-primary">
+                    {nf.format(ui.wishlists)}
+                  </p>
+                </div>
               ) : (
                 <span />
               )}
-              <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+              <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                 {t.affiliate.cases.openCase}
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </article>
       </Link>
     )
   }
@@ -120,7 +162,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
             return (
               <div key={category.id}>
                 <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">{locale === "en" ? category.name_en : category.name_ru}</h3>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{visiblePartners.map((partner) => renderCaseCard(partner))}</div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{visiblePartners.map((partner) => renderCaseCard(partner))}</div>
                 {categoryPartners.length > MAX_VISIBLE && (
                   <div className="mt-6 flex justify-center">
                     <button
@@ -144,7 +186,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
           {uncategorizedPartners.length > 0 && (
             <div>
               <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">{t.cases.uncategorizedTitle}</h3>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{(showAllUncategorized ? uncategorizedPartners : uncategorizedPartners.slice(0, MAX_VISIBLE)).map((partner) => renderCaseCard(partner))}</div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{(showAllUncategorized ? uncategorizedPartners : uncategorizedPartners.slice(0, MAX_VISIBLE)).map((partner) => renderCaseCard(partner))}</div>
               {uncategorizedPartners.length > MAX_VISIBLE && (
                 <div className="mt-6 flex justify-center">
                   <button
