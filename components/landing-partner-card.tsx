@@ -18,7 +18,8 @@ type LandingPartnerCardProps = {
 }
 
 /**
- * Карточка партнёра на главной: фиксированный слот логотипа → одинаковый размер ячеек.
+ * Карточка партнёра на главной: крупный логотип + компактная тёмная blur-подложка (~+10%).
+ * Подпись под картинкой — только через displayMode (настройки сайта).
  */
 export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: LandingPartnerCardProps) {
   const logoSrc = getPartnerLogoSrc(partner)
@@ -28,24 +29,31 @@ export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: Lan
   const href = partner.target_url?.trim() || null
 
   const nameOnly = !showLogo && showName
+  const logoOnly = showLogo && !showName
 
   const inner = (
     <>
       {showLogo && logoSrc ? (
-        <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-muted/40 p-3">
-          <img
-            src={logoSrc}
-            alt=""
+        <div className="relative p-1 flex aspect-square w-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg">
+          {/* Подложка ~на 10% больше логотипа: тёмная, ненасыщенная, без «ореола» на всю карточку */}
+          <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover blur-md"
-            loading="lazy"
-            decoding="async"
-          />
+            className="pointer-events-none absolute inset-[5%] overflow-hidden rounded-md sm:inset-[4%]"
+          >
+            <img
+              src={logoSrc}
+              alt=""
+              className="h-full w-full scale-105 object-cover opacity-80 blur-md brightness-[0.35] saturate-[0.2]"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute inset-0 bg-black/35" />
+          </div>
           <img
             src={logoSrc}
             alt={partner.name}
             title={partner.name}
-            className="relative z-10 h-full w-auto rounded-lg object-contain"
+            className="relative z-10 max-h-[90%] max-w-[90%] rounded-md object-contain"
             loading="lazy"
             decoding="async"
           />
@@ -54,7 +62,11 @@ export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: Lan
 
       {showName ? (
         <span
-          className={clsx("line-clamp-2 text-center text-sm font-medium leading-snug text-foreground", showLogo && "mt-3", nameOnly && "flex flex-1 items-center justify-center px-1")}
+          className={clsx(
+            "line-clamp-2 text-center text-sm font-medium leading-snug text-foreground",
+            showLogo && "mt-2 shrink-0",
+            nameOnly && "flex flex-1 items-center justify-center px-1",
+          )}
           title={partner.name}
         >
           {partner.name}
@@ -64,8 +76,8 @@ export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: Lan
   )
 
   const className = clsx(
-    "flex h-full w-full flex-col items-center rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/30",
-    nameOnly ? "justify-center" : "justify-start",
+    "flex h-full w-full flex-col items-center rounded-xl border border-border bg-card transition-colors hover:border-primary/30",
+    logoOnly ? "justify-center p-1.5 sm:p-2" : nameOnly ? "justify-center p-3" : "justify-start p-2 sm:p-2.5",
     href && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
   )
 
