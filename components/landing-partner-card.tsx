@@ -34,7 +34,7 @@ export function LandingPartnerCard({ partner, displayMode = "logoAndName" }: Lan
   const inner = (
     <>
       {showLogo && logoSrc ? (
-        <div className="relative p-1 flex aspect-square w-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg">
+        <div className="relative flex aspect-[5/3] w-full min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg p-1">
           {/* Подложка ~на 10% больше логотипа: тёмная, ненасыщенная, без «ореола» на всю карточку */}
           <div
             aria-hidden
