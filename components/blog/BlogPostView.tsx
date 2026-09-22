@@ -22,28 +22,15 @@ export function BlogPostView({ post, category, showDates = true }: BlogPostViewP
   const formattedDate = showDates ? format(new Date(post.published_at), "d MMMM yyyy", { locale: dateLocale }) : null
 
   return (
-    <article className="mx-auto w-full min-w-0 max-w-3xl">
+    <div className="mx-auto w-full min-w-0">
       <BlogPageBreadcrumbs
         variant="post"
         category={category}
         postTitle={title}
       />
 
-      <header className="mb-10 space-y-4 lg:space-y-5">
-        <p className="text-sm font-medium text-primary">{categoryLabel}</p>
-        <h1 className="font-[family-name:var(--font-space-grotesk)] text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          {title}
-        </h1>
-        {formattedDate && (
-          <p className="text-sm text-muted-foreground">
-            <span className="text-muted-foreground/80">{t.blog.dateLabel}: </span>
-            <time dateTime={post.published_at}>{formattedDate}</time>
-          </p>
-        )}
-      </header>
-
       {post.cover_image_url ? (
-        <figure className="mb-10 overflow-hidden rounded-xl border border-border/60 bg-muted shadow-sm">
+        <figure className="mt-6 mb-8 overflow-hidden rounded-xl border border-border/50 bg-muted/30 sm:mb-10">
           <img
             src={post.cover_image_url}
             alt={title}
@@ -55,9 +42,26 @@ export function BlogPostView({ post, category, showDates = true }: BlogPostViewP
         </figure>
       ) : null}
 
-      <div className="min-w-0 w-full overflow-x-hidden">
-        <BlogArticleBody html={body} />
-      </div>
-    </article>
+      <article className={`blog-article-glass mx-auto w-full max-w-3xl ${post.cover_image_url ? "" : "mt-6"}`}>
+        <div className="blog-article-glass__inner p-6 sm:p-8 md:p-10">
+          <header className="mb-8 space-y-4 lg:mb-10 lg:space-y-5">
+            <p className="text-sm font-medium text-primary">{categoryLabel}</p>
+            <h1 className="font-[family-name:var(--font-space-grotesk)] text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              {title}
+            </h1>
+            {formattedDate && (
+              <p className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground/80">{t.blog.dateLabel}: </span>
+                <time dateTime={post.published_at}>{formattedDate}</time>
+              </p>
+            )}
+          </header>
+
+          <div className="min-w-0 w-full overflow-x-hidden">
+            <BlogArticleBody html={body} />
+          </div>
+        </div>
+      </article>
+    </div>
   )
 }

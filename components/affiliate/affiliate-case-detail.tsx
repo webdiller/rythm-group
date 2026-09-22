@@ -23,9 +23,9 @@ function CaseChannelMiniCard({ channel }: { channel: AffiliateCaseChannelUi }) {
       href={channel.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-primary/30"
+      className="group flex min-w-0 max-w-full items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 transition-all hover:border-primary/30"
     >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
         {hasImage && channel.avatarSrc ? (
           <img
             src={channel.avatarSrc}
@@ -34,10 +34,12 @@ function CaseChannelMiniCard({ channel }: { channel: AffiliateCaseChannelUi }) {
             onError={() => setHasImage(false)}
           />
         ) : (
-          <span className="text-lg font-bold">{channel.name.charAt(0)}</span>
+          <span className="text-sm font-bold">{channel.name.charAt(0)}</span>
         )}
       </div>
-      <h3 className="min-w-0 truncate text-sm font-semibold text-card-foreground sm:text-base">{channel.name}</h3>
+      <h3 className="min-w-0 text-sm font-semibold leading-snug text-card-foreground [overflow-wrap:anywhere]">
+        {channel.name}
+      </h3>
     </Link>
   )
 }
@@ -52,7 +54,7 @@ function GallerySlide({ image, priority, onOpen, openLabel }: { image: Affiliate
       type="button"
       onClick={onOpen}
       aria-label={openLabel}
-      className="relative flex h-[280px] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:h-[360px] lg:h-[420px]"
+      className="relative flex h-[min(260px,38vh)] w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-muted sm:h-[min(300px,40vh)] xl:h-[min(360px,44vh)]"
     >
       <img
         src={image.originalSrc}
@@ -60,7 +62,7 @@ function GallerySlide({ image, priority, onOpen, openLabel }: { image: Affiliate
         aria-hidden
         width={image.width}
         height={image.height}
-        className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover blur-md"
+        className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-md brightness-[0.55] saturate-[0.35]"
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
@@ -69,7 +71,7 @@ function GallerySlide({ image, priority, onOpen, openLabel }: { image: Affiliate
         alt=""
         width={image.width}
         height={image.height}
-        className="relative z-10 h-full w-full object-contain"
+        className="relative z-10 max-h-full max-w-full object-contain p-2 sm:p-3"
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
@@ -124,8 +126,6 @@ function CaseGallery({ gallery, locale }: { gallery: AffiliateCaseGalleryImageUi
         height: image.height,
         msrc: image.thumbnailSrc,
       })),
-      // Dynamic import — PhotoSwipe core loads on first open
-      // https://photoswipe.com/react-image-gallery/
       pswpModule: () => import("photoswipe"),
     })
     lightbox.init()
@@ -157,7 +157,7 @@ function CaseGallery({ gallery, locale }: { gallery: AffiliateCaseGalleryImageUi
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-2.5">
       <Carousel
         setApi={setApi}
         opts={{ align: "start", loop: false }}
@@ -180,17 +180,17 @@ function CaseGallery({ gallery, locale }: { gallery: AffiliateCaseGalleryImageUi
         </CarouselContent>
         <CarouselPrevious
           variant="secondary"
-          className="left-1 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:left-2"
+          className="left-1 z-20 size-8 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:left-2 sm:size-9"
         />
         <CarouselNext
           variant="secondary"
-          className="right-1 z-20 size-9 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:right-2"
+          className="right-1 z-20 size-8 border-border/80 bg-background/85 shadow-sm backdrop-blur-sm hover:bg-background disabled:opacity-40 sm:right-2 sm:size-9"
         />
       </Carousel>
 
       <div
         ref={thumbsRef}
-        className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {gallery.map((image, index) => {
           const isActive = index === selectedIndex
@@ -202,7 +202,10 @@ function CaseGallery({ gallery, locale }: { gallery: AffiliateCaseGalleryImageUi
               }}
               type="button"
               onClick={() => api?.scrollTo(index)}
-              className={cn("relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border transition-[border-color,box-shadow,opacity]", isActive ? "border-primary ring-2 ring-primary/35" : "border-border/70 opacity-80 hover:border-primary/40 hover:opacity-100")}
+              className={cn(
+                "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border transition-[border-color,box-shadow,opacity] sm:h-16 sm:w-24",
+                isActive ? "border-primary ring-2 ring-primary/35" : "border-border/70 opacity-80 hover:border-primary/40 hover:opacity-100",
+              )}
               aria-label={locale === "en" ? `Show image ${index + 1}` : `Показать изображение ${index + 1}`}
               aria-current={isActive ? "true" : undefined}
             >
@@ -272,9 +275,15 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
         ← {cp.back}
       </Link>
 
-      <div className={cn("grid gap-8 lg:gap-10 lg:items-start", hasGallery && "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]")}>
+      {/* Верхний блок: галерея + «О игре» — на ноутбуках сбалансированные колонки без sticky */}
+      <div
+        className={cn(
+          "grid items-start gap-6 lg:gap-8",
+          hasGallery && "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] xl:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]",
+        )}
+      >
         {hasGallery ? (
-          <div className="min-w-0 lg:sticky lg:top-24">
+          <div className="min-w-0">
             <CaseGallery
               gallery={gallery}
               locale={locale}
@@ -282,36 +291,38 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
           </div>
         ) : null}
 
-        <div className="min-w-0 space-y-6">
-          <header className="flex items-center gap-4">
+        <div className="min-w-0 space-y-5">
+          <header className="flex items-start gap-3 sm:gap-4">
             {showAvatar ? (
-              <div className="size-14 shrink-0 flex items-center sm:size-16">
+              <div className="flex size-12 shrink-0 items-center sm:size-14">
                 <img
                   src={coverSrc}
                   alt=""
-                  className="object-contain h-auto w-full rounded-xl"
+                  className="h-auto w-full rounded-xl object-contain"
                   loading="eager"
                   decoding="async"
                 />
               </div>
             ) : null}
-            <h1 className="font-(family-name:--font-space-grotesk) text-xl font-bold tracking-tight text-foreground sm:text-2xl lg:text-3xl">{title}</h1>
+            <h1 className="min-w-0 font-(family-name:--font-space-grotesk) text-xl font-bold leading-snug tracking-tight text-foreground sm:text-2xl xl:text-[1.75rem]">
+              {title}
+            </h1>
           </header>
 
           <Card className="border-border/80 bg-card/85 py-0 shadow-none backdrop-blur-sm">
-            <CardHeader className="px-6 pt-6 pb-3 md:px-8 md:pt-8 md:pb-4">
-              <CardTitle className="text-xl">{cp.aboutGame}</CardTitle>
+            <CardHeader className="px-5 pt-5 pb-2 sm:px-6 sm:pt-6 sm:pb-3">
+              <CardTitle className="text-lg sm:text-xl">{cp.aboutGame}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6 px-6 pb-6 pt-0 text-sm text-muted-foreground md:px-8 md:pb-8">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+            <CardContent className="space-y-4 px-5 pb-5 pt-0 text-sm text-muted-foreground sm:space-y-5 sm:px-6 sm:pb-6">
+              <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4">
                   <p className="mb-1 inline-flex items-center gap-2 text-xs uppercase tracking-wide">
                     <Tag className="h-3.5 w-3.5" />
                     {locale === "en" ? "Category" : "Категория"}
                   </p>
-                  <p className="text-foreground">{category}</p>
+                  <p className="text-foreground [overflow-wrap:anywhere]">{category}</p>
                 </div>
-                <div className="rounded-lg border border-border/60 bg-muted/30 p-4">
+                <div className="rounded-lg border border-border/60 bg-muted/30 p-3 sm:p-4">
                   <p className="mb-1 inline-flex items-center gap-2 text-xs uppercase tracking-wide">
                     <CalendarDays className="h-3.5 w-3.5" />
                     {t.affiliate.cases.publishedLabel}
@@ -319,7 +330,7 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
                   <p className="text-foreground">{formattedDate}</p>
                 </div>
               </div>
-              <p className="text-base leading-relaxed text-muted-foreground">{desc}</p>
+              <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">{desc}</p>
               {c.steamGameUrl ? (
                 <a
                   href={c.steamGameUrl}
@@ -333,49 +344,51 @@ export function AffiliateCaseDetail({ caseItem: c }: AffiliateCaseDetailProps) {
               ) : null}
             </CardContent>
           </Card>
-
-          {showWishlists || showViews ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {showWishlists ? (
-                <Card className="border-border/80 bg-card/85 py-0 shadow-none">
-                  <CardContent className="flex items-center justify-between p-5">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
-                      <p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}</p>
-                    </div>
-                    <Heart className="h-6 w-6 text-primary" />
-                  </CardContent>
-                </Card>
-              ) : null}
-              {showViews ? (
-                <Card className="border-border/80 bg-card/85 py-0 shadow-none">
-                  <CardContent className="flex items-center justify-between p-5">
-                    <div>
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
-                      <p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(views)}</p>
-                    </div>
-                    <Eye className="h-6 w-6 text-primary" />
-                  </CardContent>
-                </Card>
-              ) : null}
-            </div>
-          ) : null}
-
-          {c.channels.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-foreground">{cp.publishedInChannels}</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {c.channels.map((channel) => (
-                  <CaseChannelMiniCard
-                    key={channel.id}
-                    channel={channel}
-                  />
-                ))}
-              </div>
-            </section>
-          ) : null}
         </div>
       </div>
+
+      {/* Метрики на всю ширину — не сжимают правую колонку */}
+      {showWishlists || showViews ? (
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:max-w-2xl">
+          {showWishlists ? (
+            <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+              <CardContent className="flex items-center justify-between p-4 sm:p-5">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
+                  <p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(c.wishlists)}</p>
+                </div>
+                <Heart className="h-6 w-6 text-primary" />
+              </CardContent>
+            </Card>
+          ) : null}
+          {showViews ? (
+            <Card className="border-border/80 bg-card/85 py-0 shadow-none">
+              <CardContent className="flex items-center justify-between p-4 sm:p-5">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{cp.views}</p>
+                  <p className="text-2xl font-bold text-foreground">{new Intl.NumberFormat(locale === "en" ? "en-US" : "ru-RU").format(views)}</p>
+                </div>
+                <Eye className="h-6 w-6 text-primary" />
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Каналы на всю ширину — без обрезки «хвоста» в узкой колонке */}
+      {c.channels.length > 0 ? (
+        <section className="space-y-3 sm:space-y-4">
+          <h2 className="text-lg font-semibold text-foreground sm:text-xl">{cp.publishedInChannels}</h2>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
+            {c.channels.map((channel) => (
+              <CaseChannelMiniCard
+                key={channel.id}
+                channel={channel}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </article>
   )
 }
