@@ -62,7 +62,7 @@ function GallerySlide({ image, priority, onOpen, openLabel }: { image: Affiliate
         aria-hidden
         width={image.width}
         height={image.height}
-        className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover opacity-80 blur-md brightness-[0.55] saturate-[0.35]"
+        className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-90 blur-2xl saturate-125"
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
@@ -71,7 +71,7 @@ function GallerySlide({ image, priority, onOpen, openLabel }: { image: Affiliate
         alt=""
         width={image.width}
         height={image.height}
-        className="relative z-10 max-h-full max-w-full object-contain p-2 sm:p-3"
+        className="relative z-10 h-full w-full object-contain"
         loading={priority ? "eager" : "lazy"}
         decoding="async"
       />
