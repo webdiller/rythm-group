@@ -2,19 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import sharp from "sharp"
 import { promises as fs } from "node:fs"
 import { requireAuth } from "@/lib/auth"
-import { type BackgroundKind, resolveBackgroundSlot, uploadBackgroundWebp } from "@/lib/s3/backgrounds"
+import { type BackgroundKind, resolveBackgroundSlot, uploadBackgroundImage } from "@/lib/s3/backgrounds"
 import { clearBackgroundKey, legacyBackgroundDiskPath, replaceBackgroundKey } from "@/lib/server/site-backgrounds"
 
 type ProcessOptions = {
   kind: BackgroundKind
   orientationError: string
   requireLandscape: boolean
-  resize: { width: number; height: number }
 }
 
-/** Только upload/delete (auth). Отдача — public S3 URL или static `/backgrounds/*.webp`. */
+/** Только upload/delete (auth). Без resize / WebP-перекодирования — файл уходит в S3 как есть. */
 export function createBackgroundRouteHandlers(options: ProcessOptions) {
-  const { kind, orientationError, requireLandscape, resize } = options
+  const { kind, orientationError, requireLandscape } = options
 
   async function POST(request: NextRequest) {
     try {
@@ -32,9 +31,9 @@ export function createBackgroundRouteHandlers(options: ProcessOptions) {
         return NextResponse.json({ error: "file is required" }, { status: 400 })
       }
 
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
-      const fileType = (file as File).type || ""
-      if (!allowedTypes.includes(fileType)) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"] as const
+      const fileType = ((file as File).type || "") as (typeof allowedTypes)[number] | ""
+      if (!allowedTypes.includes(fileType as (typeof allowedTypes)[number])) {
         return NextResponse.json({ error: "Допустимые форматы файлов: JPG, PNG, WebP" }, { status: 400 })
       }
 
@@ -44,8 +43,7 @@ export function createBackgroundRouteHandlers(options: ProcessOptions) {
       }
 
       const inputBuffer = Buffer.from(await file.arrayBuffer())
-      const image = sharp(inputBuffer)
-      const metadata = await image.metadata()
+      const metadata = await sharp(inputBuffer).metadata()
 
       if (metadata.width && metadata.height) {
         if (requireLandscape && metadata.width < metadata.height) {
@@ -56,9 +54,7 @@ export function createBackgroundRouteHandlers(options: ProcessOptions) {
         }
       }
 
-      const optimizedBuffer = await image.resize(resize.width, resize.height, { fit: "cover" }).webp({ quality: 80 }).toBuffer()
-
-      const key = await uploadBackgroundWebp(slot, optimizedBuffer)
+      const key = await uploadBackgroundImage(slot, inputBuffer, fileType)
       await replaceBackgroundKey(slot, key)
 
       try {
