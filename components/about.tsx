@@ -93,8 +93,8 @@ export function About({
                 delayStep={120}
                 disabled={!animationsEnabled}
               >
-                <div className="group rounded-xl h-full border border-border bg-card p-8 transition-all hover:border-primary/30 glow-border">
-                  <div className="mb-5 flex mx-auto h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                <div className="group flex h-full flex-col items-center rounded-xl border border-border bg-card p-8 text-center transition-all hover:border-primary/30 glow-border">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
                     {card.hasCustomIcon && card.iconSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element -- динамический URL из CMS
                       <img
@@ -108,8 +108,8 @@ export function About({
                       <Icon className="h-6 w-6" />
                     )}
                   </div>
-                  <h3 className="mb-3 text-lg sm:text-xl lg:text-2xl text-center font-semibold text-card-foreground">{card.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{card.text}</p>
+                  <h3 className="mb-3 text-lg font-semibold text-card-foreground sm:text-xl lg:text-2xl">{card.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground text-pretty">{card.text}</p>
                 </div>
               </ScrollStagger>
             )

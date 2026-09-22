@@ -22,7 +22,7 @@ export function BlogPostView({ post, category, showDates = true }: BlogPostViewP
   const formattedDate = showDates ? format(new Date(post.published_at), "d MMMM yyyy", { locale: dateLocale }) : null
 
   return (
-    <article>
+    <article className="mx-auto w-full min-w-0 max-w-3xl">
       <BlogPageBreadcrumbs
         variant="post"
         category={category}
@@ -31,7 +31,9 @@ export function BlogPostView({ post, category, showDates = true }: BlogPostViewP
 
       <header className="mb-10 space-y-4 lg:space-y-5">
         <p className="text-sm font-medium text-primary">{categoryLabel}</p>
-        <h1 className="font-[family-name:var(--font-space-grotesk)] text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{title}</h1>
+        <h1 className="font-[family-name:var(--font-space-grotesk)] text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          {title}
+        </h1>
         {formattedDate && (
           <p className="text-sm text-muted-foreground">
             <span className="text-muted-foreground/80">{t.blog.dateLabel}: </span>
@@ -53,7 +55,7 @@ export function BlogPostView({ post, category, showDates = true }: BlogPostViewP
         </figure>
       ) : null}
 
-      <div className="max-w-4xl mx-auto w-full">
+      <div className="min-w-0 w-full overflow-x-hidden">
         <BlogArticleBody html={body} />
       </div>
     </article>

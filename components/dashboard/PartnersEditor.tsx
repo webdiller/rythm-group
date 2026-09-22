@@ -941,7 +941,7 @@ function PartnerForm({
     show_logo_on_case_detail: boolean
     order_index: number
   }>({
-    category_id: partner?.category_id ?? categories[0]?.id ?? null,
+    category_id: partner != null ? partner.category_id : null,
     name: partner?.name ?? "",
     title_ru: partner?.title_ru ?? "",
     title_en: partner?.title_en ?? "",
@@ -973,7 +973,11 @@ function PartnerForm({
   const [blogPosts, setBlogPosts] = useState<BlogPostOption[]>([])
   const [channelOptions, setChannelOptions] = useState<ChannelOption[]>([])
   const [relatedChannelIds, setRelatedChannelIds] = useState<number[]>(() => parseRelatedChannelIds(partner?.related_channel_ids))
-  const [targetType, setTargetType] = useState<"case_detail" | "blog_post">(partner?.target_url?.startsWith("/blog/") ? "blog_post" : "case_detail")
+  const [targetType, setTargetType] = useState<"case_detail" | "blog_post" | "none">(() => {
+    if (!partner?.target_url?.trim()) return "none"
+    if (partner.target_url.startsWith("/blog/")) return "blog_post"
+    return "case_detail"
+  })
   const [selectedBlogUrl, setSelectedBlogUrl] = useState<string>(partner?.target_url?.startsWith("/blog/") ? partner.target_url : "")
 
   useEffect(() => {
@@ -1065,7 +1069,14 @@ function PartnerForm({
           toast.error("Выберите статью блога для перехода из кейса")
           return
         }
-        const resolvedTargetUrl = targetType === "blog_post" ? selectedBlogUrl : isEditingExistingPartner ? caseDetailUrl : AUTO_CASE_DETAIL_URL
+        const resolvedTargetUrl =
+          targetType === "none"
+            ? null
+            : targetType === "blog_post"
+              ? selectedBlogUrl
+              : isEditingExistingPartner
+                ? caseDetailUrl
+                : AUTO_CASE_DETAIL_URL
         onSave(
           {
             ...formData,
@@ -1297,7 +1308,7 @@ function PartnerForm({
           <Label>Куда ведет клик по кейсу</Label>
           <Select
             value={targetType}
-            onValueChange={(value: "case_detail" | "blog_post") => setTargetType(value)}
+            onValueChange={(value: "case_detail" | "blog_post" | "none") => setTargetType(value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Выберите действие при клике" />
@@ -1305,9 +1316,11 @@ function PartnerForm({
             <SelectContent>
               <SelectItem value="case_detail">Перейти на детальную страницу кейса</SelectItem>
               <SelectItem value="blog_post">Выбрать статью из блога</SelectItem>
+              <SelectItem value="none">Без перехода / без ссылки</SelectItem>
             </SelectContent>
           </Select>
           {targetType === "case_detail" && <p className="text-xs text-muted-foreground">{isEditingExistingPartner ? `Будет использован URL: ${caseDetailUrl}` : "Для нового кейса URL детальной страницы будет сформирован автоматически после создания."}</p>}
+          {targetType === "none" && <p className="text-xs text-muted-foreground">Карточка не будет кликабельной на главной и в Wishlists.</p>}
         </div>
         <div className="space-y-2">
           <Label>Статья блога</Label>

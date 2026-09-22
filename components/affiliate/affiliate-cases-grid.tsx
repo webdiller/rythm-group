@@ -7,7 +7,6 @@ import { enUS, ru } from "date-fns/locale"
 import { useLocale } from "@/lib/locale-context"
 import type { Partner, PartnerCategory } from "@/components/cases"
 import { mapPartnerToAffiliateCaseCard } from "@/lib/affiliate/cases-ui"
-import { wishlistsCasePath } from "@/lib/wishlists-path"
 import { ChevronRight } from "lucide-react"
 import { getPartnerLogoSrc } from "@/lib/s3/partner-logo-url"
 
@@ -44,7 +43,7 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
         : locale === "en"
           ? "No date"
           : "Без даты"
-    const href = partner.target_url || wishlistsCasePath(ui.slug)
+    const href = partner.target_url?.trim() || null
     const imageSrc = getPartnerLogoSrc(partner) || ui.coverImage?.trim() || ""
     const showImage = Boolean(imageSrc) && !brokenImageByPartner[partner.id]
     const title = locale === "en" ? partner.title_en || partner.name : partner.title_ru || partner.name
@@ -64,86 +63,127 @@ export function AffiliateCasesGrid({ categories, partners }: AffiliateCasesGridP
             },
       )
 
-    return (
-      <Link
-        key={ui.slug}
-        href={href}
-        className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border/70 bg-card/70 shadow-none backdrop-blur-md transition-[border-color,box-shadow] duration-300 hover:border-primary/35 hover:shadow-[0_8px_28px_-18px_rgba(230,27,0,0.4)]">
-          <div className="relative aspect-2/1 w-full overflow-hidden bg-muted/50">
-            {showImage ? (
-              <>
+    const articleClassName = `flex h-full flex-col overflow-hidden rounded-xl border border-border/70 bg-card/70 shadow-none backdrop-blur-md transition-[border-color,box-shadow] duration-300 ${
+      href ? "hover:border-primary/35 hover:shadow-[0_8px_28px_-18px_rgba(230,27,0,0.4)]" : ""
+    }`
+
+    const card = (
+      <article className={articleClassName}>
+        <div className="relative aspect-2/1 w-full overflow-hidden bg-muted/50">
+          {showImage ? (
+            <>
+              <img
+                src={imageSrc}
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-75 blur-xl saturate-125 transition-transform duration-500"
+                loading="lazy"
+                decoding="async"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-card/70 via-card/15 to-transparent" />
+              <div className="relative z-10 flex h-full items-center justify-center p-2.5 sm:p-3">
                 <img
                   src={imageSrc}
-                  alt=""
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-75 blur-xl saturate-125 transition-transform duration-500"
+                  alt={title}
+                  className="p-2 w-auto h-full rounded-2xl object-contain drop-shadow-sm transition-transform duration-300"
                   loading="lazy"
                   decoding="async"
+                  onError={onImageError}
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-card/70 via-card/15 to-transparent" />
-                <div className="relative z-10 flex h-full items-center justify-center p-2.5 sm:p-3">
-                  <img
-                    src={imageSrc}
-                    alt={title}
-                    className="p-2 w-auto h-full rounded-2xl object-contain drop-shadow-sm transition-transform duration-300"
-                    loading="lazy"
-                    decoding="async"
-                    onError={onImageError}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="flex h-full items-center justify-center px-4">
-                <span className="line-clamp-2 text-center font-(family-name:--font-space-grotesk) text-lg font-semibold tracking-tight text-muted-foreground/80">
-                  {partner.name}
-                </span>
               </div>
+            </>
+          ) : (
+            <div className="flex h-full items-center justify-center px-4">
+              <span className="line-clamp-2 text-center font-(family-name:--font-space-grotesk) text-lg font-semibold tracking-tight text-muted-foreground/80">
+                {partner.name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3 p-5">
+          <time
+            dateTime={parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : undefined}
+            className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
+          >
+            {dateStr}
+          </time>
+
+          <h3
+            className={`line-clamp-2 font-(family-name:--font-space-grotesk) text-lg font-semibold leading-snug tracking-tight text-foreground ${
+              href ? "transition-colors group-hover:text-primary" : ""
+            }`}
+          >
+            {title}
+          </h3>
+
+          {description ? (
+            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+          ) : null}
+
+          <div className="mt-auto flex items-end justify-between gap-3 border-t border-border/60 pt-3">
+            {showWishlists ? (
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
+                <p className="truncate text-sm font-semibold tabular-nums text-primary">{nf.format(ui.wishlists)}</p>
+              </div>
+            ) : (
+              <span />
             )}
-          </div>
-
-          <div className="flex flex-1 flex-col gap-3 p-5">
-            <time
-              dateTime={parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : undefined}
-              className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground"
-            >
-              {dateStr}
-            </time>
-
-            <h3 className="line-clamp-2 font-(family-name:--font-space-grotesk) text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
-              {title}
-            </h3>
-
-            {description ? (
-              <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
-            ) : null}
-
-            <div className="mt-auto flex items-end justify-between gap-3 border-t border-border/60 pt-3">
-              {showWishlists ? (
-                <div className="min-w-0">
-                  <p className="text-[11px] text-muted-foreground">{t.affiliate.cases.wishlistsLabel}</p>
-                  <p className="truncate text-sm font-semibold tabular-nums text-primary">
-                    {nf.format(ui.wishlists)}
-                  </p>
-                </div>
-              ) : (
-                <span />
-              )}
+            {href ? (
               <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
                 {t.affiliate.cases.openCase}
                 <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </span>
-            </div>
+            ) : null}
           </div>
-        </article>
+        </div>
+      </article>
+    )
+
+    if (!href) {
+      return (
+        <div
+          key={ui.slug}
+          className="h-full"
+        >
+          {card}
+        </div>
+      )
+    }
+
+    const isExternal = /^https?:\/\//i.test(href) || href.startsWith("//")
+    const linkClassName =
+      "group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+    if (isExternal) {
+      return (
+        <a
+          key={ui.slug}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClassName}
+        >
+          {card}
+        </a>
+      )
+    }
+
+    return (
+      <Link
+        key={ui.slug}
+        href={href}
+        className={linkClassName}
+      >
+        {card}
       </Link>
     )
   }
 
   return (
     <section
-      id="affiliate-cases"
+      id="cases"
       className="py-16 md:py-20"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

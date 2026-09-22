@@ -66,7 +66,7 @@ export function BlogArticleBody({ html, className }: BlogArticleBodyProps) {
           <img
             src={src}
             alt={alt}
-            className="my-4 h-auto rounded-lg border border-border"
+            className="my-4 h-auto max-w-full rounded-lg border border-border"
             style={{
               width: `${width}%`,
               display: "block",

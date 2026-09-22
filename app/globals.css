@@ -262,9 +262,25 @@ html {
 .blog-article-body {
   @apply text-base leading-relaxed;
   color: var(--blog-body);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .blog-article-body > * + * {
   margin-top: 1rem;
+}
+.blog-article-body img,
+.blog-article-body video,
+.blog-article-body iframe,
+.blog-article-body table,
+.blog-article-body pre {
+  max-width: 100%;
+}
+.blog-article-body table {
+  display: block;
+  overflow-x: auto;
+}
+.blog-article-body pre {
+  overflow-x: auto;
 }
 .blog-article-body h1 {
   @apply mt-10 mb-4 text-2xl font-bold tracking-tight;

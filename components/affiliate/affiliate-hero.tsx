@@ -36,7 +36,7 @@ export function AffiliateHero({ data, enableAffiliateCooperationFormats, backgro
   const [heroContentVisible, setHeroContentVisible] = useState(false)
   const a = t.affiliate.hero
   const contactHref = "#contact"
-  const moreHref = wishlistsSectionHref("affiliate-formats")
+  const moreHref = wishlistsSectionHref("formats")
   const handleContactClick = createAnchorClickHandler({
     rawHref: contactHref,
     sectionHrefPrefix: "",
