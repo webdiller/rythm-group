@@ -90,7 +90,7 @@ export function Cases({ categories, partners, animationsEnabled = true, displayM
                 disabled={!animationsEnabled}
               >
                 <h3 className="mb-6 text-xl font-semibold text-foreground md:text-2xl">{locale === "ru" ? category.name_ru : category.name_en}</h3>
-                <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-2 lg:gap-4 sm:grid-cols-3 md:grid-cols-4">
+                <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-2 lg:gap-4 sm:grid-cols-3 md:grid-cols-5">
                   {visiblePartners.map((partner) => (
                     <LandingPartnerCard
                       key={partner.id}
@@ -121,7 +121,7 @@ export function Cases({ categories, partners, animationsEnabled = true, displayM
 
           {uncategorizedPartners.length > 0 && (
             <ScrollReveal disabled={!animationsEnabled}>
-              <div className="grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 md:grid-cols-4">
+              <div className="grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 md:grid-cols-5">
                 {(showAllUncategorized ? uncategorizedPartners : uncategorizedPartners.slice(0, MAX_VISIBLE)).map((partner) => (
                   <LandingPartnerCard
                     key={partner.id}

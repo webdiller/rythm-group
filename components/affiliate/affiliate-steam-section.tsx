@@ -25,7 +25,7 @@ export function AffiliateSteamSection({ partners }: AffiliateSteamSectionProps) 
           <p className="text-base text-muted-foreground sm:text-lg">{t.affiliate.steam.subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-2 lg:gap-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 items-stretch gap-1 sm:gap-2 lg:gap-4 sm:grid-cols-3 md:grid-cols-5">
           {visibleItems.map((p) => {
             const steamUrl = p.developer_url?.trim() || ""
             const hasLink = steamUrl.length > 0
