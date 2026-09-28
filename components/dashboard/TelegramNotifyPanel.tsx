@@ -1,9 +1,20 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 
@@ -24,14 +35,29 @@ type Status = {
   source: "admin" | "env" | "mixed" | "none"
 }
 
+type ClearTarget = "token" | "chatId" | null
+
+function StatusFlag({ ok, label }: { ok: boolean | undefined; label: string }) {
+  if (ok == null) return <span>{label}: …</span>
+  return (
+    <span>
+      {label}:{" "}
+      <span className={ok ? "font-medium text-green-600 dark:text-green-500" : "text-muted-foreground"}>
+        {ok ? "задан" : "нет"}
+      </span>
+    </span>
+  )
+}
+
 export function TelegramNotifyPanel() {
   const [status, setStatus] = useState<Status | null>(null)
   const [botToken, setBotToken] = useState("")
   const [chatId, setChatId] = useState("")
-  const [clearToken, setClearToken] = useState(false)
-  const [clearChatId, setClearChatId] = useState(false)
+  const [showToken, setShowToken] = useState(false)
+  const [showChatId, setShowChatId] = useState(false)
   const [busy, setBusy] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [clearTarget, setClearTarget] = useState<ClearTarget>(null)
 
   const loadStatus = useCallback(async () => {
     try {
@@ -54,10 +80,34 @@ export function TelegramNotifyPanel() {
     void loadStatus()
   }, [loadStatus])
 
+  const putSettings = async (body: {
+    botToken?: string | null
+    chatId?: string | null
+    keepToken?: boolean
+    keepChatId?: boolean
+  }) => {
+    const token = getToken()
+    const res = await fetch("/api/admin/telegram-settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    })
+    const json = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; data?: Status }
+    if (!res.ok) {
+      toast.error(json.error || "Не удалось сохранить")
+      if (json.hint) toast.message(json.hint)
+      return false
+    }
+    setStatus(json.data ?? null)
+    return true
+  }
+
   const save = async () => {
     setBusy(true)
     try {
-      const token = getToken()
       const body: {
         botToken?: string | null
         chatId?: string | null
@@ -65,44 +115,46 @@ export function TelegramNotifyPanel() {
         keepChatId?: boolean
       } = {}
 
-      if (clearToken) {
-        body.botToken = null
-      } else if (botToken.trim()) {
+      if (botToken.trim()) {
         body.botToken = botToken.trim()
       } else {
         body.keepToken = true
       }
 
-      if (clearChatId) {
-        body.chatId = null
-      } else if (chatId.trim()) {
+      if (chatId.trim()) {
         body.chatId = chatId.trim()
       } else {
         body.keepChatId = true
       }
 
-      const res = await fetch("/api/admin/telegram-settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(body),
-      })
-      const json = (await res.json().catch(() => ({}))) as { error?: string; hint?: string; data?: Status }
-      if (!res.ok) {
-        toast.error(json.error || "Не удалось сохранить")
-        if (json.hint) toast.message(json.hint)
-        return
-      }
-      setStatus(json.data ?? null)
+      const ok = await putSettings(body)
+      if (!ok) return
       setBotToken("")
       setChatId("")
-      setClearToken(false)
-      setClearChatId(false)
-      toast.success("Настройки Telegram сохранены (зашифрованы в БД)")
+      toast.success("Сохранено")
     } catch {
       toast.error("Ошибка сети при сохранении")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const confirmClear = async () => {
+    if (!clearTarget) return
+    setBusy(true)
+    try {
+      const body =
+        clearTarget === "token"
+          ? { botToken: null as null, keepChatId: true }
+          : { chatId: null as null, keepToken: true }
+      const ok = await putSettings(body)
+      if (!ok) return
+      if (clearTarget === "token") setBotToken("")
+      else setChatId("")
+      toast.success(clearTarget === "token" ? "Токен удалён из админки" : "Chat ID удалён из админки")
+      setClearTarget(null)
+    } catch {
+      toast.error("Ошибка сети при удалении")
     } finally {
       setBusy(false)
     }
@@ -122,7 +174,7 @@ export function TelegramNotifyPanel() {
         if (json.hint) toast.message(json.hint)
         return
       }
-      toast.success("Тестовое сообщение отправлено в Telegram")
+      toast.success("Тестовое сообщение отправлено")
       await loadStatus()
     } catch {
       toast.error("Ошибка сети при тесте Telegram")
@@ -133,22 +185,22 @@ export function TelegramNotifyPanel() {
 
   const sourceLabel =
     status?.source === "admin"
-      ? "админка (шифр)"
+      ? "админка"
       : status?.source === "env"
         ? ".env"
         : status?.source === "mixed"
-          ? "смешанный (админка + .env)"
-          : "не настроено"
+          ? "смешанный"
+          : null
+
+  const fieldsDisabled = busy || status?.encryptionReady === false
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Уведомления Telegram</CardTitle>
         <CardDescription>
-          Заявки с форм уходят в Telegram. Токен и chat id можно задать здесь — они хранятся в БД{" "}
-          <strong>в зашифрованном виде</strong> (ключ <code className="text-xs">SECRETS_ENCRYPTION_KEY</code> только в{" "}
-          <code className="text-xs">.env</code>). Пустые поля при сохранении не затирают текущие значения. Fallback:{" "}
-          <code className="text-xs">TELEGRAM_BOT_TOKEN</code> / <code className="text-xs">TELEGRAM_CHAT_ID</code> в .env.
+          Заявки с форм уходят в Telegram. Значения в админке шифруются ключом{" "}
+          <code className="text-xs">SECRETS_ENCRYPTION_KEY</code>. Пустые поля не затирают сохранённое.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -158,91 +210,110 @@ export function TelegramNotifyPanel() {
             {status == null ? (
               "…"
             ) : status.encryptionReady ? (
-              <span className="font-medium text-foreground">готово</span>
+              <span className="font-medium text-green-600 dark:text-green-500">готово</span>
             ) : (
-              <span className="font-medium text-destructive">нужен SECRETS_ENCRYPTION_KEY в .env</span>
+              <span className="font-medium text-destructive">нужен SECRETS_ENCRYPTION_KEY</span>
             )}
-          </p>
-          <p>
-            Статус отправки:{" "}
+            {" · "}
+            Отправка:{" "}
             {status == null ? (
               "…"
             ) : status.configured ? (
-              <span className="font-medium text-foreground">ок ({sourceLabel})</span>
+              <span className="font-medium text-green-600 dark:text-green-500">
+                ок{sourceLabel ? ` (${sourceLabel})` : ""}
+              </span>
             ) : (
               <span className="font-medium text-destructive">не настроено</span>
             )}
           </p>
-          <p className="text-xs">
-            Токен в админке: {status?.tokenInAdmin ? "задан" : "нет"}
-            {" · "}
-            Chat id в админке: {status?.chatIdInAdmin ? "задан" : "нет"}
-            {" · "}
-            Токен в .env: {status?.tokenInEnv ? "да" : "нет"}
-            {" · "}
-            Chat id в .env: {status?.chatIdInEnv ? "да" : "нет"}
+          <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+            <StatusFlag ok={status?.tokenInAdmin} label="Токен" />
+            <StatusFlag ok={status?.chatIdInAdmin} label="Chat ID" />
+            <StatusFlag ok={status?.tokenInEnv} label="Токен .env" />
+            <StatusFlag ok={status?.chatIdInEnv} label="Chat ID .env" />
           </p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="tg-bot-token">Bot token</Label>
-          <Input
-            id="tg-bot-token"
-            type="password"
-            autoComplete="off"
-            placeholder={status?.tokenInAdmin ? "•••••••• (оставьте пустым, чтобы не менять)" : "123456:ABC…"}
-            value={botToken}
-            onChange={(e) => {
-              setBotToken(e.target.value)
-              setClearToken(false)
-            }}
-            disabled={busy || status?.encryptionReady === false}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="tg-bot-token"
+              type={showToken ? "text" : "password"}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={status?.tokenInAdmin ? "•••••••• (оставьте пустым, чтобы не менять)" : "123456:ABC…"}
+              value={botToken}
+              onChange={(e) => setBotToken(e.target.value)}
+              disabled={fieldsDisabled}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label={showToken ? "Скрыть токен" : "Показать токен"}
+              onClick={() => setShowToken((v) => !v)}
+            >
+              {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
           {status?.tokenInAdmin ? (
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={clearToken}
-                onChange={(e) => setClearToken(e.target.checked)}
-              />
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={fieldsDisabled}
+              onClick={() => setClearTarget("token")}
+            >
               Удалить токен из админки
-            </label>
+            </Button>
           ) : null}
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="tg-chat-id">Chat ID</Label>
-          <Input
-            id="tg-chat-id"
-            type="text"
-            autoComplete="off"
-            placeholder={status?.chatIdInAdmin ? "•••••••• (оставьте пустым, чтобы не менять)" : "-100…"}
-            value={chatId}
-            onChange={(e) => {
-              setChatId(e.target.value)
-              setClearChatId(false)
-            }}
-            disabled={busy || status?.encryptionReady === false}
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="tg-chat-id"
+              type={showChatId ? "text" : "password"}
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={status?.chatIdInAdmin ? "•••••••• (оставьте пустым, чтобы не менять)" : "-100…"}
+              value={chatId}
+              onChange={(e) => setChatId(e.target.value)}
+              disabled={fieldsDisabled}
+              className="flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label={showChatId ? "Скрыть chat id" : "Показать chat id"}
+              onClick={() => setShowChatId((v) => !v)}
+            >
+              {showChatId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
           {status?.chatIdInAdmin ? (
-            <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={clearChatId}
-                onChange={(e) => setClearChatId(e.target.checked)}
-              />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto px-0 text-destructive hover:bg-transparent hover:text-destructive"
+              disabled={fieldsDisabled}
+              onClick={() => setClearTarget("chatId")}
+            >
               Удалить chat id из админки
-            </label>
+            </Button>
           ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            disabled={busy || status?.encryptionReady === false}
-            onClick={() => void save()}
-          >
-            {busy ? "Сохранение…" : "Сохранить"}
+          <Button type="button" disabled={fieldsDisabled} onClick={() => void save()}>
+            {busy && clearTarget == null ? "Сохранение…" : "Сохранить"}
           </Button>
           <Button
             type="button"
@@ -250,10 +321,38 @@ export function TelegramNotifyPanel() {
             disabled={testing || status?.configured === false}
             onClick={() => void sendTest()}
           >
-            {testing ? "Отправка…" : "Протестировать Telegram"}
+            {testing ? "Отправка…" : "Протестировать"}
           </Button>
         </div>
       </CardContent>
+
+      <AlertDialog open={clearTarget != null} onOpenChange={(open) => !open && setClearTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {clearTarget === "token" ? "Удалить токен из админки?" : "Удалить chat id из админки?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {clearTarget === "token"
+                ? "Зашифрованный bot token будет удалён из БД. Если токен есть в .env — он останется как fallback."
+                : "Зашифрованный chat id будет удалён из БД. Если chat id есть в .env — он останется как fallback."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              disabled={busy}
+              onClick={(e) => {
+                e.preventDefault()
+                void confirmClear()
+              }}
+            >
+              {busy ? "Удаление…" : "Удалить"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }
