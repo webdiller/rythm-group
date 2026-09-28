@@ -4,10 +4,14 @@ declare global {
       JWT_SECRET: string
       DB_PATH: string
       ADMIN_USERS?: string
-      SMTP_HOST: string
-      SMTP_PORT: number
-      SMTP_USER: string
-      SMTP_PASS: string
+      /** Telegram Bot API token (from @BotFather). Required for contact form. */
+      TELEGRAM_BOT_TOKEN?: string
+      /** Destination chat/group/channel id for contact notifications. */
+      TELEGRAM_CHAT_ID?: string
+      SMTP_HOST?: string
+      SMTP_PORT?: number
+      SMTP_USER?: string
+      SMTP_PASS?: string
       SMTP_FROM?: string
       CONTACT_FALLBACK_EMAIL?: string
       CONTACT_EMAIL_SUBJECT?: string

@@ -4,8 +4,8 @@ const MESSAGES = {
   ru: {
     generic: "Не удалось отправить сообщение. Попробуйте ещё раз или напишите нам напрямую.",
     invalidPayload: "Проверьте заполнение полей формы.",
-    smtpNotConfigured: "Отправка временно недоступна: не настроена почта на сервере. Свяжитесь с нами через контакты ниже.",
-    noRecipients: "Не указан email для приёма заявок. Свяжитесь с нами через контакты ниже.",
+    telegramNotConfigured:
+      "Отправка временно недоступна: Telegram не настроен на сервере. Свяжитесь с нами через контакты ниже.",
     network: "Ошибка сети. Проверьте подключение и попробуйте снова.",
     success: "Сообщение успешно отправлено.",
     sending: "Отправка...",
@@ -13,8 +13,8 @@ const MESSAGES = {
   en: {
     generic: "Could not send your message. Please try again or contact us directly.",
     invalidPayload: "Please check the form fields.",
-    smtpNotConfigured: "Sending is temporarily unavailable: mail is not configured on the server. Please use the contacts below.",
-    noRecipients: "No recipient email is configured. Please use the contacts below.",
+    telegramNotConfigured:
+      "Sending is temporarily unavailable: Telegram is not configured on the server. Please use the contacts below.",
     network: "Network error. Check your connection and try again.",
     success: "Message sent successfully.",
     sending: "Sending...",
@@ -29,10 +29,9 @@ export function mapContactApiError(error: string | undefined, locale: Locale): s
   switch (error) {
     case "Invalid payload":
       return getContactFormMessage(locale, "invalidPayload")
+    case "Telegram is not configured":
     case "SMTP is not configured":
-      return getContactFormMessage(locale, "smtpNotConfigured")
-    case "No recipient emails configured":
-      return getContactFormMessage(locale, "noRecipients")
+      return getContactFormMessage(locale, "telegramNotConfigured")
     case "Failed to send message":
       return getContactFormMessage(locale, "generic")
     default:

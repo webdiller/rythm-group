@@ -27,7 +27,7 @@
 > **Где выполнять:** на **VPS** (Ubuntu), пользователь с `sudo`. Не на локальной Windows/macOS.
 
 Скрипт ставит пакеты, Docker, готовит `/var/www/rythm-group`, копирует `.env.example` → `.env` (без секретов), пишет базовый nginx → `:3000`.  
-**Не** подставляет JWT/S3/SMTP и **не** выпускает HTTPS сам — это остаётся ручным шагом.
+**Не** подставляет JWT/S3/Telegram и **не** выпускает HTTPS сам — это остаётся ручным шагом.
 
 ```bash
 # Вариант 1: уже склонировали репозиторий
@@ -154,7 +154,7 @@ nano .env
 - `JWT_SECRET` — `openssl rand -base64 32`
 - `ADMIN_USERS` — `логин:пароль`
 - `NEXT_PUBLIC_SITE_URL` — `https://example.com` (без `/` в конце)
-- SMTP-поля
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` (заявки с форм)
 - **Yandex Object Storage:** `YA_STORAGE_ID`, `YA_STORAGE_SECRET`, `YA_BUCKET_NAME`, `YA_REGION`, `YA_ENDPOINT`, `NEXT_PUBLIC_YA_PUBLIC_BASE`
 
 Опционально для бэкапов: `BACKUP_S3_PREFIX=backups/cms`, `BACKUP_KEEP_DAYS=14`.
