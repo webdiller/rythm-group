@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
-    const result = await sendTelegramMessage(formatContactTelegramMessage(data))
+    const result = await sendTelegramMessage(formatContactTelegramMessage(data), { parseMode: "HTML" })
 
     if (!result.ok) {
       console.error("Contact form Telegram error:", result.error)

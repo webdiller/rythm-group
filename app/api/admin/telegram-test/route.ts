@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
-import { isTelegramConfigured, sendTelegramMessage } from "@/lib/telegram/send-message"
+import { isTelegramConfigured, sendTelegramMessage, escapeTelegramHtml } from "@/lib/telegram/send-message"
 
 export const runtime = "nodejs"
 
@@ -35,8 +35,24 @@ export async function POST(request: NextRequest) {
     }
 
     const site = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "local"
+    const when = new Date().toLocaleString("ru-RU", {
+      timeZone: "Europe/Moscow",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
     const result = await sendTelegramMessage(
-      ["🧪 Тест Telegram из админки Rythm Group", `Сайт: ${site}`, `Время: ${new Date().toISOString()}`].join("\n"),
+      [
+        "🧪 <b>Тест Telegram</b>",
+        "──────────────",
+        `<b>Сайт:</b> ${escapeTelegramHtml(site)}`,
+        `<b>Время:</b> ${escapeTelegramHtml(when)} (МСК)`,
+        "",
+        "Если вы видите это сообщение — бот и chat id настроены верно.",
+      ].join("\n"),
+      { parseMode: "HTML" },
     )
 
     if (!result.ok) {
