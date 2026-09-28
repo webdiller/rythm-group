@@ -4,10 +4,12 @@ declare global {
       JWT_SECRET: string
       DB_PATH: string
       ADMIN_USERS?: string
-      /** Telegram Bot API token (from @BotFather). Required for contact form. */
+      /** Telegram Bot API token (optional fallback; prefer encrypted admin settings). */
       TELEGRAM_BOT_TOKEN?: string
-      /** Destination chat/group/channel id for contact notifications. */
+      /** Destination chat id (optional fallback). */
       TELEGRAM_CHAT_ID?: string
+      /** Master key for AES-GCM encryption of admin-stored secrets (any passphrase). */
+      SECRETS_ENCRYPTION_KEY?: string
       SMTP_HOST?: string
       SMTP_PORT?: number
       SMTP_USER?: string

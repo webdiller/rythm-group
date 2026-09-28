@@ -47,6 +47,8 @@ export function wipeCmsDataKeepLogo(): { keptLogo: boolean } {
   const existing = db.select().from(tableSiteSettings).limit(1).all()[0]
   const keptLogoValue = existing?.logo ?? null
   const keptLogo = Boolean(keptLogoValue && String(keptLogoValue).trim())
+  const keptTelegramTokenEnc = existing?.telegram_bot_token_enc ?? null
+  const keptTelegramChatEnc = existing?.telegram_chat_id_enc ?? null
 
   db.delete(tableAffiliatePartnerViews).run()
   db.delete(tableBlogPosts).run()
@@ -93,6 +95,8 @@ export function wipeCmsDataKeepLogo(): { keptLogo: boolean } {
       page_affiliate_enabled: true,
       site_published: true,
       backgrounds: null,
+      telegram_bot_token_enc: keptTelegramTokenEnc,
+      telegram_chat_id_enc: keptTelegramChatEnc,
     })
     .run()
 

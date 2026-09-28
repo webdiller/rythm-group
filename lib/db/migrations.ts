@@ -55,6 +55,12 @@ export function runMigrations(sqlite: Database.Database): void {
     if (!names.has("backgrounds")) {
       sqlite.exec("ALTER TABLE site_settings ADD COLUMN backgrounds TEXT")
     }
+    if (!names.has("telegram_bot_token_enc")) {
+      sqlite.exec("ALTER TABLE site_settings ADD COLUMN telegram_bot_token_enc TEXT")
+    }
+    if (!names.has("telegram_chat_id_enc")) {
+      sqlite.exec("ALTER TABLE site_settings ADD COLUMN telegram_chat_id_enc TEXT")
+    }
   }
 
   if (tableExists(sqlite, "partners")) {

@@ -75,7 +75,7 @@ nano .env
 - `JWT_SECRET` — например `openssl rand -base64 32`
 - `ADMIN_USERS` — `логин:пароль` (можно несколько через запятую)
 - `NEXT_PUBLIC_SITE_URL` — `https://omnigrps.ru` (без `/` в конце)
-- Telegram (заявки с форм): `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+- Telegram (заявки с форм): `SECRETS_ENCRYPTION_KEY` (обязателен для хранения токена в админке) + опционально `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` как fallback; либо задайте токен и chat id в админке
 - Yandex Object Storage: `YA_STORAGE_ID`, `YA_STORAGE_SECRET`, `YA_BUCKET_NAME`, `YA_REGION`, `YA_ENDPOINT`, `NEXT_PUBLIC_YA_PUBLIC_BASE`
 
 Опционально для бэкапов: `BACKUP_S3_PREFIX=backups/cms`, `BACKUP_KEEP_DAYS=14`.

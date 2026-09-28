@@ -226,6 +226,10 @@ export const tableSiteSettings = sqliteTable("site_settings", {
   site_published: integer("site_published", { mode: "boolean" }).default(true),
   /** JSON: `{ "hero_light": "site/backgrounds/...", ... }` — S3-ключи фонов */
   backgrounds: text("backgrounds"),
+  /** AES-GCM ciphertext Telegram bot token (см. SECRETS_ENCRYPTION_KEY) */
+  telegram_bot_token_enc: text("telegram_bot_token_enc"),
+  /** AES-GCM ciphertext Telegram chat id */
+  telegram_chat_id_enc: text("telegram_chat_id_enc"),
 })
 
 export const relationsSiteSettings = relations(tableSiteSettings, () => ({}))

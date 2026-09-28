@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
-import { isTelegramConfigured, sendTelegramMessage, escapeTelegramHtml } from "@/lib/telegram/send-message"
+import { escapeTelegramHtml, getTelegramConfigStatus, isTelegramConfigured, sendTelegramMessage } from "@/lib/telegram/send-message"
 
 export const runtime = "nodejs"
 
-/** Статус: настроен ли Telegram в .env (без раскрытия секретов). */
 export async function GET(request: NextRequest) {
   try {
     requireAuth(request)
     return NextResponse.json({
-      data: {
-        configured: isTelegramConfigured(),
-      },
+      data: getTelegramConfigStatus(),
       meta: null,
     })
   } catch (error: unknown) {
@@ -22,14 +19,16 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Демо-сообщение в TELEGRAM_CHAT_ID. */
 export async function POST(request: NextRequest) {
   try {
     requireAuth(request)
 
     if (!isTelegramConfigured()) {
       return NextResponse.json(
-        { error: "Telegram is not configured", hint: "Задайте TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в .env" },
+        {
+          error: "Telegram is not configured",
+          hint: "Задайте токен и chat id в админке (нужен SECRETS_ENCRYPTION_KEY) или в .env",
+        },
         { status: 400 },
       )
     }
