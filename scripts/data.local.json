@@ -1,0 +1,339 @@
+{
+  "faq": [
+    {
+      "question": "Можно ли зафиксировать кол-во вишлистов?",
+      "answer": "Нет, мы не гарантируем точное количество вишлистов, потому что размещаем нативные публикации на живую аудиторию, а итоговый результат зависит от игры, жанра, визуала, Steam-страницы и интереса аудитории. Перед запуском мы можем дать ориентировочный прогноз по проекту на основе выбранных каналов и опыта прошлых публикаций. Если вам нужен строго фиксированный формат в рамках бюджета, то можем предложить рассмотреть покупку рекламного поста по фиксированной цене"
+    },
+    {
+      "question": "На каких стадиях можно размещать проект на вишлисты?",
+      "answer": "Размещать проект можем только на стадии анонса или демоверсии игры. Если игра уже вышла в релиз с возможностью покупки — такой проект мы не сможем взять на вишлисты"
+    },
+    {
+      "question": "Можно ли продвигать несколько раз один проект на вишлисты?",
+      "answer": "Нет, проект на вишлисты запускается один раз на один проект. Исключения возможны в случае появления демо-версии игры или крупного обновления проекта: визуала, механик, сеттинга или других значимых изменений"
+    },
+    {
+      "question": "Могут ли вишлисты измениться после кампании?",
+      "answer": "Мы размещаем посты в своих Telegram-каналах с живой, реальной аудиторией. Количество вишлистов всегда зависит исключительно от заинтересованности пользователей вашим проектом. Мы не используем накрутку, ботов и искусственный трафик — только органические показы. В вишлисты игру добавляют реальные люди, которые увидели публикацию и заинтересовались проектом. Часть вишлистов может меняться естественным образом: пользователи продолжают добавлять игру или, наоборот, убирают её из списка — это нормальный процесс для любой игры"
+    },
+    {
+      "question": "Как убедиться в реальности аудитории, которая добавляет игру в вишлисты?",
+      "answer": "Мы заинтересованы исключительно в долгосрочном сотрудничестве, поэтому делимся всей открытой информацией: с кем мы работаем, список наших каналов, статистика и метрики, а также примерами постов на реальных кейсах. Дополнительно вы можете написать любому разработчику или издателю, с которым мы уже сотрудничали, чтобы лично убедиться в нашей честности и надёжности"
+    }
+  ],
+  "formats": {
+    "title": "Форматы сотрудничества и принципы работы",
+    "subtitle": "Запускаем продвижение игровых проектов через Telegram-каналы: от подготовки до публикации",
+    "items": [
+      {
+        "title": "Вишлисты Steam",
+        "description": "Продвигаем Steam-проекты через релевантные игровые Telegram-каналы. Перед запуском знакомимся с проектом, его жанром, визуалом и аудиторией, чтобы подобрать подходящие каналы. На основе ваших материалов подготавливаем посты, согласовываем даты выхода и после фиксируем результат по UTM ссылке (Steam аналитика)"
+      },
+      {
+        "title": "Рекламный формат",
+        "description": "Запускаем публикации для брендов, сервисов, анонсов, релизов и спецпредложений. Вы передаёте ссылку, медиафайлы и ключевые акценты, которые важно отразить в размещении. Мы подготавливаем пост под Telegram-формат и выпускаем его в выбранных каналах в согласованные даты"
+      },
+      {
+        "title": "Сопровождение запуска",
+        "description": "Сначала знакомимся с вашим проектом: смотрим страницу, визуал, жанр и ключевые особенности. После этого вы передаёте ссылку, медиафайлы, скриншоты, видео, описание и акценты, которые важно отразить в публикации. Мы сами подбираем подходящие каналы, подготавливаем посты под Telegram-формат и отправляем их вам на утверждение. После согласования выпускаем публикации в назначенные дни"
+      }
+    ]
+  },
+  "about_ru": {
+    "title": "Кто мы",
+    "subtitle": "Rythm Group — Telegram-медиахолдинг в gaming & esports. \n\nМы развиваем собственную сеть Telegram-каналов в gaming-сегменте и работаем с аудиторией, которая ежедневно интересуется играми, релизами, киберспортом и digital-культурой",
+    "cards": [
+      {
+        "icon": "target",
+        "title": "Наша цель",
+        "description": "Объединяем крупнейшие Telegram-каналы в игровой и киберспортивной нише, создавая единую экосистему для рекламодателей и аудитории."
+      },
+      {
+        "icon": "users",
+        "title": "Подход",
+        "description": "Подбираем релевантные каналы и формат размещения под аудиторию, продукт и цель кампании"
+      },
+      {
+        "icon": "crosshair",
+        "title": "Целевая аудитория",
+        "description": "Мужчины 18-35 лет, геймеры, киберспортивные фанаты, технологические энтузиасты и активные пользователи Telegram."
+      }
+    ]
+  },
+  "about_en": {
+    "title": "Who We Are",
+    "subtitle": "A next-generation media holding",
+    "cards": [
+      {
+        "icon": "target",
+        "title": "Our Mission",
+        "description": "We unite the largest Telegram channels in the gaming and esports niche, creating a unified ecosystem for advertisers and audiences."
+      },
+      {
+        "icon": "users",
+        "title": "Our Team",
+        "description": "Over 30 professionals in media, marketing, and content production work to develop the holding."
+      },
+      {
+        "icon": "crosshair",
+        "title": "Target Audience",
+        "description": "Men aged 18-35, gamers, esports fans, tech enthusiasts, and active Telegram users."
+      }
+    ]
+  },
+  "stats_ru": {
+    "title": "Цифры говорят сами за себя",
+    "subtitle": "Результаты, которых мы достигли",
+    "stats": [
+      {
+        "value": "1,6M",
+        "label": "Подписчиков"
+      },
+      {
+        "value": "215K",
+        "label": "Совокупный охват"
+      },
+      {
+        "value": "19",
+        "label": "Каналов в сети"
+      },
+      {
+        "value": "500+",
+        "label": "Успешных рекламных кампаний"
+      }
+    ]
+  },
+  "stats_en": {
+    "title": "The Numbers Speak for Themselves",
+    "subtitle": "Results we have achieved",
+    "stats": [
+      {
+        "value": "50M+",
+        "label": "Subscribers"
+      },
+      {
+        "value": "120M+",
+        "label": "Monthly Reach"
+      },
+      {
+        "value": "80+",
+        "label": "Channels in Network"
+      },
+      {
+        "value": "500+",
+        "label": "Successful Ad Campaigns"
+      }
+    ]
+  },
+  "channels": [
+    {
+      "id": 19,
+      "name": "Steam Community",
+      "url": "https://t.me/+vU2odDM00nU3Mjli",
+      "avatar": "https://rythm-group.com/api/content/channels/19/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/19/avatar",
+      "subscribers": 614208,
+      "reach": 85000,
+      "engagementRate": 13.84,
+      "localAvatar": "avatars/channel_19.webp"
+    },
+    {
+      "id": 20,
+      "name": "Fucking Steam",
+      "url": "https://t.me/+XpMHAJgkmdI0Zjli",
+      "avatar": "https://rythm-group.com/api/content/channels/20/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/20/avatar",
+      "subscribers": 173333,
+      "reach": 22200,
+      "engagementRate": 12.81,
+      "localAvatar": "avatars/channel_20.webp"
+    },
+    {
+      "id": 21,
+      "name": "FUCKING TWITCH",
+      "url": "https://t.me/+f3kiZpaiTOE5ZWNk",
+      "avatar": "https://rythm-group.com/api/content/channels/21/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/21/avatar",
+      "subscribers": 172234,
+      "reach": 35400,
+      "engagementRate": 20.55,
+      "localAvatar": "avatars/channel_21.webp"
+    },
+    {
+      "id": 37,
+      "name": "Игровой",
+      "url": "https://t.me/+pIS90PQOkWc5ZmMy",
+      "avatar": "https://rythm-group.com/api/content/channels/37/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/37/avatar",
+      "subscribers": 90473,
+      "reach": 6700,
+      "engagementRate": 7.41,
+      "localAvatar": "avatars/channel_37.webp"
+    },
+    {
+      "id": 22,
+      "name": "Dota Community",
+      "url": "https://t.me/+gWbc2wdpUohlZGQy",
+      "avatar": "https://rythm-group.com/api/content/channels/22/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/22/avatar",
+      "subscribers": 95414,
+      "reach": 13700,
+      "engagementRate": 14.36,
+      "localAvatar": "avatars/channel_22.webp"
+    },
+    {
+      "id": 23,
+      "name": "DOTA",
+      "url": "https://t.me/+DFV91UdK3SJiN2My",
+      "avatar": "https://rythm-group.com/api/content/channels/23/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/23/avatar",
+      "subscribers": 41207,
+      "reach": 6300,
+      "engagementRate": 15.29,
+      "localAvatar": "avatars/channel_23.webp"
+    },
+    {
+      "id": 24,
+      "name": "CS Community",
+      "url": "https://t.me/+_gYV3dkuiDw1NmRi",
+      "avatar": "https://rythm-group.com/api/content/channels/24/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/24/avatar",
+      "subscribers": 46244,
+      "reach": 3200,
+      "engagementRate": 6.92,
+      "localAvatar": "avatars/channel_24.webp"
+    },
+    {
+      "id": 25,
+      "name": "Deadlock Community",
+      "url": "https://t.me/+mlgwAbY25VUwZDdi",
+      "avatar": "https://rythm-group.com/api/content/channels/25/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/25/avatar",
+      "subscribers": 15860,
+      "reach": 2300,
+      "engagementRate": 14.5,
+      "localAvatar": "avatars/channel_25.webp"
+    },
+    {
+      "id": 26,
+      "name": "ИГРОВЫЕ НОВОСТИ",
+      "url": "https://t.me/+J9FNkuD1cHtlMDMy",
+      "avatar": "https://rythm-group.com/api/content/channels/26/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/26/avatar",
+      "subscribers": 68205,
+      "reach": 7100,
+      "engagementRate": 10.41,
+      "localAvatar": "avatars/channel_26.webp"
+    },
+    {
+      "id": 27,
+      "name": "Epic Games Store",
+      "url": "https://t.me/+_SjHWP1f1wAyZDUy",
+      "avatar": "https://rythm-group.com/api/content/channels/27/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/27/avatar",
+      "subscribers": 93675,
+      "reach": 10700,
+      "engagementRate": 11.42,
+      "localAvatar": "avatars/channel_27.webp"
+    },
+    {
+      "id": 28,
+      "name": "ИГРОВЫЕ РАЗДАЧИ",
+      "url": "https://t.me/+Fxd9I1pQX8szNmZi",
+      "avatar": "https://rythm-group.com/api/content/channels/28/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/28/avatar",
+      "subscribers": 44881,
+      "reach": 6300,
+      "engagementRate": 14.04,
+      "localAvatar": "avatars/channel_28.webp"
+    },
+    {
+      "id": 29,
+      "name": "PlayStation",
+      "url": "https://t.me/+olFYp8uWfoVjM2E6",
+      "avatar": "https://rythm-group.com/api/content/channels/29/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/29/avatar",
+      "subscribers": 36884,
+      "reach": 5800,
+      "engagementRate": 15.72,
+      "localAvatar": "avatars/channel_29.webp"
+    },
+    {
+      "id": 30,
+      "name": "Торрунити",
+      "url": "https://t.me/+Au_o0fSws3kwMjg0",
+      "avatar": "https://rythm-group.com/api/content/channels/30/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/30/avatar",
+      "subscribers": 25015,
+      "reach": 2200,
+      "engagementRate": 8.79,
+      "localAvatar": "avatars/channel_30.webp"
+    },
+    {
+      "id": 31,
+      "name": "Гачамания",
+      "url": "http://t.me/gachamanya",
+      "avatar": "https://rythm-group.com/api/content/channels/31/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/31/avatar",
+      "subscribers": 5245,
+      "reach": 900,
+      "engagementRate": 17.16,
+      "localAvatar": "avatars/channel_31.webp"
+    },
+    {
+      "id": 32,
+      "name": "Мир Fortnite",
+      "url": "https://t.me/+6NIGRjjoii8yOWM0",
+      "avatar": "https://rythm-group.com/api/content/channels/32/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/32/avatar",
+      "subscribers": 9914,
+      "reach": 890,
+      "engagementRate": 8.98,
+      "localAvatar": "avatars/channel_32.webp"
+    },
+    {
+      "id": 33,
+      "name": "Игроманы",
+      "url": "https://t.me/+bYjWYfzKH-0yMTQy",
+      "avatar": "https://rythm-group.com/api/content/channels/33/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/33/avatar",
+      "subscribers": 42778,
+      "reach": 5000,
+      "engagementRate": 11.69,
+      "localAvatar": "avatars/channel_33.webp"
+    },
+    {
+      "id": 34,
+      "name": "Игромания",
+      "url": "https://t.me/+wq8qveS9pLM3OWIy",
+      "avatar": "https://rythm-group.com/api/content/channels/34/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/34/avatar",
+      "subscribers": 24778,
+      "reach": 1600,
+      "engagementRate": 6.46,
+      "localAvatar": "avatars/channel_34.webp"
+    },
+    {
+      "id": 35,
+      "name": "FreeGamer",
+      "url": "http://t.me/free_gamer",
+      "avatar": "https://rythm-group.com/api/content/channels/35/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/35/avatar",
+      "subscribers": 17147,
+      "reach": 1750,
+      "engagementRate": 10.21,
+      "localAvatar": "avatars/channel_35.webp"
+    },
+    {
+      "id": 36,
+      "name": "Мир GTA | GTA VI",
+      "url": "http://t.me/gta6medianews",
+      "avatar": "https://rythm-group.com/api/content/channels/36/avatar",
+      "avatarPath": "https://rythm-group.com/api/content/channels/36/avatar",
+      "subscribers": 14116,
+      "reach": 5600,
+      "engagementRate": 39.67,
+      "localAvatar": "avatars/channel_36.webp"
+    }
+  ]
+}

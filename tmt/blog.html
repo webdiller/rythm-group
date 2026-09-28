@@ -1,0 +1,107 @@
+<nav class="flex flex-wrap gap-2 mb-10" aria-label="Блог"><a class="rounded-full border px-4 py-2 text-sm font-medium transition-colors border-primary bg-primary/10 text-foreground" href="/blog">Все</a><a class="rounded-full border px-4 py-2 text-sm font-medium transition-colors border-border bg-card/60 text-muted-foreground hover:border-primary/40 hover:text-foreground" href="/blog/news">Новости</a><a class="rounded-full border px-4 py-2 text-sm font-medium transition-colors border-border bg-card/60 text-muted-foreground hover:border-primary/40 hover:text-foreground" href="/blog/cases">Кейсы</a><a class="rounded-full border px-4 py-2 text-sm font-medium transition-colors border-border bg-card/60 text-muted-foreground hover:border-primary/40 hover:text-foreground" href="/blog/statistics">Статистика</a><a class="rounded-full border px-4 py-2 text-sm font-medium transition-colors border-border bg-card/60 text-muted-foreground hover:border-primary/40 hover:text-foreground" href="/blog/memes">Мемы</a></nav>
+
+<ul class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <li class="min-h-[1px]">
+        <div data-slot="card"
+            class="text-card-foreground flex flex-col gap-6 rounded-xl border group h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-colors hover:border-primary/35">
+            <a class="relative block aspect-video w-full shrink-0 overflow-hidden bg-muted"
+                href="/blog/cases/wishlist-two-weeks"><img alt=""
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    loading="lazy" decoding="async" src="/uploads/blog/1780844710415-dc2b54d3.webp"></a>
+            <div data-slot="card-header"
+                class="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 gap-3 p-6 pb-2">
+                <div class="flex flex-wrap items-center gap-2"><span data-slot="badge"
+                        class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs w-fit whitespace-nowrap shrink-0 [&amp;&gt;svg]:size-3 gap-1 [&amp;&gt;svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent bg-secondary [a&amp;]:hover:bg-secondary/90 font-normal text-muted-foreground">Кейсы</span><time
+                        class="text-xs text-muted-foreground" datetime="2025-02-01T12:00:00.000Z">1 февраля 2025</time>
+                </div>
+                <h2
+                    class="text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+                    <a class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                        href="/blog/cases/wishlist-two-weeks">Как мы запускаем wishlist-кампании для Steam-игр через
+                        Telegram</a></h2>
+            </div>
+            <div data-slot="card-content" class="flex flex-col gap-4 p-6 pt-0">
+                <p class="text-sm leading-relaxed text-muted-foreground line-clamp-3">Как мы запускаем wishlist-кампании
+                    для Steam-игр через наши Telegram-каналы
+                </p><a class="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    href="/blog/cases/wishlist-two-weeks">Читать далее</a>
+            </div>
+        </div>
+    </li>
+    <li class="min-h-[1px]">
+        <div data-slot="card"
+            class="text-card-foreground flex flex-col gap-6 rounded-xl border group h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-colors hover:border-primary/35">
+            <a class="relative block aspect-video w-full shrink-0 overflow-hidden bg-muted"
+                href="/blog/statistics/reach-vs-conversion"><img alt=""
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    loading="lazy" decoding="async"
+                    src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&amp;q=80"></a>
+            <div data-slot="card-header"
+                class="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 gap-3 p-6 pb-2">
+                <div class="flex flex-wrap items-center gap-2"><span data-slot="badge"
+                        class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs w-fit whitespace-nowrap shrink-0 [&amp;&gt;svg]:size-3 gap-1 [&amp;&gt;svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent bg-secondary [a&amp;]:hover:bg-secondary/90 font-normal text-muted-foreground">Статистика</span><time
+                        class="text-xs text-muted-foreground" datetime="2025-01-20T10:00:00.000Z">20 января 2025</time>
+                </div>
+                <h2
+                    class="text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+                    <a class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                        href="/blog/statistics/reach-vs-conversion">Охваты vs конверсия в Telegram</a></h2>
+            </div>
+            <div data-slot="card-content" class="flex flex-col gap-4 p-6 pt-0">
+                <p class="text-sm leading-relaxed text-muted-foreground line-clamp-3">Что смотреть в отчётах, если цель
+                    — вишлист, а не только просмотры.</p><a
+                    class="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    href="/blog/statistics/reach-vs-conversion">Читать далее</a>
+            </div>
+        </div>
+    </li>
+    <li class="min-h-[1px]">
+        <div data-slot="card"
+            class="text-card-foreground flex flex-col gap-6 rounded-xl border group h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-colors hover:border-primary/35">
+            <a class="relative block aspect-video w-full shrink-0 overflow-hidden bg-muted"
+                href="/blog/memes/friday-meme-01"><img alt=""
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    loading="lazy" decoding="async"
+                    src="https://images.unsplash.com/photo-1614854262340-ab1ca7d079c7?w=1200&amp;q=80"></a>
+            <div data-slot="card-header"
+                class="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 gap-3 p-6 pb-2">
+                <div class="flex flex-wrap items-center gap-2"><span data-slot="badge"
+                        class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs w-fit whitespace-nowrap shrink-0 [&amp;&gt;svg]:size-3 gap-1 [&amp;&gt;svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent bg-secondary [a&amp;]:hover:bg-secondary/90 font-normal text-muted-foreground">Мемы</span><time
+                        class="text-xs text-muted-foreground" datetime="2025-01-12T15:30:00.000Z">13 января 2025</time>
+                </div>
+                <h2
+                    class="text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+                    <a class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                        href="/blog/memes/friday-meme-01">Пятничный мем про дедлайны</a></h2>
+            </div>
+            <div data-slot="card-content" class="flex flex-col gap-4 p-6 pt-0">
+                <p class="text-sm leading-relaxed text-muted-foreground line-clamp-3">Короткий пост для настроя команды
+                    перед релизом.</p><a
+                    class="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    href="/blog/memes/friday-meme-01">Читать далее</a>
+            </div>
+        </div>
+    </li>
+    <li class="min-h-[1px]">
+        <div data-slot="card"
+            class="text-card-foreground flex flex-col gap-6 rounded-xl border group h-full overflow-hidden border-border/80 bg-card/80 py-0 shadow-none backdrop-blur-sm transition-colors hover:border-primary/35">
+            <div data-slot="card-header"
+                class="@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6 gap-3 p-6 pb-2">
+                <div class="flex flex-wrap items-center gap-2"><span data-slot="badge"
+                        class="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs w-fit whitespace-nowrap shrink-0 [&amp;&gt;svg]:size-3 gap-1 [&amp;&gt;svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent bg-secondary [a&amp;]:hover:bg-secondary/90 font-normal text-muted-foreground">Новости</span><time
+                        class="text-xs text-muted-foreground" datetime="2025-01-05T09:00:00.000Z">5 января 2025</time>
+                </div>
+                <h2
+                    class="text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors group-hover:text-primary">
+                    <a class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                        href="/blog/news/march-indie-slots">Новые слоты для инди в марте</a></h2>
+            </div>
+            <div data-slot="card-content" class="flex flex-col gap-4 p-6 pt-0">
+                <p class="text-sm leading-relaxed text-muted-foreground line-clamp-3">Открыли дополнительные окна для
+                    нативных интеграций.</p><a
+                    class="inline-flex w-fit text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    href="/blog/news/march-indie-slots">Читать далее</a>
+            </div>
+        </div>
+    </li>
+</ul>
