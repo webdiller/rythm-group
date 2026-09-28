@@ -6,6 +6,8 @@ const MESSAGES = {
     invalidPayload: "Проверьте заполнение полей формы.",
     telegramNotConfigured:
       "Отправка временно недоступна: Telegram не настроен на сервере. Свяжитесь с нами через контакты ниже.",
+    rateLimit:
+      "Слишком много заявок. Можно отправить не более 6 сообщений в минуту. Подождите немного и попробуйте снова.",
     network: "Ошибка сети. Проверьте подключение и попробуйте снова.",
     success: "Сообщение успешно отправлено.",
     sending: "Отправка...",
@@ -15,6 +17,7 @@ const MESSAGES = {
     invalidPayload: "Please check the form fields.",
     telegramNotConfigured:
       "Sending is temporarily unavailable: Telegram is not configured on the server. Please use the contacts below.",
+    rateLimit: "Too many requests. You can send at most 6 messages per minute. Please wait and try again.",
     network: "Network error. Check your connection and try again.",
     success: "Message sent successfully.",
     sending: "Sending...",
@@ -32,6 +35,8 @@ export function mapContactApiError(error: string | undefined, locale: Locale): s
     case "Telegram is not configured":
     case "SMTP is not configured":
       return getContactFormMessage(locale, "telegramNotConfigured")
+    case "Rate limit exceeded":
+      return getContactFormMessage(locale, "rateLimit")
     case "Failed to send message":
       return getContactFormMessage(locale, "generic")
     default:
