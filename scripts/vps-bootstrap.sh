@@ -198,7 +198,7 @@ mkdir -p "${APP_DIR}/data" "${APP_DIR}/public/uploads"
 
 if [[ -f "${APP_DIR}/.env.example" && ! -f "${APP_DIR}/.env" ]]; then
   cp "${APP_DIR}/.env.example" "${APP_DIR}/.env"
-  log "Создан ${APP_DIR}/.env из .env.example — ОБЯЗАТЕЛЬНО заполните секреты (JWT, ADMIN, YA_*, SMTP, NEXT_PUBLIC_*)."
+  log "Создан ${APP_DIR}/.env из .env.example — ОБЯЗАТЕЛЬНО заполните секреты (JWT, ADMIN, YA_*, Telegram, NEXT_PUBLIC_*)."
 elif [[ -f "${APP_DIR}/.env" ]]; then
   log ".env уже существует — не перезаписываю"
 else
@@ -281,7 +281,7 @@ log "Готово (базовая подготовка)."
 echo
 echo "Дальше вручную:"
 echo "  1) Перелогиньтесь по SSH (если только что добавили в группу docker)."
-echo "  2) Заполните ${APP_DIR}/.env (JWT_SECRET, ADMIN_USERS, SMTP, YA_*, NEXT_PUBLIC_*)."
+echo "  2) Заполните ${APP_DIR}/.env (JWT_SECRET, ADMIN_USERS, YA_*, Telegram, NEXT_PUBLIC_*)."
 echo "  3) cd ${APP_DIR} && docker compose up -d --build"
 echo "  4) DNS A-записи @ и www → IP этого VPS."
 if [[ -n "$DOMAIN" ]]; then

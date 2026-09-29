@@ -33,7 +33,6 @@ export function mapContactApiError(error: string | undefined, locale: Locale): s
     case "Invalid payload":
       return getContactFormMessage(locale, "invalidPayload")
     case "Telegram is not configured":
-    case "SMTP is not configured":
       return getContactFormMessage(locale, "telegramNotConfigured")
     case "Rate limit exceeded":
       return getContactFormMessage(locale, "rateLimit")
