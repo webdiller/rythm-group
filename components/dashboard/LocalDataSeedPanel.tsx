@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,14 +20,16 @@ function getToken(): string | undefined {
     ?.split("=")[1]
 }
 
+type BusyPhase = "check" | "import" | null
+
 export function LocalDataSeedPanel() {
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<BusyPhase>(null)
   const [confirm, setConfirm] = useState("")
   const [dryRun, setDryRun] = useState<LocalSeedDryRunResult | null>(null)
   const [lastResult, setLastResult] = useState<LocalSeedExecuteResult | null>(null)
 
   const runDryRun = async () => {
-    setBusy(true)
+    setBusy("check")
     setLastResult(null)
     try {
       const token = getToken()
@@ -55,7 +58,7 @@ export function LocalDataSeedPanel() {
     } catch {
       toast.error("Ошибка проверки")
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -76,7 +79,7 @@ export function LocalDataSeedPanel() {
       return
     }
 
-    setBusy(true)
+    setBusy("import")
     try {
       const token = getToken()
       const res = await fetch("/api/admin/local-seed", {
@@ -109,9 +112,11 @@ export function LocalDataSeedPanel() {
     } catch {
       toast.error("Ошибка импорта")
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
+
+  const isBusy = busy != null
 
   return (
     <Card>
@@ -124,8 +129,42 @@ export function LocalDataSeedPanel() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button type="button" variant="outline" disabled={busy} onClick={() => void runDryRun()}>
-          {busy && !lastResult ? "…" : "1. Проверить файл"}
+        {busy === "import" ? (
+          <div
+            className="flex items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-3 text-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-foreground" />
+            <div>
+              <p className="font-medium text-foreground">Идёт посев локальных данных…</p>
+              <p className="text-xs text-muted-foreground">
+                Загрузка аватаров в S3 и запись в БД. Не закрывайте страницу.
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {busy === "check" ? (
+          <div
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Проверка файла и аватаров…
+          </div>
+        ) : null}
+
+        <Button type="button" variant="outline" disabled={isBusy} onClick={() => void runDryRun()}>
+          {busy === "check" ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Проверка…
+            </>
+          ) : (
+            "1. Проверить файл"
+          )}
         </Button>
 
         {dryRun ? (
@@ -171,19 +210,26 @@ export function LocalDataSeedPanel() {
             onChange={(e) => setConfirm(e.target.value)}
             placeholder={LOCAL_SEED_CONFIRM_PHRASE}
             autoComplete="off"
-            disabled={busy}
+            disabled={isBusy}
           />
           <Button
             type="button"
             disabled={
-              busy ||
+              isBusy ||
               confirm !== LOCAL_SEED_CONFIRM_PHRASE ||
               !dryRun?.ready ||
               !dryRun.allowed
             }
             onClick={() => void runExecute()}
           >
-            2. Импортировать
+            {busy === "import" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Импорт…
+              </>
+            ) : (
+              "2. Импортировать"
+            )}
           </Button>
         </div>
 
