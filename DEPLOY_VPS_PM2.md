@@ -1,6 +1,11 @@
 # Развёртывание на VPS (Node.js + PM2 + nginx)
 
-Упрощённый вариант для **публичного** репозитория: клон через HTTPS, ручные обновления через `git pull`. Автодеплой через GitHub Actions здесь не используется.
+Доставка кода на сервер — **любым** из двух способов (можно использовать оба в разное время):
+
+1. **Git** — `git clone` / `git pull` с публичного GitHub (HTTPS).
+2. **Копирование с ПК** — `rsync` / `scp` локальной папки проекта на VPS (без GitHub).
+
+После появления файлов в `/var/www/rythm-group` запуск и обновление одинаковые: `npm ci` → `npm run build` → PM2. Автодеплой через GitHub Actions здесь не используется.
 
 Вариант с Docker и CI: [DEPLOY_VPS.md](./DEPLOY_VPS.md).
 
@@ -16,13 +21,43 @@
 
 Миграции БД выполняются при старте приложения (`getDb()` → `runMigrations()`). Отдельно `drizzle-kit push` на проде обычно не нужен.
 
+Подготовку VPS можно сделать **скриптом** или **вручную** (разделы **1**–**5** ниже) — результат один и тот же.
+
+### Быстрый старт (опционально): `scripts/vps-bootstrap-pm2.sh`
+
+> **Где выполнять:** на **VPS** (Ubuntu), пользователь с `sudo`. Не на локальной Windows/macOS.  
+> Docker-bootstrap: [scripts/vps-bootstrap.sh](./scripts/vps-bootstrap.sh) + [DEPLOY_VPS.md](./DEPLOY_VPS.md).
+
+Скрипт ставит пакеты, **Node 22**, **PM2**, готовит `/var/www/rythm-group`, копирует `.env.example` → `.env` (без секретов), пишет базовый nginx → `:3000`.  
+**Не** подставляет JWT/S3/Telegram и **не** выпускает HTTPS сам.
+
+```bash
+# Вариант 1: уже склонировали / скопировали репозиторий
+cd /var/www/rythm-group
+bash scripts/vps-bootstrap-pm2.sh
+
+# Вариант 2: клон + bootstrap (публичный репо — HTTPS)
+DEPLOY_USER=deploy \
+REPO_URL=https://github.com/OWNER/REPO.git \
+DOMAIN=omnigrps.ru \
+bash -c 'curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/scripts/vps-bootstrap-pm2.sh | bash'
+
+# Опционально сразу собрать и запустить (только после заполнения .env):
+# START_APP=1 bash scripts/vps-bootstrap-pm2.sh
+```
+
+Дальше: заполнить `.env` → при необходимости `npm ci && npm run build` → `pm2 start` / `pm2 startup` → DNS → certbot (см. чеклист §9).  
+Если предпочитаете контроль каждого шага — пропускайте скрипт и следуйте разделам **1**–**5**.
+
 ---
 
 ## 1. Подготовка VPS (Ubuntu)
 
+Ручная установка (если не использовали `vps-bootstrap-pm2.sh`):
+
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y git curl ca-certificates nginx certbot python3-certbot-nginx
+sudo apt install -y git curl ca-certificates nginx certbot python3-certbot-nginx rsync
 ```
 
 ### Node.js 22 (NodeSource)
@@ -43,13 +78,18 @@ pm2 -v
 
 ---
 
-## 2. Клон публичного репозитория
+## 2. Первая доставка кода на VPS
 
-Подставьте свой URL вместо `OWNER/REPO`.
+Подготовьте каталог (общий шаг для обоих способов):
 
 ```bash
 sudo mkdir -p /var/www/rythm-group
 sudo chown "$USER:$USER" /var/www/rythm-group
+```
+
+### Вариант A — Git (публичный репозиторий)
+
+```bash
 cd /var/www/rythm-group
 
 # Только HTTPS — для публичного репо ключ не нужен.
@@ -59,6 +99,34 @@ mkdir -p data public/uploads
 ```
 
 SSH-ключ к GitHub для публичного репо **не нужен** (клон только по HTTPS).
+
+### Вариант B — копирование с локального ПК (без GitHub)
+
+На **локальном** компьютере, из корня проекта (Git Bash / WSL / macOS / Linux). Подставьте пользователя и IP VPS:
+
+```bash
+rsync -avz \
+  --exclude node_modules \
+  --exclude .next \
+  --exclude data \
+  --exclude .env \
+  --exclude .env.local \
+  --exclude .git \
+  ./ USER@VPS_IP:/var/www/rythm-group/
+```
+
+Затем на VPS:
+
+```bash
+cd /var/www/rythm-group
+mkdir -p data public/uploads
+```
+
+Не копируйте на сервер локальный `.env.local` и не затирайте уже существующие на VPS `.env` и `data/`.
+
+Альтернатива без rsync: архив (`tar`/`zip`) + `scp`, затем распаковка в `/var/www/rythm-group` с теми же исключениями.
+
+Дальше для **обоих** вариантов — разделы **3** и **4**.
 
 ---
 
@@ -74,15 +142,18 @@ nano .env
 
 - `JWT_SECRET` — например `openssl rand -base64 32`
 - `ADMIN_USERS` — `логин:пароль` (можно несколько через запятую)
+- `DB_PATH` — обычно `./data/cms.db` (можно не менять)
 - `NEXT_PUBLIC_SITE_URL` — `https://omnigrps.ru` (без `/` в конце)
 - Telegram (заявки с форм): `SECRETS_ENCRYPTION_KEY` (обязателен для хранения токена в админке) + опционально `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` как fallback; либо задайте токен и chat id в админке
 - Yandex Object Storage: `YA_STORAGE_ID`, `YA_STORAGE_SECRET`, `YA_BUCKET_NAME`, `YA_REGION`, `YA_ENDPOINT`, `NEXT_PUBLIC_YA_PUBLIC_BASE`
 
 Опционально для бэкапов: `BACKUP_S3_PREFIX=backups/cms`, `BACKUP_KEEP_DAYS=14`.
 
+На проде не включайте `ALLOW_DEMO_SEED=1` без необходимости (демо-сид и импорт `data.local.json`).
+
 > Переменные `NEXT_PUBLIC_*` вшиваются в клиентский бандл на этапе **`npm run build`**. После смены домена или публичного URL бакета выполните rebuild и `pm2 reload` — одного `pm2 restart` недостаточно.
 
-Файл `.env` не коммитьте. Каталог `data/` тоже не должен попадать в git (уже в `.gitignore`).
+Файл `.env` не коммитьте и не перезаписывайте при rsync. Каталог `data/` тоже не должен попадать в git / в синхронизацию с ПК.
 
 ---
 
@@ -188,7 +259,7 @@ Certbot предложит редирект HTTP→HTTPS. При необход�
 
 ## 6. Обновление сайта (вручную)
 
-На VPS после пуша в `main` (или нужную ветку) на GitHub:
+После доставки новых файлов (git **или** rsync) на VPS всегда одно и то же:
 
 ```bash
 cd /var/www/rythm-group
@@ -196,7 +267,6 @@ cd /var/www/rythm-group
 # Опционально: бэкап БД перед обновлением
 node --env-file=.env scripts/backup-sqlite-to-s3.mjs || true
 
-git pull
 npm ci
 npm run build
 pm2 reload rythm-group
@@ -205,6 +275,44 @@ pm2 reload rythm-group
 Не удаляйте `data/` и `.env` при обновлении.
 
 Если меняли только серверный код без `NEXT_PUBLIC_*`, всё равно безопаснее делать полный `build` — так вы избежите рассинхрона артефактов.
+
+### 6.1. Доставка кода через Git
+
+На VPS после пуша в нужную ветку на GitHub:
+
+```bash
+cd /var/www/rythm-group
+git pull
+# далее npm ci / build / pm2 reload — как выше
+```
+
+### 6.2. Доставка кода с локального ПК (без GitHub)
+
+С **локального** компьютера, из корня проекта:
+
+```bash
+rsync -avz \
+  --exclude node_modules \
+  --exclude .next \
+  --exclude data \
+  --exclude .env \
+  --exclude .env.local \
+  --exclude .git \
+  ./ USER@VPS_IP:/var/www/rythm-group/
+```
+
+Затем на VPS: `npm ci` → `npm run build` → `pm2 reload rythm-group` (см. блок в начале раздела **6**).
+
+Опционально `--delete` удалит на сервере файлы, которых уже нет локально. **Не используйте `--delete` без** `--exclude data` и `--exclude .env` — иначе можно снести БД или секреты.
+
+### Совмещение Git и rsync
+
+Оба способа допустимы. Если чередуете их на одном каталоге:
+
+- после rsync `git status` на VPS может показывать «лишние» изменения;
+- перед следующим `git pull` либо откатите локальные отличия на сервере, либо какое-то время обновляйтесь только через rsync.
+
+Проще выбрать один основной канал доставки и придерживаться его.
 
 ---
 
@@ -238,15 +346,15 @@ crontab -e
 | Рестарт            | `pm2 restart rythm-group`                            |
 | Reload (zero-ish)  | `pm2 reload rythm-group`                             |
 | Остановка          | `pm2 stop rythm-group`                               |
-| Обновление         | см. раздел **6**                                     |
+| Обновление         | см. раздел **6** (git или rsync)                     |
 | Восстановление БД  | положить файл в `./data/cms.db` → `pm2 restart …`    |
 
 ---
 
 ## 9. Чеклист первого запуска
 
-- [ ] Node 22 и PM2 установлены
-- [ ] Репозиторий склонирован в `/var/www/rythm-group`
+- [ ] Подготовка VPS: `vps-bootstrap-pm2.sh` **или** ручные шаги §1
+- [ ] Код в `/var/www/rythm-group` (git clone **или** rsync с ПК)
 - [ ] `.env` заполнен, `data/` создан
 - [ ] `npm ci && npm run build` прошли без ошибок
 - [ ] `pm2 status` показывает `rythm-group` online, `pm2 save` + `pm2 startup` настроены
@@ -258,7 +366,7 @@ crontab -e
 
 ## Важно
 
-1. **`./data`** — источник правды для контента CMS. Не удаляйте каталог «для чистоты».
+1. **`./data`** — источник правды для контента CMS. Не удаляйте каталог «для чистоты» и не синхронизируйте его с ПК через rsync.
 2. Смена `NEXT_PUBLIC_SITE_URL` или `NEXT_PUBLIC_YA_PUBLIC_BASE` → обязательный **`npm run build`** и `pm2 reload`.
 3. При ошибке **413** увеличьте `client_max_body_size` в nginx.
 4. На проде не включайте `ALLOW_DEMO_SEED=1` без необходимости (wipe CMS + медиа в S3).
