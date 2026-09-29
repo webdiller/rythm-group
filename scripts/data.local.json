@@ -335,5 +335,73 @@
       "engagementRate": 39.67,
       "localAvatar": "avatars/channel_36.webp"
     }
+  ],
+  "partners": [
+    {
+      "id": 1,
+      "name": "TopHouse",
+      "url": "https://store.steampowered.com/publisher/TopHouse/lists/",
+      "avatar": "https://rythm-group.com/api/content/partners/88/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/88/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_1.webp"
+    },
+    {
+      "id": 2,
+      "name": "Findie Studios",
+      "url": "https://store.steampowered.com/developer/findiestudios/",
+      "avatar": "https://rythm-group.com/api/content/partners/89/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/89/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_2.webp"
+    },
+    {
+      "id": 3,
+      "name": "Lunisky Studio",
+      "url": "https://store.steampowered.com/search/?sort_by=_ASC&supportedlang=russian&publisher=Lunisky+Studio",
+      "avatar": "https://rythm-group.com/api/content/partners/90/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/90/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_3.webp"
+    },
+    {
+      "id": 4,
+      "name": "Akuseru Studio",
+      "url": "https://store.steampowered.com/search/?publisher=Akuseru%20Studio",
+      "avatar": "https://rythm-group.com/api/content/partners/91/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/91/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_4.webp"
+    },
+    {
+      "id": 5,
+      "name": "Sineus Games",
+      "url": "https://store.steampowered.com/search/?publisher=Sineus%20Games",
+      "avatar": "https://rythm-group.com/api/content/partners/92/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/92/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_5.webp"
+    },
+    {
+      "id": 6,
+      "name": "Findie Studios",
+      "url": "https://store.steampowered.com/developer/findiestudios/",
+      "avatar": "https://rythm-group.com/api/content/partners/93/logo",
+      "avatarPath": "https://rythm-group.com/api/content/partners/93/logo",
+      "subscribers": 0,
+      "reach": 0,
+      "engagementRate": 0,
+      "localAvatar": "avatars/partner_6.webp"
+    }
   ]
 }

@@ -18,6 +18,7 @@ import { fallbackTranslations } from "@/lib/i18n"
 import { getSiteFaviconSrc, getSiteLogoSrc } from "@/lib/s3/site-asset-url"
 import { getBackgroundSrc, parseBackgroundsJson, resolveBackgroundSlot, type BackgroundSlot, type BackgroundsMap } from "@/lib/s3/background-slots"
 import { DemoSeedPanel } from "@/components/dashboard/DemoSeedPanel"
+import { LocalDataSeedPanel } from "@/components/dashboard/LocalDataSeedPanel"
 import { TelegramNotifyPanel } from "@/components/dashboard/TelegramNotifyPanel"
 
 function SortableNavList({ items, children }: { items: HeaderNavItemId[]; children: ReactNode }) {
@@ -1736,6 +1737,8 @@ export function SiteSettingsEditor() {
       </Card>
 
       <TelegramNotifyPanel />
+
+      <LocalDataSeedPanel />
 
       <DemoSeedPanel />
 
